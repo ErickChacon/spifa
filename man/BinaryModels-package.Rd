@@ -1,6 +1,6 @@
-\name{BinaryModels-package}
-\alias{BinaryModels-package}
-\alias{BinaryModels}
+\name{spmirt-package}
+\alias{spmirt-package}
+\alias{spmirt}
 \docType{package}
 \title{
   A short title line describing what the package does

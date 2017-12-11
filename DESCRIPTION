@@ -10,6 +10,10 @@ Description: Fits spatial multidimensional item response models using Bayesian
         inference  with conjugates priors and using auxiliary variables with probit
         link function.
 License: GPL (>= 2) | file LICENSE
-Imports: Rcpp (>= 0.12.13)
-LinkingTo: Rcpp
+Imports: Rcpp (>= 0.12.13),
+         RcppArmadillo,
+         RcppTN
+LinkingTo: Rcpp,
+           RcppArmadillo,
+           RcppTN
 RoxygenNote: 6.0.1

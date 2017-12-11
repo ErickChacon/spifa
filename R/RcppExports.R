@@ -6,3 +6,38 @@ rcpp_hello_world <- function() {
     .Call('_spmirt_rcpp_hello_world', PACKAGE = 'spmirt')
 }
 
+#' @export
+ifa_gibbs <- function(y, n, q, N, m = 1L) {
+    .Call('_spmirt_ifa_gibbs', PACKAGE = 'spmirt', y, n, q, N, m)
+}
+
+#' @export
+ifa_gibbs_no <- function(y, n, q, N, m = 1L) {
+    .Call('_spmirt_ifa_gibbs_no', PACKAGE = 'spmirt', y, n, q, N, m)
+}
+
+#' @export
+test <- function(y) {
+    .Call('_spmirt_test', PACKAGE = 'spmirt', y)
+}
+
+#' @export
+vec2mat <- function(x, nrow, ncol) {
+    .Call('_spmirt_vec2mat', PACKAGE = 'spmirt', x, nrow, ncol)
+}
+
+#' @export
+vec2matt <- function(x, nrow, ncol) {
+    .Call('_spmirt_vec2matt', PACKAGE = 'spmirt', x, nrow, ncol)
+}
+
+#' @export
+theta2mat <- function(a, q, m) {
+    .Call('_spmirt_theta2mat', PACKAGE = 'spmirt', a, q, m)
+}
+
+#' @export
+rcpptn_hello_world <- function() {
+    .Call('_spmirt_rcpptn_hello_world', PACKAGE = 'spmirt')
+}
+
