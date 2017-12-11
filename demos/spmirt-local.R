@@ -10,7 +10,7 @@ devtools::install_local(file.path(path_repos, "spmirt"))
 # devtools::use_travis()
 
 
-setwd("demos")
+# setwd("demos")
 
 library(spmirt)
 library(Matrix)

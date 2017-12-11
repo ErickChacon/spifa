@@ -5,6 +5,7 @@ rm(list = ls())
 library(tidyverse)
 library(day2day)
 library(spmirt)
+library(coda)
 # library(rstan)
 # library(Matrix)
 
@@ -39,11 +40,11 @@ table(bla$ability)
 
 # FIT MODEL WITH SPMIRT --------------------------------------------------------
 
-library(coda)
 
 ini <- Sys.time()
-samples <- ifa_gibbs(data_long$y, n, q, 10000)
+samples <- ifa_gibbs(data_long$y, n, q, 5000)
 print(Sys.time() - ini)
+# 45
 
 # ini <- Sys.time()
 # samples <- ifa_gibbs_no(data_long$y, n, q, 5000)
@@ -51,7 +52,7 @@ print(Sys.time() - ini)
 #
 
 # samples2 <- samples %>% purrr::map(~ .[1001:2000, ])
-samples2 <- samples %>% purrr::map(~ .[5001:10000, ])
+samples2 <- samples %>% purrr::map(~ .[2501:5000, ])
 means <- purrr::map(samples2, ~ apply(., 2, mean))
 medians <- purrr::map(samples2, ~ apply(., 2, median))
 
@@ -64,12 +65,14 @@ plot(c_sam)
 
 plot(discrimination, means$a)
 abline(0, 1)
+abline(0, -1)
 
 a_sam <- mcmc(samples2$a)
 plot(a_sam)
 
 plot(ability, means$theta)
 abline(0, 1)
+abline(0, -1)
 
 theta_sam <- mcmc(samples2$theta)
 plot(theta_sam)

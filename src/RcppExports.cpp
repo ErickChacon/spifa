@@ -6,16 +6,6 @@
 
 using namespace Rcpp;
 
-// rcpp_hello_world
-List rcpp_hello_world();
-RcppExport SEXP _spmirt_rcpp_hello_world() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpp_hello_world());
-    return rcpp_result_gen;
-END_RCPP
-}
 // ifa_gibbs
 Rcpp::List ifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
 RcppExport SEXP _spmirt_ifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
@@ -31,9 +21,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// ifa_gibbs_no
-Rcpp::List ifa_gibbs_no(Rcpp::NumericVector y, int n, int q, int N, int m);
-RcppExport SEXP _spmirt_ifa_gibbs_no(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
+// rcpp_hello_world
+List rcpp_hello_world();
+RcppExport SEXP _spmirt_rcpp_hello_world() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(rcpp_hello_world());
+    return rcpp_result_gen;
+END_RCPP
+}
+// spifa_gibbs
+Rcpp::List spifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
+RcppExport SEXP _spmirt_spifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -42,18 +42,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type q(qSEXP);
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(ifa_gibbs_no(y, n, q, N, m));
+    rcpp_result_gen = Rcpp::wrap(spifa_gibbs(y, n, q, N, m));
     return rcpp_result_gen;
 END_RCPP
 }
-// test
-arma::vec test(arma::vec y);
-RcppExport SEXP _spmirt_test(SEXP ySEXP) {
+// rcpptn_hello_world
+List rcpptn_hello_world();
+RcppExport SEXP _spmirt_rcpptn_hello_world() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
-    rcpp_result_gen = Rcpp::wrap(test(y));
+    rcpp_result_gen = Rcpp::wrap(rcpptn_hello_world());
     return rcpp_result_gen;
 END_RCPP
 }
@@ -83,39 +82,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// theta2mat
-arma::mat theta2mat(arma::vec a, int q, int m);
-RcppExport SEXP _spmirt_theta2mat(SEXP aSEXP, SEXP qSEXP, SEXP mSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type a(aSEXP);
-    Rcpp::traits::input_parameter< int >::type q(qSEXP);
-    Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(theta2mat(a, q, m));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcpptn_hello_world
-List rcpptn_hello_world();
-RcppExport SEXP _spmirt_rcpptn_hello_world() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpptn_hello_world());
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_spmirt_rcpp_hello_world", (DL_FUNC) &_spmirt_rcpp_hello_world, 0},
     {"_spmirt_ifa_gibbs", (DL_FUNC) &_spmirt_ifa_gibbs, 5},
-    {"_spmirt_ifa_gibbs_no", (DL_FUNC) &_spmirt_ifa_gibbs_no, 5},
-    {"_spmirt_test", (DL_FUNC) &_spmirt_test, 1},
+    {"_spmirt_rcpp_hello_world", (DL_FUNC) &_spmirt_rcpp_hello_world, 0},
+    {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},
+    {"_spmirt_rcpptn_hello_world", (DL_FUNC) &_spmirt_rcpptn_hello_world, 0},
     {"_spmirt_vec2mat", (DL_FUNC) &_spmirt_vec2mat, 3},
     {"_spmirt_vec2matt", (DL_FUNC) &_spmirt_vec2matt, 3},
-    {"_spmirt_theta2mat", (DL_FUNC) &_spmirt_theta2mat, 3},
-    {"_spmirt_rcpptn_hello_world", (DL_FUNC) &_spmirt_rcpptn_hello_world, 0},
     {NULL, NULL, 0}
 };
 
