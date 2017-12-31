@@ -1,15 +1,37 @@
-# CLEAN WORKSPACE AND LOAD PACKAGES --------------------------------------------
+---
+title: "Two Parameter Logistic Model"
+author: "Erick A. Chacon-Montalvan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Two Parameter Logistic Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(fig.width = 6, fig.height = 4)
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+# fig.show = 'hold'
+```
+
+In this vignette, we show how to use the package to fit a 2 parameter model.
+
+## Required packages
+
+```{r}
 rm(list = ls())
-
 library(tidyverse)
 library(day2day)
 library(spmirt)
 library(coda)
-# library(rstan)
-# library(Matrix)
+```
 
-# SIMULATE DATA ----------------------------------------------------------------
+## Simulation of the data
+
+```{r}
 
 q <- 10
 n <- 300
@@ -32,27 +54,28 @@ data_long <- expand.grid(subject = 1:n, item = 1:q) %>% mutate(
 
 bla <- data_long %>% as_tibble() %>% group_by(subject) %>%
   summarize(a1 = mean(y), abil = mean(ability))
-plot(bla$abil, bla$a1)
+ggplot(bla, aes(abil, a1)) + geom_point()
 
 data_long %>% as_tibble() %>% group_by(item) %>% summarize(easiness = mean(y))
 bla <- data_long %>% as_tibble() %>% group_by(subject) %>% summarize(ability = mean(y))
 table(bla$ability)
 
-# FIT MODEL WITH SPMIRT --------------------------------------------------------
 
+```
 
+## Fitting the model
+
+```{r}
 ini <- Sys.time()
-samples <- ifa_gibbs(data_long$y, n, q, 5000)
+samples <- ifa_gibbs(data_long$y, n, q, 1000)
 print(Sys.time() - ini)
-# 45
+```
 
-# ini <- Sys.time()
-# samples <- ifa_gibbs_no(data_long$y, n, q, 5000)
-# print(Sys.time() - ini)
-#
+## Evaluate the results
 
-# samples2 <- samples %>% purrr::map(~ .[1001:2000, ])
-samples2 <- samples %>% purrr::map(~ .[2501:5000, ])
+```{r}
+samples2 <- samples %>% purrr::map(~ .[501:1000, ])
+# samples2 <- samples %>% purrr::map(~ .[2501:5000, ])
 means <- purrr::map(samples2, ~ apply(., 2, mean))
 medians <- purrr::map(samples2, ~ apply(., 2, median))
 
@@ -73,24 +96,4 @@ plot(a_sam)
 plot(ability, means$theta)
 abline(0, 1)
 abline(0, -1)
-
-# theta_sam <- mcmc(samples2$theta)
-# plot(theta_sam)
-# plot(samples$c[, 1], type = "l")
-# hist(samples$c[, 1])
-
-plot(samples2$z[,1], samples2$theta[,1])
-
-plot(means$z, data_long$y)
-abil <- tapply(means$z, data_long$subject, mean)
-plot(ability, abil)
-abline(0, 1)
-
-
-# psych::logistic(1.702)
-# pnorm(1.702)
-
-
-# x <- seq(-3, 3, 0.1)
-# plot(psych::logistic(1.702 * x), pnorm(x))
-# abline(0, 1)
+```

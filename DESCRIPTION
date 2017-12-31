@@ -17,3 +17,6 @@ LinkingTo: Rcpp,
            RcppArmadillo,
            RcppTN
 RoxygenNote: 6.0.1
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr
