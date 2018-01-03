@@ -102,7 +102,7 @@ Rcpp::List ifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m = 1) {
 
     theta_mat.col(i) = theta;
     c_mat.col(i) = c;
-    a_mat.col(i) = a;
+    a_mat.col(i) = arma::vectorise(A);
     z_mat.col(i) = z;
 
   }
