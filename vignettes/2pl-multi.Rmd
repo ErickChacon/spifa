@@ -12,6 +12,7 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
 knitr::opts_chunk$set(fig.width = 6, fig.height = 4)
+# knitr::opts_chunk$set(fig.width = 6, fig.height = 4)
 knitr::opts_chunk$set(comment = "#>")
 options(width = 100)
 ```
@@ -51,8 +52,9 @@ data_long <- sim_model(formula = f,
                         link_inv = list(pnorm, identity),
                         generator = rbinom,
                         responses = q,
-                        n = n,
-                        seed = 1)
+                        n = n)
+# ,
+#                         seed = 1)
 
 data_long <- dplyr::rename(data_long, subject = id, ability1 = re.id.prob,
                            ability2 = re.id.prob.1,
@@ -101,21 +103,34 @@ par(opar)
 samples_params_summary$theta <- samples_params_summary$theta %>%
   mutate(
     param1 = c(unique(data_long$ability1), unique(data_long$ability2)),
-    param2 = - c(unique(data_long$ability1), unique(data_long$ability2)),
-    param3 = c(unique(data_long$ability2), unique(data_long$ability1)),
-    param4 = - c(unique(data_long$ability2), unique(data_long$ability1)),
+    param2 = c(unique(data_long$ability1), - unique(data_long$ability2)),
+    param3 = c(- unique(data_long$ability1), unique(data_long$ability2)),
+    param4 = - c(unique(data_long$ability1), unique(data_long$ability2)),
+    param5 = c(unique(data_long$ability2), unique(data_long$ability1)),
+    param6 = c(unique(data_long$ability2), - unique(data_long$ability1)),
+    param7 = c(- unique(data_long$ability2), unique(data_long$ability1)),
+    param8 = - c(unique(data_long$ability2), unique(data_long$ability1)),
          )
 samples_params_summary$a <- samples_params_summary$a %>%
   mutate(
     param1 = c(discrimination1, discrimination2),
-    param2 = - c(discrimination1, discrimination2),
-    param3 = c(discrimination2, discrimination1),
-    param4 = - c(discrimination2, discrimination1),
+    param2 = c(discrimination1, - discrimination2),
+    param3 = c(- discrimination1, discrimination2),
+    param4 = - c(discrimination1, discrimination2),
+    param5 = c(discrimination2, discrimination1),
+    param6 = c(discrimination2, - discrimination1),
+    param7 = c(- discrimination2, discrimination1),
+    param8 = - c(discrimination2, discrimination1),
          )
 samples_params_summary$c$param <- c(difficulty)
 
 # Visualize results
 samples_params_summary$theta %>% gather(key, param, param1:param4) %>%
+  ggplot(., aes(X50., param)) +
+    geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
+    geom_point(col = 2) +
+    facet_wrap(~ key)
+samples_params_summary$theta %>% gather(key, param, param5:param8) %>%
   ggplot(., aes(X50., param)) +
     geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
     geom_point(col = 2) +
@@ -126,11 +141,40 @@ samples_params_summary$a %>% gather(key, param, param1:param4) %>%
     geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
     geom_point(col = 2) +
     facet_wrap(~ key)
+samples_params_summary$a %>% gather(key, param, param5:param8) %>%
+  ggplot(., aes(X50., param)) +
+    geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
+    geom_point(col = 2) +
+    facet_wrap(~ key)
+
 
 samples_params_summary$c %>%
   ggplot(., aes(X50., param)) +
     geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
     geom_point(col = 2)
+
+
+```
+
+Correlation
+
+```{r}
+ability_real <- matrix(unique(c(data_long$ability1, data_long$ability2)), ncol = 2)
+ability_estimate <- matrix(samples_params_summary$theta$X50., ncol = 2)
+cor(ability_real)
+cor(ability_estimate)
+cov(ability_real)
+cov(ability_estimate)
+
+A <- cbind(c(discrimination1), c(discrimination2))
+solve(crossprod(A) + diag(1, 2))
+
+tcrossprod(A)
+
+A_est <- matrix(samples_params_summary$a$X50., ncol = 2)
+
+plot(tcrossprod(A), tcrossprod(A_est))
+abline(0, 1)
 
 
 ```
