@@ -77,9 +77,69 @@ ggplot(explor, aes(ability2, endorse)) + geom_point()
 ## Fitting the model
 
 ```{r}
-iter <- 1000
+iter <- 100000
 system.time(samples <- ifa_gibbs(data_long$y, n, q, iter, 2))
 purrr::map(samples, dim)
+```
+
+```{r}
+plot(samples$theta[, 1 + c(1, 301)])
+points(0, 0, pch = 19, col = 2)
+points(samples$theta[, 2 + c(1, 301)], col = 3)
+points(samples$theta[, 3 + c(1, 301)], col = 4)
+points(samples$theta[, 4 + c(1, 301)], col = 5)
+points(samples$theta[, 5 + c(1, 301)], col = 6)
+points(samples$theta[, 6 + c(1, 301)], col = 7)
+
+# plot(samples$theta[, 17 + c(1, 301)], type = "b", col = rgb(0, 0, 0, 0.2))
+plot(samples$theta[, 6 + c(1, 301)], type = "b", col = rgb(0, 0, 0, 0.2))
+points(0, 0, pch = 19, col = 2)
+
+plot(samples$a[, 0 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
+points(0, 0, pch = 19, col = 2)
+
+
+plot(samples$a[, 1 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
+points(0, 0, pch = 19, col = 2)
+
+plot(samples$a[, 2 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
+points(0, 0, pch = 19, col = 2)
+
+plot(samples$a[, 3 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
+points(0, 0, pch = 19, col = 2)
+
+plot(samples$a[, 4 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
+points(0, 0, pch = 19, col = 2)
+
+plot(samples$a[, 5 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
+points(0, 0, pch = 19, col = 2)
+
+plot(samples$a[, 6 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
+points(0, 0, pch = 19, col = 2)
+
+k <- 1
+image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+
+k <- 2
+image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+
+k <- 4
+image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+
+k <- 5
+image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+
+k <- 6
+image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+
+k <- 7
+image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+
+k <- 8
+image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+
+k <- 9
+image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
 ```
 
 ## Evaluate the results
