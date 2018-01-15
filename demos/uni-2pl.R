@@ -4,7 +4,7 @@ rm(list = ls())
 
 library(tidyverse)
 library(day2day)
-library(spmirt)
+# library(spmirt)
 library(coda)
 # library(rstan)
 # library(Matrix)

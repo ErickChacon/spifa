@@ -38,3 +38,6 @@ t(rotate(pi/4)) %*% rotate(pi/4)
 t(rotate(pi/4)) %*% matrix(c(-1, 0, 0, 1), 2) %*% rotate(pi/4)
 
 rotate(pi/4) %*% rbind(1, 1)
+
+
+
