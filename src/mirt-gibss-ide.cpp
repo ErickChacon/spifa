@@ -85,13 +85,15 @@ Rcpp::List ifa_gibbs_iden(Rcpp::NumericVector y, int n, int q, int N, int m = 1)
     mu_c = x_c.t() * (z - arma::vectorise(Theta * A.t())) / (n + 1);
     c = mu_c + arma::randn<arma::vec>(q) / sqrt(n + 1);
 
-    // Updating discrimation parameters (a)
-    for (int j = 0; j < m; ++i) {
-      double sigma2_aux = 1.0 / arma::as_scalar(Theta.col(j).t() * Theta.col(j) + 1.0);
-      double mean_aux = arma::as_scalar(
-          Theta.col(j).t() * (z.subvec(j * n, (j + 1) * n - 1) - c(j) -
-            Theta.cols(0, j) * a.subvec(j * m, (j + 1) * m -1)));
-    }
+    // // Updating discrimation parameters (a)
+    // for (int j = 0; j < m; ++i) {
+    //   double sigma2_aux = 1.0 / arma::as_scalar(Theta.col(j).t() * Theta.col(j) + 1.0);
+    //   double mean_aux = arma::as_scalar(
+    //       Theta.col(j).t() * (z.subvec(j * n, (j + 1) * n - 1) - c(j) -
+    //         Theta.cols(0, j) * a.subvec(j * m, (j + 1) * m -1)));
+    //   // a.
+    // }
+
     Sigma_a_aux_chol = arma::chol(Theta.t() * Theta + eye_m, "lower");
     Sigma_a_aux_chol_inv = arma::inv(Sigma_a_aux_chol);
     Sigma_a = arma::kron(eye_q, Sigma_a_aux_chol_inv.t() * Sigma_a_aux_chol_inv);
@@ -125,4 +127,3 @@ Rcpp::List ifa_gibbs_iden(Rcpp::NumericVector y, int n, int q, int N, int m = 1)
       Rcpp::Named("z") = z_mat.t()
       );
 }
-
