@@ -97,6 +97,31 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// vecsub
+arma::vec vecsub(arma::vec x, int first_index, int n_length);
+RcppExport SEXP _spmirt_vecsub(SEXP xSEXP, SEXP first_indexSEXP, SEXP n_lengthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type first_index(first_indexSEXP);
+    Rcpp::traits::input_parameter< int >::type n_length(n_lengthSEXP);
+    rcpp_result_gen = Rcpp::wrap(vecsub(x, first_index, n_length));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vecsub1
+double vecsub1(arma::vec x, int index);
+RcppExport SEXP _spmirt_vecsub1(SEXP xSEXP, SEXP indexSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type index(indexSEXP);
+    rcpp_result_gen = Rcpp::wrap(vecsub1(x, index));
+    return rcpp_result_gen;
+END_RCPP
+}
 // subset_cpp
 Rcpp::List subset_cpp(arma::mat X, arma::vec y);
 RcppExport SEXP _spmirt_subset_cpp(SEXP XSEXP, SEXP ySEXP) {
@@ -118,6 +143,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_rcpptn_hello_world", (DL_FUNC) &_spmirt_rcpptn_hello_world, 0},
     {"_spmirt_vec2mat", (DL_FUNC) &_spmirt_vec2mat, 3},
     {"_spmirt_vec2matt", (DL_FUNC) &_spmirt_vec2matt, 3},
+    {"_spmirt_vecsub", (DL_FUNC) &_spmirt_vecsub, 3},
+    {"_spmirt_vecsub1", (DL_FUNC) &_spmirt_vecsub1, 2},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
     {NULL, NULL, 0}
 };

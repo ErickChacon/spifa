@@ -86,12 +86,12 @@ Rcpp::List ifa_gibbs_iden(Rcpp::NumericVector y, int n, int q, int N, int m = 1)
     c = mu_c + arma::randn<arma::vec>(q) / sqrt(n + 1);
 
     // Updating discrimation parameters (a)
-    for (int j = 0; j < m; ++i) {
-      double sigma2_aux = 1.0 / arma::as_scalar(Theta.col(j).t() * Theta.col(j) + 1.0);
+    for (int j = 0; j < m; ++j) {
+      double sigma2_aux = 1.0 /
+        arma::as_scalar(Theta.col(j).t() * Theta.col(j) + 1.0);
       double mean_aux = arma::as_scalar(
-          Theta.col(j).t() * (z.subvec(j * n, (j + 1) * n - 1) - c(j) -
-            Theta.cols(0, j) * a.subvec(j * m, (j + 1) * m -1)));
-      // a.
+          Theta.col(j).t() * (vecsub(z, j * n, n) - vecsub1(c, j) -
+            Theta.cols(0, j) * subvec(a, j * m, m)));
     }
 
     Sigma_a_aux_chol = arma::chol(Theta.t() * Theta + eye_m, "lower");

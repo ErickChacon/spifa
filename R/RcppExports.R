@@ -88,6 +88,16 @@ vec2matt <- function(x, nrow, ncol) {
 }
 
 #' @export
+vecsub <- function(x, first_index, n_length) {
+    .Call(`_spmirt_vecsub`, x, first_index, n_length)
+}
+
+#' @export
+vecsub1 <- function(x, index) {
+    .Call(`_spmirt_vecsub1`, x, index)
+}
+
+#' @export
 subset_cpp <- function(X, y) {
     .Call(`_spmirt_subset_cpp`, X, y)
 }
