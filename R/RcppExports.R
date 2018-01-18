@@ -45,11 +45,6 @@ ifa_gibbs_iden <- function(y, n, q, N, m = 1L) {
     .Call(`_spmirt_ifa_gibbs_iden`, y, n, q, N, m)
 }
 
-#' @export
-rcpp_hello_world <- function() {
-    .Call(`_spmirt_rcpp_hello_world`)
-}
-
 #' @title Spatial multidimesional item response model
 #'
 #' @description
@@ -73,6 +68,11 @@ spifa_gibbs <- function(y, n, q, N, m = 1L) {
 }
 
 #' @export
+rcpp_hello_world <- function() {
+    .Call(`_spmirt_rcpp_hello_world`)
+}
+
+#' @export
 rcpptn_hello_world <- function() {
     .Call(`_spmirt_rcpptn_hello_world`)
 }
@@ -88,7 +88,7 @@ vec2matt <- function(x, nrow, ncol) {
 }
 
 #' @export
-vec2ma <- function(x, nrow, ncol) {
-    .Call(`_spmirt_vec2ma`, x, nrow, ncol)
+subset_cpp <- function(X, y) {
+    .Call(`_spmirt_subset_cpp`, X, y)
 }
 

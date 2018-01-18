@@ -36,16 +36,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// rcpp_hello_world
-List rcpp_hello_world();
-RcppExport SEXP _spmirt_rcpp_hello_world() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpp_hello_world());
-    return rcpp_result_gen;
-END_RCPP
-}
 // spifa_gibbs
 Rcpp::List spifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
 RcppExport SEXP _spmirt_spifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
@@ -58,6 +48,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< int >::type m(mSEXP);
     rcpp_result_gen = Rcpp::wrap(spifa_gibbs(y, n, q, N, m));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpp_hello_world
+List rcpp_hello_world();
+RcppExport SEXP _spmirt_rcpp_hello_world() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(rcpp_hello_world());
     return rcpp_result_gen;
 END_RCPP
 }
@@ -97,16 +97,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// vec2ma
-arma::mat vec2ma(arma::vec x, int nrow, int ncol);
-RcppExport SEXP _spmirt_vec2ma(SEXP xSEXP, SEXP nrowSEXP, SEXP ncolSEXP) {
+// subset_cpp
+Rcpp::List subset_cpp(arma::mat X, arma::vec y);
+RcppExport SEXP _spmirt_subset_cpp(SEXP XSEXP, SEXP ySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type nrow(nrowSEXP);
-    Rcpp::traits::input_parameter< int >::type ncol(ncolSEXP);
-    rcpp_result_gen = Rcpp::wrap(vec2ma(x, nrow, ncol));
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(subset_cpp(X, y));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -114,12 +113,12 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_ifa_gibbs", (DL_FUNC) &_spmirt_ifa_gibbs, 5},
     {"_spmirt_ifa_gibbs_iden", (DL_FUNC) &_spmirt_ifa_gibbs_iden, 5},
-    {"_spmirt_rcpp_hello_world", (DL_FUNC) &_spmirt_rcpp_hello_world, 0},
     {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},
+    {"_spmirt_rcpp_hello_world", (DL_FUNC) &_spmirt_rcpp_hello_world, 0},
     {"_spmirt_rcpptn_hello_world", (DL_FUNC) &_spmirt_rcpptn_hello_world, 0},
     {"_spmirt_vec2mat", (DL_FUNC) &_spmirt_vec2mat, 3},
     {"_spmirt_vec2matt", (DL_FUNC) &_spmirt_vec2matt, 3},
-    {"_spmirt_vec2ma", (DL_FUNC) &_spmirt_vec2ma, 3},
+    {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
     {NULL, NULL, 0}
 };
 
