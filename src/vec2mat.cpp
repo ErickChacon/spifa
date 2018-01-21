@@ -32,7 +32,18 @@ double vecsub1(arma::vec x, int index) {
 
 //' @export
 // [[Rcpp::export]]
+double matsub1(arma::mat x, int index_row, int index_col) {
+  double out = arma::as_scalar(x.submat(index_row,index_col, index_row,index_col));
+  return out;
+}
+
+//' @export
+// [[Rcpp::export]]
 Rcpp::List subset_cpp(arma::mat X, arma::vec y) {
+  // X(arma::span(0, 0), arma::span(0, 0)) = 5.0;
+  X.submat(0, 0, 0, 0) = 5.1;
+  X.submat(0, 1, 0, 3) = y.subvec(0,2).t();
+  // X.submat(1, 0, 3, 0) = y.subvec(0,2);
   arma::vec sub_col = X.col(0);
   arma::vec sub_vec = y.subvec(0, 3);
   // arma::vec vec_scal = y - y.subvec(0, 0);
@@ -45,12 +56,24 @@ Rcpp::List subset_cpp(arma::mat X, arma::vec y) {
     *itz = i;
     itz++;
   }
+  arma::mat A(9,5,arma::fill::randn);
+  A.diag() = abs(A.diag());
+  for (int i = 0; i < 9; ++i) {
+    for (int j = 0; j < 5; ++j) {
+      if (j > i) {
+        A.submat(i,j,i,j) = 0;
+      }
+    }
+  }
+  // arma::mat L = arma::trimatl(A);
   return Rcpp::List::create(
       Rcpp::Named("col") = sub_col,
       Rcpp::Named("sub_vec") = sub_vec,
       Rcpp::Named("vec_scal") = vec_scal,
       Rcpp::Named("elem") = element,
-      Rcpp::Named("loop_fill") = z
+      Rcpp::Named("loop_fill") = z,
+      Rcpp::Named("X") = X,
+      Rcpp::Named("Lower") = A
       );
 }
 

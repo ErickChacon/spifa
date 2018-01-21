@@ -1,5 +1,6 @@
 library(spmirt)
 x <- matrix(1:10, 5, 2)
+x <- matrix(0, 5, 5)
 (out <- subset_cpp(x, 1:10))
 out$vec_scal
 

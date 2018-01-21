@@ -38,6 +38,7 @@ q <- 10
 n <- 300
 difficulty <- matrix((1:q - 5)/10 * 2, nrow = 1)
 discrimination <- matrix(seq(0.4, 1.5, length.out = q), nrow = 1)
+discrimination[1,1] = 1.5
 
 f <- list(
   prob ~ mfa(ones, beta = get("difficulty")) +
@@ -72,8 +73,8 @@ ggplot(explor, aes(ability, endorse)) + geom_point()
 ## Fitting the model
 
 ```{r}
-iter <- 5000
-system.time(samples <- ifa_gibbs(data_long$y, n, q, iter))
+iter <- 1000
+system.time(samples <- ifa_gibbs_iden(data_long$y, n, q, iter))
 purrr::map(samples, dim)
 ```
 
@@ -152,8 +153,8 @@ ggplot(explor, aes(ability, endorse)) + geom_point()
 ## Fitting the model
 
 ```{r}
-iter <- 5000
-system.time(samples <- ifa_gibbs(data_long$y, n, q, iter))
+iter <- 1000
+system.time(samples <- ifa_gibbs_iden(data_long$y, n, q, iter))
 purrr::map(samples, dim)
 ```
 

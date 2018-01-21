@@ -122,6 +122,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// matsub1
+double matsub1(arma::mat x, int index_row, int index_col);
+RcppExport SEXP _spmirt_matsub1(SEXP xSEXP, SEXP index_rowSEXP, SEXP index_colSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type index_row(index_rowSEXP);
+    Rcpp::traits::input_parameter< int >::type index_col(index_colSEXP);
+    rcpp_result_gen = Rcpp::wrap(matsub1(x, index_row, index_col));
+    return rcpp_result_gen;
+END_RCPP
+}
 // subset_cpp
 Rcpp::List subset_cpp(arma::mat X, arma::vec y);
 RcppExport SEXP _spmirt_subset_cpp(SEXP XSEXP, SEXP ySEXP) {
@@ -145,6 +158,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_vec2matt", (DL_FUNC) &_spmirt_vec2matt, 3},
     {"_spmirt_vecsub", (DL_FUNC) &_spmirt_vecsub, 3},
     {"_spmirt_vecsub1", (DL_FUNC) &_spmirt_vecsub1, 2},
+    {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
     {NULL, NULL, 0}
 };

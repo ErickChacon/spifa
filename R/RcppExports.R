@@ -98,6 +98,11 @@ vecsub1 <- function(x, index) {
 }
 
 #' @export
+matsub1 <- function(x, index_row, index_col) {
+    .Call(`_spmirt_matsub1`, x, index_row, index_col)
+}
+
+#' @export
 subset_cpp <- function(X, y) {
     .Call(`_spmirt_subset_cpp`, X, y)
 }
