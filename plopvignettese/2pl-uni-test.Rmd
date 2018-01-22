@@ -50,8 +50,10 @@ data_long <- sim_model(formula = f,
                         link_inv = list(pnorm, identity),
                         generator = rbinom,
                         responses = q,
-                        n = n,
-                        seed = 2)
+                        n = n
+                        # ,
+                        # seed = 3
+                        )
 
 data_long <- dplyr::rename(data_long, subject = id, ability = re.id.prob,
                            item = response_label, y = response)
@@ -78,6 +80,9 @@ system.time(samples <- ifa_gibbs_test(data_long$y, n, q, iter))
 purrr::map(samples, dim)
 samples$firstA
 samples$firstA <- NULL
+plot(samples$a[, 1:2], pch = 19, col = rgb(0, 0, 0, 0.2))
+points(-discrimination[1], -discrimination[2], pch = 19, col = 2)
+points(discrimination[1], discrimination[2], pch = 19, col = 2)
 ```
 
 ## Evaluate the results
@@ -133,8 +138,10 @@ data_long <- sim_model(formula = f,
                         link_inv = list(pnorm, identity),
                         generator = rbinom,
                         responses = q,
-                        n = n,
-                        seed = 1)
+                        n = n
+                        # ,
+                        # seed = 1
+                        )
 
 data_long <- dplyr::rename(data_long, subject = id, ability = re.id.prob,
                            item = response_label, y = response)
@@ -156,12 +163,16 @@ ggplot(explor, aes(ability, endorse)) + geom_point()
 ## Fitting the model
 
 ```{r}
+# set.seed(4)
+set.seed(1)
 iter <- 1000
 system.time(samples <- ifa_gibbs_test(data_long$y, n, q, iter))
 purrr::map(samples, dim)
 samples$firstA
 samples$firstA <- NULL
-plot(samples$a[1:20, 1:2])
+plot(samples$a[, 1:2], pch = 19, col = rgb(0, 0, 0, 0.2))
+points(-discrimination[1], -discrimination[2], pch = 19, col = 2)
+points(discrimination[1], discrimination[2], pch = 19, col = 2)
 ```
 
 ## Evaluate the results
