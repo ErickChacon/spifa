@@ -6,6 +6,82 @@
 
 using namespace Rcpp;
 
+// vec2mat
+arma::mat vec2mat(arma::vec x, int nrow, int ncol);
+RcppExport SEXP _spmirt_vec2mat(SEXP xSEXP, SEXP nrowSEXP, SEXP ncolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type nrow(nrowSEXP);
+    Rcpp::traits::input_parameter< int >::type ncol(ncolSEXP);
+    rcpp_result_gen = Rcpp::wrap(vec2mat(x, nrow, ncol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vec2matt
+arma::mat vec2matt(arma::vec x, int nrow, int ncol);
+RcppExport SEXP _spmirt_vec2matt(SEXP xSEXP, SEXP nrowSEXP, SEXP ncolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type nrow(nrowSEXP);
+    Rcpp::traits::input_parameter< int >::type ncol(ncolSEXP);
+    rcpp_result_gen = Rcpp::wrap(vec2matt(x, nrow, ncol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vecsub
+arma::vec vecsub(arma::vec x, int first_index, int n_length);
+RcppExport SEXP _spmirt_vecsub(SEXP xSEXP, SEXP first_indexSEXP, SEXP n_lengthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type first_index(first_indexSEXP);
+    Rcpp::traits::input_parameter< int >::type n_length(n_lengthSEXP);
+    rcpp_result_gen = Rcpp::wrap(vecsub(x, first_index, n_length));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vecsub1
+double vecsub1(arma::vec x, int index);
+RcppExport SEXP _spmirt_vecsub1(SEXP xSEXP, SEXP indexSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type index(indexSEXP);
+    rcpp_result_gen = Rcpp::wrap(vecsub1(x, index));
+    return rcpp_result_gen;
+END_RCPP
+}
+// matsub1
+double matsub1(arma::mat x, int index_row, int index_col);
+RcppExport SEXP _spmirt_matsub1(SEXP xSEXP, SEXP index_rowSEXP, SEXP index_colSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type index_row(index_rowSEXP);
+    Rcpp::traits::input_parameter< int >::type index_col(index_colSEXP);
+    rcpp_result_gen = Rcpp::wrap(matsub1(x, index_row, index_col));
+    return rcpp_result_gen;
+END_RCPP
+}
+// subset_cpp
+Rcpp::List subset_cpp(arma::mat X, arma::vec y);
+RcppExport SEXP _spmirt_subset_cpp(SEXP XSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(subset_cpp(X, y));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ifa_gibbs
 Rcpp::List ifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
 RcppExport SEXP _spmirt_ifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
@@ -86,96 +162,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// vec2mat
-arma::mat vec2mat(arma::vec x, int nrow, int ncol);
-RcppExport SEXP _spmirt_vec2mat(SEXP xSEXP, SEXP nrowSEXP, SEXP ncolSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type nrow(nrowSEXP);
-    Rcpp::traits::input_parameter< int >::type ncol(ncolSEXP);
-    rcpp_result_gen = Rcpp::wrap(vec2mat(x, nrow, ncol));
-    return rcpp_result_gen;
-END_RCPP
-}
-// vec2matt
-arma::mat vec2matt(arma::vec x, int nrow, int ncol);
-RcppExport SEXP _spmirt_vec2matt(SEXP xSEXP, SEXP nrowSEXP, SEXP ncolSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type nrow(nrowSEXP);
-    Rcpp::traits::input_parameter< int >::type ncol(ncolSEXP);
-    rcpp_result_gen = Rcpp::wrap(vec2matt(x, nrow, ncol));
-    return rcpp_result_gen;
-END_RCPP
-}
-// vecsub
-arma::vec vecsub(arma::vec x, int first_index, int n_length);
-RcppExport SEXP _spmirt_vecsub(SEXP xSEXP, SEXP first_indexSEXP, SEXP n_lengthSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type first_index(first_indexSEXP);
-    Rcpp::traits::input_parameter< int >::type n_length(n_lengthSEXP);
-    rcpp_result_gen = Rcpp::wrap(vecsub(x, first_index, n_length));
-    return rcpp_result_gen;
-END_RCPP
-}
-// vecsub1
-double vecsub1(arma::vec x, int index);
-RcppExport SEXP _spmirt_vecsub1(SEXP xSEXP, SEXP indexSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type index(indexSEXP);
-    rcpp_result_gen = Rcpp::wrap(vecsub1(x, index));
-    return rcpp_result_gen;
-END_RCPP
-}
-// matsub1
-double matsub1(arma::mat x, int index_row, int index_col);
-RcppExport SEXP _spmirt_matsub1(SEXP xSEXP, SEXP index_rowSEXP, SEXP index_colSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type index_row(index_rowSEXP);
-    Rcpp::traits::input_parameter< int >::type index_col(index_colSEXP);
-    rcpp_result_gen = Rcpp::wrap(matsub1(x, index_row, index_col));
-    return rcpp_result_gen;
-END_RCPP
-}
-// subset_cpp
-Rcpp::List subset_cpp(arma::mat X, arma::vec y);
-RcppExport SEXP _spmirt_subset_cpp(SEXP XSEXP, SEXP ySEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
-    rcpp_result_gen = Rcpp::wrap(subset_cpp(X, y));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_spmirt_ifa_gibbs", (DL_FUNC) &_spmirt_ifa_gibbs, 5},
-    {"_spmirt_ifa_gibbs_iden", (DL_FUNC) &_spmirt_ifa_gibbs_iden, 5},
-    {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},
-    {"_spmirt_ifa_gibbs_test", (DL_FUNC) &_spmirt_ifa_gibbs_test, 5},
-    {"_spmirt_rcpp_hello_world", (DL_FUNC) &_spmirt_rcpp_hello_world, 0},
-    {"_spmirt_rcpptn_hello_world", (DL_FUNC) &_spmirt_rcpptn_hello_world, 0},
     {"_spmirt_vec2mat", (DL_FUNC) &_spmirt_vec2mat, 3},
     {"_spmirt_vec2matt", (DL_FUNC) &_spmirt_vec2matt, 3},
     {"_spmirt_vecsub", (DL_FUNC) &_spmirt_vecsub, 3},
     {"_spmirt_vecsub1", (DL_FUNC) &_spmirt_vecsub1, 2},
     {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
+    {"_spmirt_ifa_gibbs", (DL_FUNC) &_spmirt_ifa_gibbs, 5},
+    {"_spmirt_ifa_gibbs_iden", (DL_FUNC) &_spmirt_ifa_gibbs_iden, 5},
+    {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},
+    {"_spmirt_ifa_gibbs_test", (DL_FUNC) &_spmirt_ifa_gibbs_test, 5},
+    {"_spmirt_rcpp_hello_world", (DL_FUNC) &_spmirt_rcpp_hello_world, 0},
+    {"_spmirt_rcpptn_hello_world", (DL_FUNC) &_spmirt_rcpptn_hello_world, 0},
     {NULL, NULL, 0}
 };
 

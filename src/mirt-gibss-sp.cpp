@@ -1,7 +1,8 @@
 
 #include <RcppArmadillo.h>
 #include <RcppTN.h>
-#include "vec2mat.h"
+// #include "vec2mat.h"
+#include "arma-mat.h"
 // [[Rcpp::depends(RcppTN)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 

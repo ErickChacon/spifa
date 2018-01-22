@@ -164,7 +164,7 @@ ggplot(explor, aes(ability, endorse)) + geom_point()
 
 ```{r}
 # set.seed(4)
-set.seed(1)
+# set.seed(1)
 iter <- 1000
 system.time(samples <- ifa_gibbs_test(data_long$y, n, q, iter))
 purrr::map(samples, dim)
