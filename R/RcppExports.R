@@ -97,28 +97,6 @@ spifa_gibbs <- function(y, n, q, N, m = 1L) {
     .Call(`_spmirt_spifa_gibbs`, y, n, q, N, m)
 }
 
-#' @title Bayesian item factor analysis
-#'
-#' @description
-#' \code{ifa_gibbs} description.
-#'
-#' @details
-#' details.
-#'
-#' @param par.
-#'
-#' @return return.
-#'
-#' @author Erick A. Chacon-Montalvan
-#'
-#' @examples
-#' 
-#'
-#' @export
-ifa_gibbs_test <- function(y, n, q, N, m = 1L) {
-    .Call(`_spmirt_ifa_gibbs_test`, y, n, q, N, m)
-}
-
 #' @export
 rcpp_hello_world <- function() {
     .Call(`_spmirt_rcpp_hello_world`)

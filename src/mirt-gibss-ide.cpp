@@ -48,16 +48,15 @@ Rcpp::List ifa_gibbs_iden(Rcpp::NumericVector y, int n, int q, int N, int m = 1)
   arma::mat x_c = arma::kron(eye_q, ones_n);
   arma::mat c_mat(q, N);
 
-  arma::mat A(q,m,arma::fill::randn);
-  // arma::mat A(q,m,arma::fill::ones);
-  A.diag() = arma::abs(A.diag());
-  for (int i = 0; i < q; ++i) {
-    for (int j = 0; j < m; ++j) {
-      if (i < j) {
-        A.submat(i,j, i,j) = 0;
-      }
-    }
-  }
+  arma::mat A(q,m,arma::fill::zeros);
+  A.diag().ones();
+  // for (int i = 0; i < q; ++i) {
+  //   for (int j = 0; j < m; ++j) {
+  //     if (i < j) {
+  //       A.submat(i,j, i,j) = 0;
+  //     }
+  //   }
+  // }
   // arma::mat A = arma::trimatl(A_init);
   arma::mat firstA = A;
   arma::vec a = arma::vectorise(A.t());
@@ -109,7 +108,7 @@ Rcpp::List ifa_gibbs_iden(Rcpp::NumericVector y, int n, int q, int N, int m = 1)
       bias_aux.fill(vecsub1(c, j));
       // if (m > 1) { bias_aux += Theta.cols(0, j-1) * vecsub(a, (j-1) * m, m); }
       double mean_aux = sigma2_aux *
-        arma::as_scalar(Theta.col(j).t() * (vecsub(z, j * n, n) - bias_aux)) + 1;
+        arma::as_scalar(Theta.col(j).t() * (vecsub(z, j * n, n) - bias_aux));
 
       A.submat(j,j, j,j) = RcppTN::rtn1(mean_aux, sqrt(sigma2_aux), 0, R_PosInf);
       // A.submat(j,j, j,j) = 1.5;

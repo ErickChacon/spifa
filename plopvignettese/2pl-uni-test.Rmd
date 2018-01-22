@@ -75,8 +75,8 @@ ggplot(explor, aes(ability, endorse)) + geom_point()
 ## Fitting the model
 
 ```{r}
-iter <- 1000
-system.time(samples <- ifa_gibbs_test(data_long$y, n, q, iter))
+iter <- 2000
+system.time(samples <- ifa_gibbs_iden(data_long$y, n, q, iter))
 purrr::map(samples, dim)
 samples$firstA
 samples$firstA <- NULL
@@ -165,8 +165,8 @@ ggplot(explor, aes(ability, endorse)) + geom_point()
 ```{r}
 # set.seed(4)
 # set.seed(1)
-iter <- 1000
-system.time(samples <- ifa_gibbs_test(data_long$y, n, q, iter))
+iter <- 2000
+system.time(samples <- ifa_gibbs_iden(data_long$y, n, q, iter))
 purrr::map(samples, dim)
 samples$firstA
 samples$firstA <- NULL
