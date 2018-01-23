@@ -97,9 +97,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// ifa_gibbs_iden
-Rcpp::List ifa_gibbs_iden(Rcpp::NumericVector y, int n, int q, int N, int m);
-RcppExport SEXP _spmirt_ifa_gibbs_iden(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
+// ifa_gibbs_nonide
+Rcpp::List ifa_gibbs_nonide(Rcpp::NumericVector y, int n, int q, int N, int m);
+RcppExport SEXP _spmirt_ifa_gibbs_nonide(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -108,7 +108,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type q(qSEXP);
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(ifa_gibbs_iden(y, n, q, N, m));
+    rcpp_result_gen = Rcpp::wrap(ifa_gibbs_nonide(y, n, q, N, m));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -156,7 +156,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
     {"_spmirt_ifa_gibbs", (DL_FUNC) &_spmirt_ifa_gibbs, 5},
-    {"_spmirt_ifa_gibbs_iden", (DL_FUNC) &_spmirt_ifa_gibbs_iden, 5},
+    {"_spmirt_ifa_gibbs_nonide", (DL_FUNC) &_spmirt_ifa_gibbs_nonide, 5},
     {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},
     {"_spmirt_rcpp_hello_world", (DL_FUNC) &_spmirt_rcpp_hello_world, 0},
     {"_spmirt_rcpptn_hello_world", (DL_FUNC) &_spmirt_rcpptn_hello_world, 0},

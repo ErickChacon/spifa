@@ -78,7 +78,7 @@ ggplot(explor, aes(ability2, endorse)) + geom_point()
 
 ```{r}
 iter <- 10
-system.time(samples <- ifa_gibbs(data_long$y, n, q, iter, 2))
+system.time(samples <- ifa_gibbs_nonide(data_long$y, n, q, iter, 2))
 purrr::map(samples, dim)
 ```
 

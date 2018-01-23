@@ -39,7 +39,7 @@ q <- q1 <- q2 <- 10
 n <- 300
 difficulty <- matrix((1:q - 5)/10 * 2, nrow = 1)
 discrimination1 <- matrix(seq(0.4, 1.5, length.out = q), nrow = 1)
-discrimination2 <- matrix(runif(q, 0, 1.5), nrow = 1)
+discrimination2 <- matrix(runif(q, -1.5, 1.5), nrow = 1)
 discrimination2[1,1] <- 0
 
 f <- list(
@@ -79,7 +79,7 @@ ggplot(explor, aes(ability2, endorse)) + geom_point()
 
 ```{r}
 iter <- 1000
-system.time(samples <- ifa_gibbs_iden(data_long$y, n, q, iter, 2))
+system.time(samples <- ifa_gibbs(data_long$y, n, q, iter, 2))
 purrr::map(samples, dim)
 samples$firstA <- NULL
 ```
@@ -97,27 +97,23 @@ points(samples$theta[, 6 + c(1, 301)], col = 7)
 plot(samples$theta[, 6 + c(1, 301)], type = "b", col = rgb(0, 0, 0, 0.2))
 points(0, 0, pch = 19, col = 2)
 
-plot(samples$a[, 0 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
-points(0, 0, pch = 19, col = 2)
+plot_samples <- function (i) {
+  vec <- c(1,11)
+  plot(samples$a[, i + vec], type = "b", col = rgb(0, 0, 0, 0.1))
+  points(0, 0, pch = 19, col = 2)
+  points(discrimination1[i+1], discrimination2[i+1], pch = 19, col = 3)
+  # points(discrimination2[i+1], discrimination1[i+1], pch = 19, col = 4)
+}
 
+lapply(0:9, plot_samples)
 
-plot(samples$a[, 1 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
-points(0, 0, pch = 19, col = 2)
+discrimination1
+apply(samples$a, 2, mean)[1:10]
 
-plot(samples$a[, 2 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
-points(0, 0, pch = 19, col = 2)
+discrimination2
+apply(samples$a, 2, mean)[11:20]
+# apply(samples$a, 2, median)
 
-plot(samples$a[, 3 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
-points(0, 0, pch = 19, col = 2)
-
-plot(samples$a[, 4 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
-points(0, 0, pch = 19, col = 2)
-
-plot(samples$a[, 5 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
-points(0, 0, pch = 19, col = 2)
-
-plot(samples$a[, 6 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
-points(0, 0, pch = 19, col = 2)
 
 # k <- 1
 # image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))

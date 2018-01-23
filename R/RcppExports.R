@@ -71,8 +71,8 @@ ifa_gibbs <- function(y, n, q, N, m = 1L) {
 #' 
 #'
 #' @export
-ifa_gibbs_iden <- function(y, n, q, N, m = 1L) {
-    .Call(`_spmirt_ifa_gibbs_iden`, y, n, q, N, m)
+ifa_gibbs_nonide <- function(y, n, q, N, m = 1L) {
+    .Call(`_spmirt_ifa_gibbs_nonide`, y, n, q, N, m)
 }
 
 #' @title Spatial multidimesional item response model
