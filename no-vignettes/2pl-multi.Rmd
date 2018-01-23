@@ -40,6 +40,7 @@ n <- 300
 difficulty <- matrix((1:q - 5)/10 * 2, nrow = 1)
 discrimination1 <- matrix(seq(0.4, 1.5, length.out = q), nrow = 1)
 discrimination2 <- matrix(runif(q, 0, 1.5), nrow = 1)
+discrimination2[1,1] <- 0
 
 f <- list(
   prob ~ mfa(ones, beta = get("difficulty")) +
@@ -77,9 +78,10 @@ ggplot(explor, aes(ability2, endorse)) + geom_point()
 ## Fitting the model
 
 ```{r}
-iter <- 100000
-system.time(samples <- ifa_gibbs(data_long$y, n, q, iter, 2))
+iter <- 1000
+system.time(samples <- ifa_gibbs_iden(data_long$y, n, q, iter, 2))
 purrr::map(samples, dim)
+samples$firstA <- NULL
 ```
 
 ```{r}
@@ -117,29 +119,29 @@ points(0, 0, pch = 19, col = 2)
 plot(samples$a[, 6 + c(1, 11)], type = "b", col = rgb(0, 0, 0, 0.1))
 points(0, 0, pch = 19, col = 2)
 
-k <- 1
-image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-
-k <- 2
-image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-
-k <- 4
-image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-
-k <- 5
-image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-
-k <- 6
-image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-
-k <- 7
-image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-
-k <- 8
-image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-
-k <- 9
-image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+# k <- 1
+# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+#
+# k <- 2
+# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+#
+# k <- 4
+# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+#
+# k <- 5
+# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+#
+# k <- 6
+# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+#
+# k <- 7
+# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+#
+# k <- 8
+# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
+#
+# k <- 9
+# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
 ```
 
 ## Evaluate the results

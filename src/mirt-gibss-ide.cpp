@@ -50,18 +50,8 @@ Rcpp::List ifa_gibbs_iden(Rcpp::NumericVector y, int n, int q, int N, int m = 1)
 
   arma::mat A(q,m,arma::fill::zeros);
   A.diag().ones();
-  // for (int i = 0; i < q; ++i) {
-  //   for (int j = 0; j < m; ++j) {
-  //     if (i < j) {
-  //       A.submat(i,j, i,j) = 0;
-  //     }
-  //   }
-  // }
-  // arma::mat A = arma::trimatl(A_init);
   arma::mat firstA = A;
   arma::vec a = arma::vectorise(A.t());
-  // arma::vec a(q * m, arma::fill::randn);
-  // arma::mat A = vec2matt(a, m, q);
   arma::mat Sigma_a((q-m)*m, (q-m)*m);
   arma::mat Sigma_a_aux_chol(m, m);
   arma::mat Sigma_a_aux_chol_inv(m, m);
@@ -85,6 +75,7 @@ Rcpp::List ifa_gibbs_iden(Rcpp::NumericVector y, int n, int q, int N, int m = 1)
   arma::vec mu_theta(n*m);
   arma::mat theta_mat(n*m, N);
 
+  // int i = 0;
   for (int i = 0; i < N; ++i) {
 
     // Updating latent habilities (theta)
@@ -106,28 +97,31 @@ Rcpp::List ifa_gibbs_iden(Rcpp::NumericVector y, int n, int q, int N, int m = 1)
 
       arma::vec bias_aux(n);
       bias_aux.fill(vecsub1(c, j));
-      // if (m > 1) { bias_aux += Theta.cols(0, j-1) * vecsub(a, (j-1) * m, m); }
+      if (j > 1) {
+        bias_aux += Theta.cols(0, j-1) * vecsub(a, j * m, j);
+      }
+
       double mean_aux = sigma2_aux *
         arma::as_scalar(Theta.col(j).t() * (vecsub(z, j * n, n) - bias_aux));
 
       A.submat(j,j, j,j) = RcppTN::rtn1(mean_aux, sqrt(sigma2_aux), 0, R_PosInf);
       // A.submat(j,j, j,j) = 1.5;
       // A.submat(j,j, j,j) = RcppTN::rtn1(mean_aux, sqrt(sigma2_aux), R_NegInf, R_PosInf);
-      // A.submat(j,j, j,j) = RcppTN::rtn1(mean_aux, sqrt(sigma2_aux), R_NegInf, 0);
 
       // Lower triangular parameters j < m
-      // if (j > 0) {
-      //   arma::mat aux_eye = arma::eye<arma::mat>(j,j);
-      //   arma::mat low_a_aux_chol = arma::chol(
-      //       Theta.cols(0, j).t() * Theta.cols(0,j) + aux_eye, "lower");
-      //   arma::mat low_a_aux_chol_inv = arma::inv(low_a_aux_chol);
-      //   arma::mat low_a_Sigma = low_a_aux_chol_inv.t() * low_a_aux_chol_inv;
-      //   arma::mat low_a_Sigma_chol = low_a_aux_chol_inv.t();
-      //   arma::vec low_a_mu = low_a_Sigma * Theta.cols(0,j).t() *
-      //     (vecsub(z, j*n, n) - vecsub1(c, j) - Theta.col(j).t() * matsub1(A, j,j));
-      //   arma::vec low_a = low_a_mu + low_a_Sigma_chol * arma::randn<arma::vec>(j);
-      //   A.submat(j,0, j,j-1) = low_a.t();
-      // }
+      if (j > 0) {
+        arma::mat aux_eye = arma::eye<arma::mat>(j,j);
+        arma::mat low_a_aux_chol = arma::chol(
+            Theta.cols(0, j-1).t() * Theta.cols(0,j-1) + aux_eye, "lower");
+        arma::mat low_a_aux_chol_inv = arma::inv(low_a_aux_chol);
+        arma::mat low_a_Sigma = low_a_aux_chol_inv.t() * low_a_aux_chol_inv;
+        arma::mat low_a_Sigma_chol = low_a_aux_chol_inv.t();
+        arma::vec low_a_mu = low_a_Sigma * Theta.cols(0,j-1).t() *
+          (vecsub(z, j*n, n) - vecsub1(c, j) - Theta.col(j) * matsub1(A, j,j));
+        arma::vec low_a = low_a_mu + low_a_Sigma_chol * arma::randn<arma::vec>(j);
+        A.submat(j,0, j,j-1) = low_a.t();
+        // A.submat(j,0, j,j-1).ones();
+      }
     }
 
     // Rectangle parameters j >= m
@@ -137,17 +131,10 @@ Rcpp::List ifa_gibbs_iden(Rcpp::NumericVector y, int n, int q, int N, int m = 1)
     Sigma_a_chol = arma::kron(eye_q_m, Sigma_a_aux_chol_inv.t());
     mu_a = Sigma_a * arma::kron(eye_q_m, Theta.t()) *
       (z.subvec(m*n, q*n-1) - arma::kron(c.subvec(m,q-1), ones_n));
+    // mu_a.ones();
     arma::vec rect_a = mu_a + Sigma_a_chol * arma::randn<arma::vec>((q-m)*m);
     A.submat(m,0, q-1,m-1) = vec2matt(rect_a, m, q-m);
-    // A.submat(1,0, 1,0) = 0.5;
-    // A.submat(2,0, 2,0) = 0.6;
-    // A.submat(3,0, 3,0) = 0.7;
-    // A.submat(4,0, 4,0) = 0.8;
-    // A.submat(5,0, 5,0) = 0.9;
-    // A.submat(6,0, 6,0) = 1.1;
-    // A.submat(7,0, 7,0) = 1.2;
     a = arma::vectorise(A.t());
-    // A = vec2matt(a, m, q);
 
     // Auxiliary variables (z)
     mu_z = x_c * c + arma::kron(eye_q, Theta) * a;

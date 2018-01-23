@@ -44,6 +44,7 @@ Rcpp::List subset_cpp(arma::mat X, arma::vec y) {
   X.submat(0, 0, 0, 0) = 5.1;
   X.submat(0, 1, 0, 3) = y.subvec(0,2).t();
   X.diag().ones();
+  X.submat(0,0, 3,3).ones();
   // X.submat(1, 0, 3, 0) = y.subvec(0,2);
   arma::vec sub_col = X.col(0);
   arma::vec sub_vec = y.subvec(0, 3);
