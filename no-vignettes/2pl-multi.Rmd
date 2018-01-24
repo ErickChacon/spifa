@@ -1,5 +1,5 @@
 ---
-title: "Two Parameter Logistic Model"
+title: "Multidimensional Two Parameter Logistic Model"
 author: "Erick A. Chacon-Montalvan"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -17,29 +17,45 @@ knitr::opts_chunk$set(comment = "#>")
 options(width = 100)
 ```
 
+In this vignette, we show how to use the **spmirt** package to fit a
+multidimensional 2 parameter logistic model used in item response theory. Let
+$Y_{ij}$ be the response for item
+$j$ in the individual $i$. The model can be defined by using an auxiliary variable
+$Z_{ij}$ such as
+\begin{align}
+  {Y}_{ij}  & =
+  \left\lbrace
+  \begin{array}[2]{cc}
+    1 & \text{if} ~ {Z}_{ij} > 0\\
+    0 & \text{otherwise}
+  \end{array}
+  \right.\\
+  {Z}_{ij} & = c_j + a_j^\intercal\theta_i + \epsilon_{ij},
+  ~~ \epsilon_{ij} \sim {N}(0, 1)\\
+  {\theta}_i & \sim {N}({0}, {I}_m)\\
+  c_j & \sim {N}(0, \sigma_c^2)\\
+  {a}_j & \sim {N}(0, \sigma_a^2{I}_m)\\
+\end{align}
 
-In this vignette, we show how to use the package to fit a 2 parameter model.
-
-## Required packages
+### Required packages
 
 ```{r}
 rm(list = ls())
 library(spmirt)
 library(datasim)
-library(coda)
 library(tidyverse)
 ```
 
-# Example 1
-
-## Simulation of the data
+### Simulation of the data
 
 ```{r}
 q <- q1 <- q2 <- 10
 n <- 300
 difficulty <- matrix((1:q - 5)/10 * 2, nrow = 1)
 discrimination1 <- matrix(seq(0.4, 1.5, length.out = q), nrow = 1)
-discrimination2 <- matrix(runif(q, -1.5, 1.5), nrow = 1)
+discrimination2 <- matrix(runif(q, 0, 2), nrow = 1)
+discrimination1[1,1] = 1
+discrimination2[1,2] = 1
 discrimination2[1,1] <- 0
 
 f <- list(
@@ -53,9 +69,11 @@ data_long <- sim_model(formula = f,
                         link_inv = list(pnorm, identity),
                         generator = rbinom,
                         responses = q,
-                        n = n)
-# ,
-#                         seed = 1)
+                        n = n
+                        # ,
+                        # seed = 2
+                        # seed = 3
+                        )
 
 data_long <- dplyr::rename(data_long, subject = id, ability1 = re.id.prob,
                            ability2 = re.id.prob.1,
@@ -66,12 +84,19 @@ data_long <- dplyr::rename(data_long, subject = id, ability1 = re.id.prob,
 knitr::kable(head(data_long, 20))
 ```
 
+### Exploratory analysis
+
+We can see the relationship between the latent abilities and the proportion of
+endorsed items.
+
 ```{r}
 explor <- data_long %>%
   group_by(subject) %>%
-  summarize(endorse = mean(y), ability1 = unique(ability1), ability2 = unique(ability2))
-ggplot(explor, aes(ability1, endorse)) + geom_point()
-ggplot(explor, aes(ability2, endorse)) + geom_point()
+  summarize(endorse = mean(y),
+            ability1 = unique(ability1),
+            ability2 = unique(ability2))
+ggplot(explor, aes(ability1, endorse)) + geom_point(alpha = 0.5)
+ggplot(explor, aes(ability2, endorse)) + geom_point(alpha = 0.5)
 ```
 
 
@@ -81,66 +106,43 @@ ggplot(explor, aes(ability2, endorse)) + geom_point()
 iter <- 1000
 system.time(samples <- ifa_gibbs(data_long$y, n, q, iter, 2))
 purrr::map(samples, dim)
-samples$firstA <- NULL
 ```
+
+### Check sampling
+
+Sampling of the first two discrimination parameters.
 
 ```{r}
-plot(samples$theta[, 1 + c(1, 301)])
-points(0, 0, pch = 19, col = 2)
-points(samples$theta[, 2 + c(1, 301)], col = 3)
-points(samples$theta[, 3 + c(1, 301)], col = 4)
-points(samples$theta[, 4 + c(1, 301)], col = 5)
-points(samples$theta[, 5 + c(1, 301)], col = 6)
-points(samples$theta[, 6 + c(1, 301)], col = 7)
 
-# plot(samples$theta[, 17 + c(1, 301)], type = "b", col = rgb(0, 0, 0, 0.2))
-plot(samples$theta[, 6 + c(1, 301)], type = "b", col = rgb(0, 0, 0, 0.2))
-points(0, 0, pch = 19, col = 2)
+gg_2scatter <- function (samples, real) {
 
-plot_samples <- function (i) {
-  vec <- c(1,11)
-  plot(samples$a[, i + vec], type = "b", col = rgb(0, 0, 0, 0.1))
-  points(0, 0, pch = 19, col = 2)
-  points(discrimination1[i+1], discrimination2[i+1], pch = 19, col = 3)
-  # points(discrimination2[i+1], discrimination1[i+1], pch = 19, col = 4)
+  data <- samples %>%
+    as_tibble() %>%
+    setNames(paste0(rep(c("x-", "y-"), each = ncol(samples)/2),
+                    rep(1:(ncol(samples)/2), 2))) %>%
+    mutate(iteration = 1:n()) %>%
+    gather(varname, varvalue, -iteration) %>%
+    tidyr::extract(varname, c("var", "number"), "([[:alpha:]])-([0-9]+)",
+                   convert = TRUE) %>%
+    spread(var, varvalue) %>%
+    group_by(number) %>%
+    nest()
+  real <- real %>%
+    as_tibble() %>%
+    mutate(id = 1:n()) %>%
+    group_by(id) %>%
+    nest()
+  data$data %>%
+      map2(real$data, ~ ggplot(.x, aes(x, y)) +
+      geom_point(alpha = 0.5) +
+      geom_path(alpha = 0.4, linetype = 2) +
+      geom_point(aes(V1, V2), data = .y, col = 2))
 }
+gg_2scatter(samples$a, t(rbind(discrimination1, discrimination2)))
 
-lapply(0:9, plot_samples)
-
-discrimination1
-apply(samples$a, 2, mean)[1:10]
-
-discrimination2
-apply(samples$a, 2, mean)[11:20]
-# apply(samples$a, 2, median)
-
-
-# k <- 1
-# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-#
-# k <- 2
-# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-#
-# k <- 4
-# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-#
-# k <- 5
-# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-#
-# k <- 6
-# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-#
-# k <- 7
-# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-#
-# k <- 8
-# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
-#
-# k <- 9
-# image(MASS::kde2d(samples$a[, k], samples$a[, k + 10], n = 100))
 ```
 
-## Evaluate the results
+### Remove burn-in and summarise parameters
 
 ```{r}
 
@@ -152,10 +154,28 @@ samples_params_summary <- samples_params %>%
   map(~ as_tibble(t(.))) %>%
   map(~ setNames(., make.names(names(.))))
 
-# Visualize convergence
-opar <- par(mfrow = c(2, 2), mar = c(2, 1.9, 2, 0.6))
-map(samples_after_burin, ~ plot(mcmc(.[, 1:5]), auto.layout = FALSE))
-par(opar)
+```
+
+### Visualize trace-plots
+
+```{r}
+gg_trace <- function (samples, name) {
+  samples %>%
+    as_tibble() %>%
+    setNames(paste0(name, 1:ncol(samples))) %>%
+    mutate(iteration = 1:n()) %>%
+    gather(varname, varvalue, -iteration) %>%
+    ggplot(aes(iteration, varvalue, group = varname, col = varname)) +
+      geom_path(alpha = 0.4, linetype = 1)
+}
+
+samples_params %>%
+  map2(c("theta", "c", "a"), ~ gg_trace(.x[,1:5], .y))
+
+```
+
+
+```{r}
 
 # Matching parameters
 samples_params_summary$theta <- samples_params_summary$theta %>%
@@ -217,22 +237,22 @@ samples_params_summary$c %>%
 Correlation
 
 ```{r}
-ability_real <- matrix(unique(c(data_long$ability1, data_long$ability2)), ncol = 2)
-ability_estimate <- matrix(samples_params_summary$theta$X50., ncol = 2)
-cor(ability_real)
-cor(ability_estimate)
-cov(ability_real)
-cov(ability_estimate)
-
-A <- cbind(c(discrimination1), c(discrimination2))
-solve(crossprod(A) + diag(1, 2))
-
-tcrossprod(A)
-
-A_est <- matrix(samples_params_summary$a$X50., ncol = 2)
-
-plot(tcrossprod(A), tcrossprod(A_est))
-abline(0, 1)
+# ability_real <- matrix(unique(c(data_long$ability1, data_long$ability2)), ncol = 2)
+# ability_estimate <- matrix(samples_params_summary$theta$X50., ncol = 2)
+# cor(ability_real)
+# cor(ability_estimate)
+# cov(ability_real)
+# cov(ability_estimate)
+#
+# A <- cbind(c(discrimination1), c(discrimination2))
+# solve(crossprod(A) + diag(1, 2))
+#
+# tcrossprod(A)
+#
+# A_est <- matrix(samples_params_summary$a$X50., ncol = 2)
+#
+# plot(tcrossprod(A), tcrossprod(A_est))
+# abline(0, 1)
 
 
 ```

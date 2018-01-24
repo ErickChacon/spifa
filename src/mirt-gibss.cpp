@@ -46,7 +46,6 @@ Rcpp::List ifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m = 1) {
 
   arma::mat A(q,m,arma::fill::zeros);
   A.diag().ones();
-  arma::mat firstA = A;
   arma::vec a = arma::vectorise(A.t());
   arma::mat Sigma_a((q-m)*m, (q-m)*m);
   arma::mat Sigma_a_aux_chol(m, m);
@@ -149,8 +148,7 @@ Rcpp::List ifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m = 1) {
       Rcpp::Named("theta") = theta_mat.t(),
       Rcpp::Named("c") = c_mat.t(),
       Rcpp::Named("a") = a_mat.t(),
-      Rcpp::Named("z") = z_mat.t(),
-      Rcpp::Named("firstA") = firstA
+      Rcpp::Named("z") = z_mat.t()
       );
 }
 

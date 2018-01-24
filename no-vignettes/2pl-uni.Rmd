@@ -41,7 +41,6 @@ $Z_{ij}$ such as
 rm(list = ls())
 library(spmirt)
 library(datasim)
-library(coda)
 library(tidyverse)
 ```
 
@@ -65,8 +64,7 @@ data_long <- sim_model(formula = f,
                         generator = rbinom,
                         responses = q,
                         n = n,
-                        seed = 3
-                        )
+                        seed = 3)
 
 data_long <- dplyr::rename(data_long, subject = id, ability = re.id.prob,
                            item = response_label, y = response)
@@ -96,40 +94,67 @@ ggplot(explor, aes(ability, endorse)) + geom_point(alpha = 0.5)
 iter <- 1000
 system.time(samples <- ifa_gibbs(data_long$y, n, q, iter))
 purrr::map(samples, dim)
-samples$firstA
-samples$firstA <- NULL
-plot(samples$a[, 1:2], pch = 19, col = rgb(0, 0, 0, 0.2))
-points(-discrimination[1], -discrimination[2], pch = 19, col = 2)
-points(discrimination[1], discrimination[2], pch = 19, col = 2)
 ```
 
-## Evaluate the results
+### Check sampling
+
+Sampling of the first two discrimination parameters.
 
 ```{r}
-#
-# # Organize and summarise output
-# samples_after_burin <- samples %>% purrr::map(~ .[(0.5 * iter):iter, ])
-# samples_params <- samples_after_burin[1:3]
-# real_params <- list(theta = unique(data_long$ability),
-#                     c = as.numeric(difficulty),
-#                     a = as.numeric(discrimination))
-# samples_params_summary <- samples_params %>%
-#   map(~ apply(., 2, function (x) quantile(x, c(0.025, 0.5, 0.975)))) %>%
-#   map(~ as_tibble(t(.))) %>%
-#   map(~ setNames(., make.names(names(.)))) %>%
-#   map2(real_params, ~ mutate(.x, param = .y)) %>%
-#   setNames(c("Latent ability", "Item difficulty", "Item discrimination"))
-#
-# # Visualize convergence
-# opar <- par(mfrow = c(2, 2), mar = c(2, 1.9, 2, 0.6))
-# # layout(matrix(1:2))
-# map(samples_after_burin, ~ plot(mcmc(.[, 1:5]), auto.layout = FALSE))
-# par(opar)
-#
-# # Visualize results
-# samples_params_summary %>%
-#   map(~ ggplot(., aes(X50., param)) +
-#           geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
-#           geom_point(col = 2)
-#         )
+discr_df <- data.frame(a1 = discrimination[1], a2 = discrimination[2])
+samples$a[, 1:2] %>%
+  as_tibble() %>%
+  setNames(c("a1", "a2")) %>%
+  ggplot(aes(a1, a2)) +
+    geom_point(alpha = 0.5) +
+    geom_path(alpha = 0.4, linetype = 2) +
+    geom_point(data = discr_df, col = 2)
+```
+
+### Remove burn-in and summarise parameters
+
+```{r}
+
+# Organize and summarise output
+samples_after_burin <- samples %>% purrr::map(~ .[(0.5 * iter):iter, ])
+samples_params <- samples_after_burin[1:3]
+real_params <- list(theta = unique(data_long$ability),
+                    c = as.numeric(difficulty),
+                    a = as.numeric(discrimination))
+samples_params_summary <- samples_params %>%
+  map(~ apply(., 2, function (x) quantile(x, c(0.025, 0.5, 0.975)))) %>%
+  map(~ as_tibble(t(.))) %>%
+  map(~ setNames(., make.names(names(.)))) %>%
+  map2(real_params, ~ mutate(.x, param = .y)) %>%
+  setNames(c("Latent ability", "Item difficulty", "Item discrimination"))
+
+```
+
+### Visualize trace-plots
+
+```{r}
+gg_trace <- function (samples, name) {
+  samples %>%
+    as_tibble() %>%
+    setNames(paste0(name, 1:ncol(samples))) %>%
+    mutate(iteration = 1:n()) %>%
+    gather(varname, varvalue, -iteration) %>%
+    ggplot(aes(iteration, varvalue, group = varname, col = varname)) +
+      geom_path(alpha = 0.4, linetype = 1)
+}
+
+samples_params %>%
+  map2(c("theta", "c", "a"), ~ gg_trace(.x[,1:5], .y))
+
+```
+
+### Visualize credible intervals
+
+```{r}
+# Visualize results
+samples_params_summary %>%
+  map(~ ggplot(., aes(X50., param)) +
+          geom_errorbar(aes(ymin = X2.5., ymax = X97.5.), width = 0.05) +
+          geom_point(col = 2)
+        )
 ```
