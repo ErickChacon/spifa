@@ -31,6 +31,28 @@ subset_cpp <- function(X, y) {
     .Call(`_spmirt_subset_cpp`, X, y)
 }
 
+#' @title Spatial Probit Model
+#'
+#' @description
+#' \code{ifa_gibbs} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#' 
+#'
+#' @export
+probit_gp <- function(y, dist, tau2, phi, iter) {
+    .Call(`_spmirt_probit_gp`, y, dist, tau2, phi, iter)
+}
+
 #' @title Bayesian item factor analysis
 #'
 #' @description

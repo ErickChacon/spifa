@@ -82,6 +82,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// probit_gp
+Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, double tau2, double phi, int iter);
+RcppExport SEXP _spmirt_probit_gp(SEXP ySEXP, SEXP distSEXP, SEXP tau2SEXP, SEXP phiSEXP, SEXP iterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type dist(distSEXP);
+    Rcpp::traits::input_parameter< double >::type tau2(tau2SEXP);
+    Rcpp::traits::input_parameter< double >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    rcpp_result_gen = Rcpp::wrap(probit_gp(y, dist, tau2, phi, iter));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ifa_gibbs
 Rcpp::List ifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
 RcppExport SEXP _spmirt_ifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
@@ -155,6 +170,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_vecsub1", (DL_FUNC) &_spmirt_vecsub1, 2},
     {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
+    {"_spmirt_probit_gp", (DL_FUNC) &_spmirt_probit_gp, 5},
     {"_spmirt_ifa_gibbs", (DL_FUNC) &_spmirt_ifa_gibbs, 5},
     {"_spmirt_ifa_gibbs_nonide", (DL_FUNC) &_spmirt_ifa_gibbs_nonide, 5},
     {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},

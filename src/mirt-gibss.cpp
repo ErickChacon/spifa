@@ -31,11 +31,11 @@ Rcpp::List ifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m = 1) {
   arma::mat eye_n = arma::eye<arma::mat>(n,n);
   arma::mat eye_m = arma::eye<arma::mat>(m,m);
   arma::mat eye_q_m = arma::eye<arma::mat>(q-m,q-m);
+
   Rcpp::NumericVector low_thresh = Rcpp::NumericVector::create(R_NegInf, 0);
   Rcpp::NumericVector high_thresh = Rcpp::NumericVector::create(0, R_PosInf);
-
-  Rcpp::NumericVector lows = low_thresh[y];
-  Rcpp::NumericVector highs = high_thresh[y];
+  // Rcpp::NumericVector lows = low_thresh[y];
+  // Rcpp::NumericVector highs = high_thresh[y];
 
   // Initializing c, a, z
 

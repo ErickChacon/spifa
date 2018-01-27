@@ -3,6 +3,7 @@
 export(ifa_gibbs)
 export(ifa_gibbs_nonide)
 export(matsub1)
+export(probit_gp)
 export(rcpp_hello_world)
 export(rcpptn_hello_world)
 export(spifa_gibbs)
