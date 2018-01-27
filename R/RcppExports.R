@@ -53,6 +53,16 @@ probit_gp <- function(y, dist, tau2, phi, iter) {
     .Call(`_spmirt_probit_gp`, y, dist, tau2, phi, iter)
 }
 
+#' @export
+dmvnorm <- function(x, mean, sigma) {
+    .Call(`_spmirt_dmvnorm`, x, mean, sigma)
+}
+
+#' @export
+testing <- function(X, y) {
+    .Call(`_spmirt_testing`, X, y)
+}
+
 #' @title Bayesian item factor analysis
 #'
 #' @description

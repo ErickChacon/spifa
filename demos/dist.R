@@ -2,7 +2,7 @@ library(spmirt)
 library(ggplot2)
 library(datasim)
 
-n <- 2000
+n <- 1000
 
 f <- list(
   prob ~ I(1) +

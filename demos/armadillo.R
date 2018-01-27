@@ -28,4 +28,6 @@ dmvnorm(x=c(1, 2), mean = c(1,2), sigma = sigma)
 dnorm(1, 1, 10^(-309))
 dmvnorm(x=c(0,0), mean=c(1,1))
 
-
+library(spmirt)
+x <- matrix(0, 7, 5)
+testing(x, 1:10)

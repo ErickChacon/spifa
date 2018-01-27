@@ -97,6 +97,31 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dmvnorm
+double dmvnorm(arma::vec x, arma::vec mean, arma::mat sigma);
+RcppExport SEXP _spmirt_dmvnorm(SEXP xSEXP, SEXP meanSEXP, SEXP sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma(sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(dmvnorm(x, mean, sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// testing
+Rcpp::List testing(arma::mat X, arma::vec y);
+RcppExport SEXP _spmirt_testing(SEXP XSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(testing(X, y));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ifa_gibbs
 Rcpp::List ifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
 RcppExport SEXP _spmirt_ifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
@@ -171,6 +196,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
     {"_spmirt_probit_gp", (DL_FUNC) &_spmirt_probit_gp, 5},
+    {"_spmirt_dmvnorm", (DL_FUNC) &_spmirt_dmvnorm, 3},
+    {"_spmirt_testing", (DL_FUNC) &_spmirt_testing, 2},
     {"_spmirt_ifa_gibbs", (DL_FUNC) &_spmirt_ifa_gibbs, 5},
     {"_spmirt_ifa_gibbs_nonide", (DL_FUNC) &_spmirt_ifa_gibbs_nonide, 5},
     {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},
