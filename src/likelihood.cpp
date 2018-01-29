@@ -22,6 +22,12 @@ Rcpp::List testing(arma::mat X, arma::vec y) {
   arma::vec di = log(X.diag());
   double plop = arma::accu(y);
   arma::vec plop2 = square(y);
+  arma::mat Sigma_proposal(2,2, arma::fill::zeros);
+  Sigma_proposal(0,0) = 0.1;
+  Sigma_proposal(1,1) = 0.1;
+  // bool a = arma::as_scalar(arma::randu<arma::vec>(1)) > 0.5;
+  bool a = R::runif(0,1) > 0.5;
+  arma::vec scal = y(1) * y;
 
   // arma::mat L = arma::trimatl(A);
   //
@@ -30,7 +36,10 @@ Rcpp::List testing(arma::mat X, arma::vec y) {
       Rcpp::Named("X") = X,
       Rcpp::Named("di") = di,
       Rcpp::Named("plop") = plop,
-      Rcpp::Named("plop2") = plop2
+      Rcpp::Named("plop2") = plop2,
+      Rcpp::Named("Sigma_proposal") = Sigma_proposal,
+      Rcpp::Named("a") = a,
+      Rcpp::Named("scal") = scal
       );
 }
 

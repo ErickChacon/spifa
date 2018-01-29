@@ -3,6 +3,8 @@
 export(dmvnorm)
 export(ifa_gibbs)
 export(ifa_gibbs_nonide)
+export(logistic)
+export(logit)
 export(matsub1)
 export(probit_gp)
 export(rcpp_hello_world)

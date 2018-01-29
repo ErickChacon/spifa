@@ -83,17 +83,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // probit_gp
-Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, double tau2, double phi, int iter);
-RcppExport SEXP _spmirt_probit_gp(SEXP ySEXP, SEXP distSEXP, SEXP tau2SEXP, SEXP phiSEXP, SEXP iterSEXP) {
+Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, arma::vec params, int iter);
+RcppExport SEXP _spmirt_probit_gp(SEXP ySEXP, SEXP distSEXP, SEXP paramsSEXP, SEXP iterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
     Rcpp::traits::input_parameter< arma::mat >::type dist(distSEXP);
-    Rcpp::traits::input_parameter< double >::type tau2(tau2SEXP);
-    Rcpp::traits::input_parameter< double >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
-    rcpp_result_gen = Rcpp::wrap(probit_gp(y, dist, tau2, phi, iter));
+    rcpp_result_gen = Rcpp::wrap(probit_gp(y, dist, params, iter));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -119,6 +118,28 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
     rcpp_result_gen = Rcpp::wrap(testing(X, y));
+    return rcpp_result_gen;
+END_RCPP
+}
+// logit
+double logit(double p);
+RcppExport SEXP _spmirt_logit(SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(logit(p));
+    return rcpp_result_gen;
+END_RCPP
+}
+// logistic
+double logistic(double x);
+RcppExport SEXP _spmirt_logistic(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(logistic(x));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -195,9 +216,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_vecsub1", (DL_FUNC) &_spmirt_vecsub1, 2},
     {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
-    {"_spmirt_probit_gp", (DL_FUNC) &_spmirt_probit_gp, 5},
+    {"_spmirt_probit_gp", (DL_FUNC) &_spmirt_probit_gp, 4},
     {"_spmirt_dmvnorm", (DL_FUNC) &_spmirt_dmvnorm, 3},
     {"_spmirt_testing", (DL_FUNC) &_spmirt_testing, 2},
+    {"_spmirt_logit", (DL_FUNC) &_spmirt_logit, 1},
+    {"_spmirt_logistic", (DL_FUNC) &_spmirt_logistic, 1},
     {"_spmirt_ifa_gibbs", (DL_FUNC) &_spmirt_ifa_gibbs, 5},
     {"_spmirt_ifa_gibbs_nonide", (DL_FUNC) &_spmirt_ifa_gibbs_nonide, 5},
     {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},

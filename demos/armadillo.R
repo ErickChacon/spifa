@@ -68,3 +68,12 @@ microbenchmark(
 
 # mvtnorm::dmvnorm(z, mean=rep(0, n), sigma=Sigma, log = TRUE)
 # spmirt::dmvnorm(z, mean=rep(0, n), sigma=Sigma)
+
+psych::logistic(2)
+psych::logit(0.5)
+
+
+hist(psych::logit(runif(10000)), 100)
+plop <- runif(10000)
+hist(plop / (1-plop), 100)
+

@@ -46,11 +46,11 @@ subset_cpp <- function(X, y) {
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#' 
+#'
 #'
 #' @export
-probit_gp <- function(y, dist, tau2, phi, iter) {
-    .Call(`_spmirt_probit_gp`, y, dist, tau2, phi, iter)
+probit_gp <- function(y, dist, params, iter) {
+    .Call(`_spmirt_probit_gp`, y, dist, params, iter)
 }
 
 #' @export
@@ -61,6 +61,16 @@ dmvnorm <- function(x, mean, sigma) {
 #' @export
 testing <- function(X, y) {
     .Call(`_spmirt_testing`, X, y)
+}
+
+#' @export
+logit <- function(p) {
+    .Call(`_spmirt_logit`, p)
+}
+
+#' @export
+logistic <- function(x) {
+    .Call(`_spmirt_logistic`, x)
 }
 
 #' @title Bayesian item factor analysis

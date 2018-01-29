@@ -2,6 +2,8 @@
 #include <RcppArmadillo.h>
 #include <RcppTN.h>
 #include "arma-mat.h"
+#include "likelihood.h"
+#include "links.h"
 // [[Rcpp::depends(RcppTN)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -20,12 +22,12 @@
 //' @author Erick A. Chacon-Montalvan
 //'
 //' @examples
-//' 
+//'
 //'
 //' @export
 // [[Rcpp::export]]
-Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist,
-    double tau2, double phi, int iter) {
+Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, arma::vec params,
+    int iter) {
 
   Rcpp::NumericVector low_thresh = Rcpp::NumericVector::create(R_NegInf, 0);
   Rcpp::NumericVector high_thresh = Rcpp::NumericVector::create(0, R_PosInf);
@@ -33,6 +35,7 @@ Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist,
   const int n = dist.n_rows;
   const double sigma2_c = 1;
   arma::vec ones_n(n, arma::fill::ones);
+  arma::vec zeros_n(n, arma::fill::zeros);
   arma::mat eye_n = arma::eye<arma::mat>(n,n);
   arma::mat X = arma::join_rows(ones_n, eye_n);
 
@@ -44,10 +47,12 @@ Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist,
     ity++;
   }
   arma::mat z_mat(n, iter);
-  arma::vec tau2_vec(iter);
-  arma::vec phi_vec(iter);
+  arma::mat params_mat(2, iter);
 
   for (int i = 0; i < iter; ++i) {
+
+    double tau2 = logistic(params(0));
+    double phi = exp(params(1));
 
     arma::mat Sigma_theta_prior(n + 1, n + 1, arma::fill::zeros);
     Sigma_theta_prior.submat(0,0, 0,0) = sigma2_c;
@@ -78,15 +83,35 @@ Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist,
       ity++;
     }
 
-    arma::mat Sigma_z = X * Sigma_theta_prior * X.t() + eye_n;
+    arma::mat Sigma_proposal(2,2, arma::fill::zeros);
+    Sigma_proposal(0,0) = 0.1;
+    Sigma_proposal(1,1) = 0.1;
+    arma::mat Sigma_proposal_chol = arma::chol(Sigma_proposal, "lower");
+    arma::vec params_aux = params + Sigma_proposal_chol * arma::randn<arma::vec>(2);
+    double tau2_aux = logistic(params_aux(0));
+    double phi_aux = exp(params_aux(1));
 
+    arma::mat Sigma_z = X * Sigma_theta_prior * X.t() + eye_n;
+    arma::mat Sigma_theta_prior_aux(n + 1, n + 1, arma::fill::zeros);
+    Sigma_theta_prior_aux.submat(0,0, 0,0) = sigma2_c;
+    Sigma_theta_prior_aux.submat(1,1, n,n) = tau2_aux * exp(- dist / phi_aux);
+    arma::mat Sigma_z_aux = X * Sigma_theta_prior_aux * X.t() + eye_n;
+    double accept = dmvnorm(z, zeros_n, Sigma_z_aux) - dmvnorm(z, zeros_n, Sigma_z);
+    if (accept > log(R::runif(0,1))) {
+      params = params_aux;
+    }
+
+
+    arma::vec params_trans(2);
+    params_trans(0) = tau2;
+    params_trans(1) = phi;
     z_mat.col(i) = z;
-// z_mat.col(i) = Mean_theta_post + Sigma_theta_post_chol * arma::randn<arma::vec>(n);
-// z_mat.col(i) = Mean_theta_post + Sigma_theta_post_chol * arma::randn<arma::vec>(n);
+    params_mat.col(i) = params_trans;
   }
 
   return Rcpp::List::create(
-      Rcpp::Named("z") = z_mat.t()
+      Rcpp::Named("z") = z_mat.t(),
+      Rcpp::Named("param") = params_mat.t()
       );
 }
 
