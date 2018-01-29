@@ -49,8 +49,8 @@ subset_cpp <- function(X, y) {
 #'
 #'
 #' @export
-probit_gp <- function(y, dist, params, iter) {
-    .Call(`_spmirt_probit_gp`, y, dist, params, iter)
+probit_gp <- function(y, dist, params, iter, Sigma_proposal) {
+    .Call(`_spmirt_probit_gp`, y, dist, params, iter, Sigma_proposal)
 }
 
 #' @export

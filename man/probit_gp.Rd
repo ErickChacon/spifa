@@ -4,7 +4,7 @@
 \alias{probit_gp}
 \title{Spatial Probit Model}
 \usage{
-probit_gp(y, dist, params, iter)
+probit_gp(y, dist, params, iter, Sigma_proposal)
 }
 \arguments{
 \item{par.}{}

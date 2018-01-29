@@ -27,7 +27,7 @@
 //' @export
 // [[Rcpp::export]]
 Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, arma::vec params,
-    int iter) {
+    int iter, arma::mat Sigma_proposal) {
 
   Rcpp::NumericVector low_thresh = Rcpp::NumericVector::create(R_NegInf, 0);
   Rcpp::NumericVector high_thresh = Rcpp::NumericVector::create(0, R_PosInf);
@@ -48,11 +48,14 @@ Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, arma::vec params,
   }
   arma::mat z_mat(n, iter);
   arma::mat params_mat(2, iter);
+  arma::vec params_fix = params;
 
   for (int i = 0; i < iter; ++i) {
 
-    double tau2 = logistic(params(0));
+    // double tau2 = exp(params(0));
+    double tau2 = exp(params_fix(0));
     double phi = exp(params(1));
+    // double phi = 0.02;
 
     arma::mat Sigma_theta_prior(n + 1, n + 1, arma::fill::zeros);
     Sigma_theta_prior.submat(0,0, 0,0) = sigma2_c;
@@ -83,13 +86,17 @@ Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, arma::vec params,
       ity++;
     }
 
-    arma::mat Sigma_proposal(2,2, arma::fill::zeros);
-    Sigma_proposal(0,0) = 0.1;
-    Sigma_proposal(1,1) = 0.1;
+    // arma::mat Sigma_proposal(2,2, arma::fill::zeros);
+    // Sigma_proposal(0,0) = 0.01;
+    // Sigma_proposal(1,1) = 0.01;
+    // Sigma_proposal(0,1) = 0.005;
+    // Sigma_proposal(1,0) = 0.005;
     arma::mat Sigma_proposal_chol = arma::chol(Sigma_proposal, "lower");
     arma::vec params_aux = params + Sigma_proposal_chol * arma::randn<arma::vec>(2);
-    double tau2_aux = logistic(params_aux(0));
+    // double tau2_aux = exp(params_aux(0));
+    double tau2_aux = exp(params_fix(0));
     double phi_aux = exp(params_aux(1));
+    // double phi_aux = phi;
 
     arma::mat Sigma_z = X * Sigma_theta_prior * X.t() + eye_n;
     arma::mat Sigma_theta_prior_aux(n + 1, n + 1, arma::fill::zeros);
