@@ -108,7 +108,6 @@ Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, arma::vec params,
       params = params_aux;
     }
 
-
     arma::vec params_trans(2);
     params_trans(0) = tau2;
     params_trans(1) = phi;

@@ -145,6 +145,51 @@ rcpp_hello_world <- function() {
 }
 
 #' @export
+matmatmat <- function(x) {
+    .Call(`_spmirt_matmatmat`, x)
+}
+
+#' @export
+matmat <- function(x) {
+    .Call(`_spmirt_matmat`, x)
+}
+
+#' @export
+ar_chol <- function(x) {
+    .Call(`_spmirt_ar_chol`, x)
+}
+
+#' @export
+mat_inv <- function(x) {
+    .Call(`_spmirt_mat_inv`, x)
+}
+
+#' @export
+mat_inv2 <- function(x) {
+    .Call(`_spmirt_mat_inv2`, x)
+}
+
+#' @export
+inv_chol <- function(x) {
+    .Call(`_spmirt_inv_chol`, x)
+}
+
+#' @export
+inv_solve <- function(x, eye) {
+    .Call(`_spmirt_inv_solve`, x, eye)
+}
+
+#' @export
+inv_solve2 <- function(x, eye) {
+    .Call(`_spmirt_inv_solve2`, x, eye)
+}
+
+#' @export
+inv_form <- function(x, eye) {
+    .Call(`_spmirt_inv_form`, x, eye)
+}
+
+#' @export
 rcpptn_hello_world <- function() {
     .Call(`_spmirt_rcpptn_hello_world`)
 }

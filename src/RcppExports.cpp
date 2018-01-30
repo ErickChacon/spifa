@@ -199,6 +199,108 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// matmatmat
+arma::mat matmatmat(arma::mat x);
+RcppExport SEXP _spmirt_matmatmat(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(matmatmat(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// matmat
+arma::mat matmat(arma::mat x);
+RcppExport SEXP _spmirt_matmat(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(matmat(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ar_chol
+arma::mat ar_chol(arma::mat x);
+RcppExport SEXP _spmirt_ar_chol(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(ar_chol(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mat_inv
+arma::mat mat_inv(arma::mat x);
+RcppExport SEXP _spmirt_mat_inv(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(mat_inv(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mat_inv2
+arma::mat mat_inv2(arma::mat x);
+RcppExport SEXP _spmirt_mat_inv2(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(mat_inv2(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// inv_chol
+arma::mat inv_chol(arma::mat x);
+RcppExport SEXP _spmirt_inv_chol(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(inv_chol(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// inv_solve
+arma::mat inv_solve(arma::mat x, arma::mat eye);
+RcppExport SEXP _spmirt_inv_solve(SEXP xSEXP, SEXP eyeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type eye(eyeSEXP);
+    rcpp_result_gen = Rcpp::wrap(inv_solve(x, eye));
+    return rcpp_result_gen;
+END_RCPP
+}
+// inv_solve2
+arma::mat inv_solve2(arma::mat x, arma::mat eye);
+RcppExport SEXP _spmirt_inv_solve2(SEXP xSEXP, SEXP eyeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type eye(eyeSEXP);
+    rcpp_result_gen = Rcpp::wrap(inv_solve2(x, eye));
+    return rcpp_result_gen;
+END_RCPP
+}
+// inv_form
+arma::mat inv_form(arma::mat x, arma::mat eye);
+RcppExport SEXP _spmirt_inv_form(SEXP xSEXP, SEXP eyeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type eye(eyeSEXP);
+    rcpp_result_gen = Rcpp::wrap(inv_form(x, eye));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcpptn_hello_world
 List rcpptn_hello_world();
 RcppExport SEXP _spmirt_rcpptn_hello_world() {
@@ -226,6 +328,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_ifa_gibbs_nonide", (DL_FUNC) &_spmirt_ifa_gibbs_nonide, 5},
     {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},
     {"_spmirt_rcpp_hello_world", (DL_FUNC) &_spmirt_rcpp_hello_world, 0},
+    {"_spmirt_matmatmat", (DL_FUNC) &_spmirt_matmatmat, 1},
+    {"_spmirt_matmat", (DL_FUNC) &_spmirt_matmat, 1},
+    {"_spmirt_ar_chol", (DL_FUNC) &_spmirt_ar_chol, 1},
+    {"_spmirt_mat_inv", (DL_FUNC) &_spmirt_mat_inv, 1},
+    {"_spmirt_mat_inv2", (DL_FUNC) &_spmirt_mat_inv2, 1},
+    {"_spmirt_inv_chol", (DL_FUNC) &_spmirt_inv_chol, 1},
+    {"_spmirt_inv_solve", (DL_FUNC) &_spmirt_inv_solve, 2},
+    {"_spmirt_inv_solve2", (DL_FUNC) &_spmirt_inv_solve2, 2},
+    {"_spmirt_inv_form", (DL_FUNC) &_spmirt_inv_form, 2},
     {"_spmirt_rcpptn_hello_world", (DL_FUNC) &_spmirt_rcpptn_hello_world, 0},
     {NULL, NULL, 0}
 };
