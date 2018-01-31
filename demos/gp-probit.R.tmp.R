@@ -38,7 +38,7 @@ ggplot(vg, aes(dist, gamma)) +
   scale_x_continuous(limits = c(0, 0.7))
 
 
-iter <- 1000
+iter <- 5000
 dist <- as.matrix(dist(dplyr::select(data, s1, s2)))
 # out <- probit_gp(data$response, dist, c(psych::logit(0.5), log(0.02)), iter)
 sigma_prop <- matrix(c(0.1, 0.05, 0.05, 0.1), 2) / 10

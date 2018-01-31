@@ -60,7 +60,8 @@ Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, arma::vec params,
     arma::mat Sigma_theta_prior(n + 1, n + 1, arma::fill::zeros);
     Sigma_theta_prior.submat(0,0, 0,0) = sigma2_c;
     Sigma_theta_prior.submat(1,1, n,n) = tau2 * exp(- dist / phi);
-    arma::mat Sigma_theta_post = (X.t() * X + Sigma_theta_prior.i()).i();
+    arma::mat Sigma_theta_post =
+      arma::inv_sympd(X.t() * X + arma::inv_sympd(Sigma_theta_prior));
     // arma::mat Sigma_theta_post_chol = arma::chol(Sigma_theta_post);
     arma::mat S_aux = Sigma_theta_post * X.t();
     arma::vec Mean_theta_post = S_aux * z;
