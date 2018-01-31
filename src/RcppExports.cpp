@@ -97,6 +97,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// probit_gp_chol
+Rcpp::List probit_gp_chol(Rcpp::NumericVector y, arma::mat dist, arma::vec params, int iter, arma::mat Sigma_proposal);
+RcppExport SEXP _spmirt_probit_gp_chol(SEXP ySEXP, SEXP distSEXP, SEXP paramsSEXP, SEXP iterSEXP, SEXP Sigma_proposalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type dist(distSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Sigma_proposal(Sigma_proposalSEXP);
+    rcpp_result_gen = Rcpp::wrap(probit_gp_chol(y, dist, params, iter, Sigma_proposal));
+    return rcpp_result_gen;
+END_RCPP
+}
 // dmvnorm
 double dmvnorm(arma::vec x, arma::vec mean, arma::mat sigma);
 RcppExport SEXP _spmirt_dmvnorm(SEXP xSEXP, SEXP meanSEXP, SEXP sigmaSEXP) {
@@ -107,6 +122,32 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type sigma(sigmaSEXP);
     rcpp_result_gen = Rcpp::wrap(dmvnorm(x, mean, sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dmvnorm_chol
+double dmvnorm_chol(arma::vec x, arma::vec mean, arma::mat L);
+RcppExport SEXP _spmirt_dmvnorm_chol(SEXP xSEXP, SEXP meanSEXP, SEXP LSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type L(LSEXP);
+    rcpp_result_gen = Rcpp::wrap(dmvnorm_chol(x, mean, L));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dmvnorm_prec
+double dmvnorm_prec(arma::vec x, arma::vec mean, arma::mat sigma_inv);
+RcppExport SEXP _spmirt_dmvnorm_prec(SEXP xSEXP, SEXP meanSEXP, SEXP sigma_invSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma_inv(sigma_invSEXP);
+    rcpp_result_gen = Rcpp::wrap(dmvnorm_prec(x, mean, sigma_inv));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -320,7 +361,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
     {"_spmirt_probit_gp", (DL_FUNC) &_spmirt_probit_gp, 5},
+    {"_spmirt_probit_gp_chol", (DL_FUNC) &_spmirt_probit_gp_chol, 5},
     {"_spmirt_dmvnorm", (DL_FUNC) &_spmirt_dmvnorm, 3},
+    {"_spmirt_dmvnorm_chol", (DL_FUNC) &_spmirt_dmvnorm_chol, 3},
+    {"_spmirt_dmvnorm_prec", (DL_FUNC) &_spmirt_dmvnorm_prec, 3},
     {"_spmirt_testing", (DL_FUNC) &_spmirt_testing, 2},
     {"_spmirt_logit", (DL_FUNC) &_spmirt_logit, 1},
     {"_spmirt_logistic", (DL_FUNC) &_spmirt_logistic, 1},

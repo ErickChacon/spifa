@@ -42,7 +42,12 @@ iter <- 100
 dist <- as.matrix(dist(dplyr::select(data, s1, s2)))
 # out <- probit_gp(data$response, dist, c(psych::logit(0.5), log(0.02)), iter)
 sigma_prop <- matrix(c(0.1, 0.05, 0.05, 0.1), 2) / 10
-out <- probit_gp(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+system.time(
+  out <- probit_gp(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+)
+system.time(
+  out <- probit_gp_chol(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+)
 plot(out$param, type = "b")
 plot(out$param[, 1])
 plot(out$param[, 2])

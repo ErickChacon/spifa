@@ -14,18 +14,33 @@ double dmvnorm(arma::vec x, arma::vec mean, arma::mat sigma) {
   return loglike;
 }
 
-// //' @export
-// // [[Rcpp::export]]
-// double dmvnorm_prec(arma::vec x, arma::vec mean, arma::mat sigma_inv) {
-//   const int n = x.n_elem;
-//   const double pi = M_PI;
-//   arma::mat L = arma::chol(sigma, "lower");
-//   arma::mat kern_sq_root = arma::solve(arma::trimatl(L), x - mean);
-//   double loglike = - 0.5 * n * log(2.0 * pi);
-//   loglike += - arma::accu(log(L.diag()));
-//   loglike += - 0.5 * arma::accu(square(kern_sq_root));
-//   return loglike;
-// }
+//' @export
+// [[Rcpp::export]]
+double dmvnorm_chol(arma::vec x, arma::vec mean, arma::mat L) {
+  const int n = x.n_elem;
+  const double pi = M_PI;
+  arma::mat kern_sq_root = arma::solve(arma::trimatl(L), x - mean);
+  double loglike = - 0.5 * n * log(2.0 * pi);
+  loglike += - arma::accu(log(L.diag()));
+  loglike += - 0.5 * arma::accu(square(kern_sq_root));
+  return loglike;
+}
+
+//' @export
+// [[Rcpp::export]]
+double dmvnorm_prec(arma::vec x, arma::vec mean, arma::mat sigma_inv) {
+  const int n = x.n_elem;
+  const double pi = M_PI;
+  double val;
+  double sign;
+  arma::log_det(val, sign, sigma_inv);
+  double kern = arma::as_scalar((x - mean).t() * sigma_inv * (x - mean));
+  double loglike = - 0.5 * n * log(2.0 * pi);
+  loglike += + 0.5 * val;
+  loglike += - 0.5 * kern;
+  return loglike;
+}
+
 
 //' @export
 // [[Rcpp::export]]
