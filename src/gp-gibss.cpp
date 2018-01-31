@@ -55,8 +55,8 @@ Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, arma::vec params,
     // double tau2 = exp(params(0));
     double tau2 = exp(params_fix(0));
     double phi = exp(params(1));
-    // double phi = 0.02;
 
+    // Simulate the auxiliary variables z
     arma::mat Sigma_theta_prior(n + 1, n + 1, arma::fill::zeros);
     Sigma_theta_prior.submat(0,0, 0,0) = sigma2_c;
     Sigma_theta_prior.submat(1,1, n,n) = tau2 * exp(- dist / phi);
