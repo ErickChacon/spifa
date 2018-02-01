@@ -71,6 +71,28 @@ probit_gp <- function(y, dist, params, iter, Sigma_proposal) {
 #'
 #'
 #' @export
+probit_gp_chol2 <- function(y, dist, params, iter, Sigma_proposal) {
+    .Call(`_spmirt_probit_gp_chol2`, y, dist, params, iter, Sigma_proposal)
+}
+
+#' @title Spatial Probit Model
+#'
+#' @description
+#' \code{ifa_gibbs} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#'
+#'
+#' @export
 probit_gp_chol <- function(y, dist, params, iter, Sigma_proposal) {
     .Call(`_spmirt_probit_gp_chol`, y, dist, params, iter, Sigma_proposal)
 }
@@ -83,6 +105,11 @@ dmvnorm <- function(x, mean, sigma) {
 #' @export
 dmvnorm_chol <- function(x, mean, L) {
     .Call(`_spmirt_dmvnorm_chol`, x, mean, L)
+}
+
+#' @export
+dmvnorm_cholinv <- function(x, mean, L_inv) {
+    .Call(`_spmirt_dmvnorm_cholinv`, x, mean, L_inv)
 }
 
 #' @export
