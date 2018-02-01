@@ -51,7 +51,7 @@ Rcpp::List probit_gp_chol(Rcpp::NumericVector y, arma::mat dist, arma::vec param
   arma::mat z_mat(n, iter);
 
   // Initializing gp variance covariance
-  double tau2 = exp(params_fix(0));
+  double tau2 = exp(params(0));
   double phi = exp(params(1));
   arma::mat Sigma_gp(n, n, arma::fill::zeros);
   Sigma_gp = tau2 * exp(- dist / phi);
@@ -62,8 +62,8 @@ Rcpp::List probit_gp_chol(Rcpp::NumericVector y, arma::mat dist, arma::vec param
 
   for (int i = 0; i < iter; ++i) {
 
-    // double tau2 = exp(params(0));
-    double tau2 = exp(params_fix(0));
+    double tau2 = exp(params(0));
+    // double tau2 = exp(params_fix(0));
     double phi = exp(params(1));
 
     // Sampling z
@@ -98,8 +98,8 @@ Rcpp::List probit_gp_chol(Rcpp::NumericVector y, arma::mat dist, arma::vec param
     // Sampling correlation parameters
     arma::mat Sigma_proposal_chol = arma::chol(Sigma_proposal, "lower");
     arma::vec params_aux = params + Sigma_proposal_chol * arma::randn<arma::vec>(2);
-    // double tau2_aux = exp(params_aux(0));
-    double tau2_aux = exp(params_fix(0));
+    double tau2_aux = exp(params_aux(0));
+    // double tau2_aux = exp(params_fix(0));
     double phi_aux = exp(params_aux(1));
     // double phi_aux = phi;
 
@@ -108,7 +108,12 @@ Rcpp::List probit_gp_chol(Rcpp::NumericVector y, arma::mat dist, arma::vec param
     Sigma_gp_aux = tau2_aux * exp(- dist / phi_aux);
     arma::mat Sigma_z_aux = sigma2_c + Sigma_gp_aux + eye_n;
     // improve line above
-    double accept = dmvnorm(z, zeros_n, Sigma_z_aux) - dmvnorm(z, zeros_n, Sigma_z);
+    double accept = dmvnorm(z, zeros_n, Sigma_z_aux) +
+      R::dnorm(params_aux(0), log(1.0), 0.4, true) +
+      R::dnorm(params_aux(1), log(0.03), 0.4, true) -
+      dmvnorm(z, zeros_n, Sigma_z) -
+      R::dnorm(params(0), log(1.0), 0.4, true) -
+      R::dnorm(params(1), log(0.03), 0.4, true);
     if (accept > log(R::runif(0,1))) {
       params = params_aux;
       Sigma_gp = Sigma_gp_aux;

@@ -38,22 +38,23 @@ ggplot(vg, aes(dist, gamma)) +
   scale_x_continuous(limits = c(0, 0.7))
 
 
-iter <- 100
+iter <- 500
 dist <- as.matrix(dist(dplyr::select(data, s1, s2)))
 # out <- probit_gp(data$response, dist, c(psych::logit(0.5), log(0.02)), iter)
-sigma_prop <- matrix(c(0.1, 0.05, 0.05, 0.1), 2) / 10
+# sigma_prop <- matrix(c(0.1, 0.05, 0.05, 0.1), 2) / 10
+sigma_prop <- matrix(c(0.1, 0, 0, 0.1), 2) / 10
 # system.time(
 #   out0 <- probit_gp(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 # )
 system.time(
-  out0 <- probit_gp_chol(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+  out <- probit_gp_chol(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 )
-system.time(
-  out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
-)
+# system.time(
+#   out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+# )
 
-plot(out0$param[, 2])
-abline(h = 0.03, col = 2)
+# plot(out$param[, 2])
+# abline(h = 0.03, col = 2)
 
 plot(out$param, type = "b")
 plot(out$param[, 1])
@@ -82,3 +83,10 @@ var(out$param)
 # # hist(out$z[3,])
 # # hist(out$z[4,])
 # # hist(out$z[5,])
+
+#
+# # phi
+# hist(exp(rnorm(1000, log(0.03), 0.4)))
+#
+# # sigma^2
+# hist(exp(rnorm(1000, log(1), 0.4)))
