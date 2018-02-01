@@ -109,7 +109,7 @@ Rcpp::List probit_gp_chol2(Rcpp::NumericVector y, arma::mat dist, arma::vec para
     Sigma_gp_aux = tau2_aux * exp(- dist / phi_aux);
     arma::mat Sigma_marginal_aux = sigma2_c + Sigma_gp_aux;
     arma::mat Sigma_z_aux = Sigma_marginal_aux + eye_n;
-    arma::mat Sigma_z_aux_cholinv =
+    arma::mat Sigma_z_aux_cholinv = eye_n;
       arma::inv(trimatl(arma::chol(Sigma_z_aux, "lower")));
     // improve line above
     double accept = dmvnorm_cholinv(z, zeros_n, Sigma_z_aux_cholinv) +

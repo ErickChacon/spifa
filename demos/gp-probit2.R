@@ -46,9 +46,9 @@ sigma_prop <- matrix(c(0.1, 0, 0, 0.1), 2) / 10
 # system.time(
 #   out0 <- probit_gp(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 # )
-# system.time(
-#   out <- probit_gp_chol(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
-# )
+system.time(
+  out <- probit_gp_chol(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+)
 system.time(
   out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 )
