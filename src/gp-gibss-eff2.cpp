@@ -51,7 +51,7 @@ Rcpp::List probit_gp_chol2(Rcpp::NumericVector y, arma::mat dist, arma::vec para
   arma::mat z_mat(n, iter);
 
   // Initializing gp variance covariance
-  double tau2 = exp(params_fix(0));
+  double tau2 = exp(params(0));
   double phi = exp(params(1));
   arma::mat Sigma_gp(n, n, arma::fill::zeros);
   Sigma_gp = tau2 * exp(- dist / phi);
@@ -68,13 +68,6 @@ Rcpp::List probit_gp_chol2(Rcpp::NumericVector y, arma::mat dist, arma::vec para
 
     // Sampling z
     arma::mat Linv_Sigma_marginal = Sigma_z_cholinv * Sigma_marginal;
-    // arma::mat Sigma_theta_prior(n + 1, n + 1, arma::fill::zeros);
-    // Sigma_theta_prior.submat(0,0, 0,0) = sigma2_c;
-    // Sigma_theta_prior.submat(1,1, n,n) = Sigma_gp;
-    // arma::mat Sigma_theta_post =
-    //   arma::inv_sympd(X.t() * X + arma::inv_sympd(Sigma_theta_prior));
-    // arma::mat S_aux = Sigma_theta_post * X.t();
-    // arma::vec Mean_theta_post = S_aux * z;
 
     arma::vec h(n);
     arma::vec w(n);
@@ -85,15 +78,14 @@ Rcpp::List probit_gp_chol2(Rcpp::NumericVector y, arma::mat dist, arma::vec para
       q(j) = sqrt(w(j) + 1);
     }
 
+    arma::mat Linv_Sigma_marginal2 = Linv_Sigma_marginal.t() * Linv_Sigma_marginal;
     ity = y.begin();
     for (int j = 0; j < n; ++j) {
-      // double z_old = vecsub1(z, j);
       double z_mean = arma::as_scalar(Sigma_marginal.row(j) * z);
       z_mean -=
-        arma::as_scalar(Linv_Sigma_marginal.col(j).t() * Linv_Sigma_marginal * z);
+        arma::as_scalar(Linv_Sigma_marginal2.row(j) * z);
       z_mean -= w(j) * (z(j) - z_mean);
       z(j) = RcppTN::rtn1(z_mean, q(j), low_thresh[*ity], high_thresh[*ity]);
-      // Mean_theta_post += (z(j) - z_old) * S_aux.col(j);
       ity++;
     }
 
@@ -101,7 +93,7 @@ Rcpp::List probit_gp_chol2(Rcpp::NumericVector y, arma::mat dist, arma::vec para
     arma::mat Sigma_proposal_chol = arma::chol(Sigma_proposal, "lower");
     arma::vec params_aux = params + Sigma_proposal_chol * arma::randn<arma::vec>(2);
     // double tau2_aux = exp(params_aux(0));
-    double tau2_aux = exp(params_fix(0));
+    double tau2_aux = exp(params_aux(0));
     double phi_aux = exp(params_aux(1));
     // double phi_aux = phi;
 
@@ -109,12 +101,14 @@ Rcpp::List probit_gp_chol2(Rcpp::NumericVector y, arma::mat dist, arma::vec para
     Sigma_gp_aux = tau2_aux * exp(- dist / phi_aux);
     arma::mat Sigma_marginal_aux = sigma2_c + Sigma_gp_aux;
     arma::mat Sigma_z_aux = Sigma_marginal_aux + eye_n;
-    arma::mat Sigma_z_aux_cholinv = eye_n;
+    arma::mat Sigma_z_aux_cholinv =
       arma::inv(trimatl(arma::chol(Sigma_z_aux, "lower")));
     // improve line above
     double accept = dmvnorm_cholinv(z, zeros_n, Sigma_z_aux_cholinv) +
+      R::dnorm(params_aux(0), log(1.0), 0.4, true) +
       R::dnorm(params_aux(1), log(0.03), 0.4, true) -
       dmvnorm_cholinv(z, zeros_n, Sigma_z_cholinv) -
+      R::dnorm(params(0), log(1.0), 0.4, true) -
       R::dnorm(params(1), log(0.03), 0.4, true);
     if (accept > log(R::runif(0,1))) {
       params = params_aux;

@@ -38,7 +38,7 @@ ggplot(vg, aes(dist, gamma)) +
   scale_x_continuous(limits = c(0, 0.7))
 
 
-iter <- 10
+iter <- 100
 dist <- as.matrix(dist(dplyr::select(data, s1, s2)))
 # out <- probit_gp(data$response, dist, c(psych::logit(0.5), log(0.02)), iter)
 # sigma_prop <- matrix(c(0.1, 0.05, 0.05, 0.1), 2) / 10
@@ -49,9 +49,9 @@ sigma_prop <- matrix(c(0.1, 0, 0, 0.1), 2) / 10
 system.time(
   out <- probit_gp_chol(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 )
-# system.time(
-#   out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
-# )
+system.time(
+  out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+)
 
 # 9%
 # DGEMM  performs one of the matrix-matrix operations

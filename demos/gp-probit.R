@@ -53,6 +53,14 @@ system.time(
   out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 )
 
+# 34%
+# DGEMV  performs one of the matrix-vector operations
+#
+#     y := alpha*A*x + beta*y,   or   y := alpha*A**T*x + beta*y,
+#
+#  where alpha and beta are scalars, x and y are vectors and A is an
+#  m by n matrix.
+
 # plot(out$param[, 2])
 # abline(h = 0.03, col = 2)
 
