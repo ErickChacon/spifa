@@ -105,10 +105,10 @@ Rcpp::List probit_gp_chol2(Rcpp::NumericVector y, arma::mat dist, arma::vec para
       arma::inv(trimatl(arma::chol(Sigma_z_aux, "lower")));
     // improve line above
     double accept = dmvnorm_cholinv(z, zeros_n, Sigma_z_aux_cholinv) +
-      R::dnorm(params_aux(0), log(1.0), 0.4, true) +
+      R::dnorm(params_aux(0), log(0.5), 0.4, true) +
       R::dnorm(params_aux(1), log(0.03), 0.4, true) -
       dmvnorm_cholinv(z, zeros_n, Sigma_z_cholinv) -
-      R::dnorm(params(0), log(1.0), 0.4, true) -
+      R::dnorm(params(0), log(0.5), 0.4, true) -
       R::dnorm(params(1), log(0.03), 0.4, true);
     if (accept > log(R::runif(0,1))) {
       params = params_aux;
