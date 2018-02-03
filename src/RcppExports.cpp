@@ -82,6 +82,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// probit_gp_adap
+Rcpp::List probit_gp_adap(Rcpp::NumericVector y, arma::mat dist, arma::vec params, int iter, arma::mat Sigma_proposal);
+RcppExport SEXP _spmirt_probit_gp_adap(SEXP ySEXP, SEXP distSEXP, SEXP paramsSEXP, SEXP iterSEXP, SEXP Sigma_proposalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type dist(distSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Sigma_proposal(Sigma_proposalSEXP);
+    rcpp_result_gen = Rcpp::wrap(probit_gp_adap(y, dist, params, iter, Sigma_proposal));
+    return rcpp_result_gen;
+END_RCPP
+}
 // probit_gp
 Rcpp::List probit_gp(Rcpp::NumericVector y, arma::mat dist, arma::vec params, int iter, arma::mat Sigma_proposal);
 RcppExport SEXP _spmirt_probit_gp(SEXP ySEXP, SEXP distSEXP, SEXP paramsSEXP, SEXP iterSEXP, SEXP Sigma_proposalSEXP) {
@@ -388,6 +403,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_vecsub1", (DL_FUNC) &_spmirt_vecsub1, 2},
     {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
+    {"_spmirt_probit_gp_adap", (DL_FUNC) &_spmirt_probit_gp_adap, 5},
     {"_spmirt_probit_gp", (DL_FUNC) &_spmirt_probit_gp, 5},
     {"_spmirt_probit_gp_chol2", (DL_FUNC) &_spmirt_probit_gp_chol2, 5},
     {"_spmirt_probit_gp_chol", (DL_FUNC) &_spmirt_probit_gp_chol, 5},

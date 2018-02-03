@@ -26,7 +26,7 @@
 //'
 //' @export
 // [[Rcpp::export]]
-Rcpp::List probit_gp_chol2(Rcpp::NumericVector y, arma::mat dist, arma::vec params,
+Rcpp::List probit_gp_adap(Rcpp::NumericVector y, arma::mat dist, arma::vec params,
     int iter, arma::mat Sigma_proposal) {
 
   Rcpp::NumericVector low_thresh = Rcpp::NumericVector::create(R_NegInf, 0);
@@ -89,7 +89,14 @@ Rcpp::List probit_gp_chol2(Rcpp::NumericVector y, arma::mat dist, arma::vec para
       ity++;
     }
 
+    arma::mat Sigma_proposal(2,2);
     // Sampling correlation parameters
+    if (i > 2 * 2 && R::runif(0,1) < 0.95) {
+      Sigma_proposal = pow(2.38, 2) *
+        arma::cov(log(params_mat.cols(0,i-1).t())) / 2;
+    } else {
+      Sigma_proposal = 0.01 * arma::eye<arma::mat>(2,2) / 2;
+    }
     arma::mat Sigma_proposal_chol = arma::chol(Sigma_proposal, "lower");
     arma::vec params_aux = params + Sigma_proposal_chol * arma::randn<arma::vec>(2);
     // double tau2_aux = exp(params_aux(0));
@@ -124,6 +131,7 @@ Rcpp::List probit_gp_chol2(Rcpp::NumericVector y, arma::mat dist, arma::vec para
     params_trans(1) = phi;
     z_mat.col(i) = z;
     params_mat.col(i) = params_trans;
+    // params_mat.col(i) = params;
   }
 
   return Rcpp::List::create(

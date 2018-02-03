@@ -49,6 +49,28 @@ subset_cpp <- function(X, y) {
 #'
 #'
 #' @export
+probit_gp_adap <- function(y, dist, params, iter, Sigma_proposal) {
+    .Call(`_spmirt_probit_gp_adap`, y, dist, params, iter, Sigma_proposal)
+}
+
+#' @title Spatial Probit Model
+#'
+#' @description
+#' \code{ifa_gibbs} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#'
+#'
+#' @export
 probit_gp <- function(y, dist, params, iter, Sigma_proposal) {
     .Call(`_spmirt_probit_gp`, y, dist, params, iter, Sigma_proposal)
 }
