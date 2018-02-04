@@ -15,6 +15,7 @@ options(width = 100)
 library(spmirt)
 library(ggplot2)
 library(datasim)
+library(gstat)
 ```
 
 ```{r}
@@ -131,10 +132,36 @@ mesh <- expand.grid(beta0 = seq(0.25, 0.75, 0.01), sigma2 = seq(0.25, 0.75, 0.01
 mesh$cost <- purrr::map2_dbl(mesh$beta0, mesh$sigma2,
                              ~ cost_moments(c(.x, log(.y)),
                                         c(mean(data$response),
-                                          var(data$response)- 0.18)))
+                                          var(data$response)- vg_fit$psill[1])))
 ggplot(mesh, aes(beta0, sigma2)) +
   geom_raster(aes(fill = cost)) +
   # scale_fill_viridis_c()
   scale_fill_distiller(palette = "RdYlBu")
 
 ```
+
+```{r}
+
+cost_moments <- function (param, mean, var) {
+  beta0 <- param[1]
+  sigma2 <- exp(param[2])
+  x <- rnorm(10^5, beta0, sd = sigma2^0.5)
+  mean_bi <- mean(pnorm(x))
+  var_bi <- var(pnorm(x))
+  return(log((mean_bi - mean) ^ 2 + (var_bi - var) ^ 2))
+}
+
+fit_variog_bin <- function (variog, mean, var, ...) {
+  vg_fit <- gstat::fit.variogram(variog, ...)
+  init <- c(0, log(0.5))
+  par <- optim(init, cost_moments, mean = mean, var = var - vg_fit$psill[1])
+  return(c(par$par[1], exp(par$par[2])))
+}
+
+fit_variog_bin(vg, mean(data$response), var(data$response),
+  model = vgm(0.5 * var(data$response),"Exp", nugget = 0.5 * var(data$response))
+  )
+
+```
+
+
