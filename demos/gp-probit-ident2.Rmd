@@ -1,0 +1,207 @@
+---
+title: "Geostatistical Probit Data Simulation"
+author: "Erick A. Chacon-Montalvan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Two Parameter Logistic Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Simulation of geostatistical probit models to understand identifiability
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(fig.width = 8, fig.height = 6)
+# knitr::opts_chunk$set(fig.width = 6, fig.height = 4)
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+```
+
+
+
+```{r}
+rm(list = ls())
+library(ggplot2)
+library(datasim)
+library(tidyverse)
+
+```
+
+```{r}
+
+gp_probit_sim <- function (data_pred, beta0, sigma2, phi, ...) {
+
+  # function to apply to each combination
+  fun <- function (sigma2, phi, beta0) {
+    formula <- substitute(list(
+        prob ~ I(beta0) +
+          gp(list(s1, s2), cor.model = "exp_cor", cor.params = list(phi = phi),
+             sigma2 = sigma2),
+        size ~ I(1)
+      ), list(sigma2 = sigma2, phi = phi, beta0 = beta0))
+  formula = eval(formula)
+  model_response_lm(data_pred,
+                    formula = formula,
+                    link_inv = list(pnorm, identity),
+                    generator = rbinom,
+                    effects_save = TRUE,
+                    ...)
+  }
+  # Simulate datasets
+  data_param <- expand.grid(beta0 = beta0, sigma2 = sigma2, phi = phi) %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(datasim = purrr::pmap(., fun)) %>%
+    tidyr::unnest()
+}
+```
+
+### COMPARE GAUSSIAN PROCESSES
+
+```{r}
+n <- 2000
+data_pred <- tibble::tibble(id = 1:n, s1 = runif(n), s2 = runif(n))
+# (data <- gp_probit_sim(data_pred, c(0.5, 1, 3, 5), c(0.0001, 0.02, 0.04, 0.05, 0.07)))
+(data <- gp_probit_sim(data_pred,
+                       c(-0.5, 0, 0.5),
+                       c(0.5, 1, 1.5, 2),
+                       c(0.03, 0.05)))
+
+ggplot(data, aes(s1, s2)) +
+  geom_point(aes(col = gp.list.prob), size = 0.5) +
+  scale_colour_distiller(palette = "RdYlBu") +
+  # facet_grid(phi ~ sigma2)
+  # facet_wrap(~ sigma2)
+  facet_grid(sigma2 ~ phi + beta0, scales = "free")
+```
+
+### IDENTIFIABILITY OF THE GAUSSIAN PROCESS PARAMETERS
+
+```{r}
+gp_vgs <- data %>%
+  group_by(beta0, phi, sigma2) %>%
+  nest() %>%
+  mutate(
+    vg = purrr::map(
+      data,
+      ~ gstat::variogram(gp.list.prob ~ 1, ~ s1 + s2, ., cutoff = 0.8, width = 0.005))
+    ) %>%
+  select(-data) %>%
+  unnest()
+
+ggplot(gp_vgs, aes(dist, gamma)) +
+  geom_point(size = 0.5) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 0.8)) +
+  facet_grid(sigma2 ~ phi + beta0, scales = "free")
+  # facet_wrap(~ sigma2)
+```
+
+### COMPARE BINARY SPATIAL OUTCOME
+
+```{r}
+ggplot(data, aes(s1, s2)) +
+  geom_point(aes(col = factor(response)), size = 0.5) +
+  # facet_grid(phi ~ sigma2)
+  # facet_wrap(~ sigma2)
+  facet_grid(sigma2 ~ phi + beta0, scales = "free")
+```
+
+### IDENTIFIABILITY OF CORRELATION PARAMETERS ON BINARY OUTPUT
+
+```{r}
+bi_vgs <- data %>%
+  group_by(beta0, phi, sigma2) %>%
+  nest() %>%
+  mutate(
+    vg = purrr::map(
+      data,
+      ~ gstat::variogram(response ~ 1, ~ s1 + s2, ., cutoff = 0.8, width = 0.005))
+    ) %>%
+  select(-data) %>%
+  unnest()
+
+get_sill <- function (beta0, sigma2) {
+  prop <- mean(pnorm(rnorm(10^5, beta0, sd = sigma2^0.5)))
+  return(prop * (1 - prop))
+}
+
+get_nugget <- function (beta0, sigma2) {
+  sill <- get_sill(beta0, sigma2)
+  nugget <- sill - var(pnorm(rnorm(10^5, beta0, sd = sigma2^0.5)))
+  return(nugget)
+}
+
+bi_vgs <- bi_vgs %>%
+  group_by(beta0, sigma2) %>%
+  nest() %>%
+  mutate(
+    inter = purrr::map2_dbl(beta0, sigma2, ~ get_nugget(.x, .y)),
+    sill = purrr::map2_dbl(beta0, sigma2, ~ get_sill(.x, .y))
+         ) %>%
+  unnest()
+
+ggplot(bi_vgs, aes(dist, gamma)) +
+  geom_point(size = 0.5) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 0.8)) +
+  geom_line(aes(y = inter), col = 2) +
+  geom_line(aes(y = sill), col = 3) +
+  # facet_grid(phi ~ sigma2, scales = "free")
+  # facet_wrap(~ sigma2)
+  facet_grid(sigma2 ~ phi + beta0)
+
+```
+
+```{r, fig.height = 14}
+vgs <- bind_cols(gp_vgs, bi_vgs)
+vgs$group <- paste(vgs$phi, vgs$sigma2)
+
+ggplot(vgs, aes(x = gamma1, y = gamma)) +
+  geom_point(aes(colour = dist)) +
+  geom_smooth() +
+  # scale_color_continuous() +
+  geom_hline(yintercept = 0) +
+  # facet_grid(sigma2 ~ phi)
+  # facet_wrap(~ sigma2, ncol = 1)
+  facet_grid(sigma2 ~ phi + beta0, scales = "free")
+
+
+
+
+
+# iter <- 5000
+# dist <- as.matrix(dist(dplyr::select(data, s1, s2)))
+# # out <- probit_gp(data$response, dist, c(psych::logit(0.5), log(0.02)), iter)
+# sigma_prop <- matrix(c(0.1, 0.05, 0.05, 0.1), 2) / 10
+# out <- probit_gp(data$response, dist, c(log(1), log(0.02)), iter, sigma_prop)
+# plot(out$param, type = "b")
+# plot(out$param[, 1])
+# plot(out$param[, 2])
+# abline(h = 0.02, col = 2)
+# summary(out$param[, 2])
+# var(out$param)
+#
+# data$z <- out$z[iter,]
+# ggplot(data, aes(s1, s2)) +
+#   geom_point(aes(col = gp, size = gp))
+# vg <- gstat::variogram(z ~ 1, ~ s1 + s2, data, cutoff = 0.4, width = 0.005)
+# ggplot(vg, aes(dist, gamma)) +
+#   geom_point(aes(size = np)) +
+#   geom_smooth() +
+#   expand_limits(y = 0, x = 0) +
+#   scale_x_continuous(limits = c(0, 0.4))
+#
+# hist(out$z[iter,])
+# plot(out$z[iter,], data$response)
+#
+# plot(out$z[iter,], type = "b")
+# var(out$z[iter,])
+# # hist(out$z[2,])
+# # hist(out$z[3,])
+# # hist(out$z[4,])
+# # hist(out$z[5,])
+```
