@@ -43,7 +43,7 @@ ggplot(vg, aes(dist, gamma)) +
 
 # 0.6
 # 50000 -> 17 minutes
-iter <- 20000
+iter <- 10000
 dist <- as.matrix(dist(dplyr::select(data, s1, s2)))
 # out <- probit_gp(data$response, dist, c(psych::logit(0.5), log(0.02)), iter)
 # sigma_prop <- matrix(c(0.1, 0.05, 0.05, 0.1), 2) / 10
@@ -52,12 +52,12 @@ sigma_prop <- matrix(c(0.1, -0.02, -0.02, 0.05), 2) * 2.38 ^ 2 / 2
 # system.time(
 #   out0 <- probit_gp(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 # )
-# system.time(
-#   out <- probit_gp_chol(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
-# )
 system.time(
-  out <- probit_gp_adap(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+  out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 )
+# system.time(
+#   out <- probit_gp_adap(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+# )
 
 # 9%
 # DGEMM  performs one of the matrix-matrix operations
@@ -90,7 +90,7 @@ ggplot(data = df, aes(sigma2, phi)) +
   guides(alpha="none") +
   geom_point(alpha = 0.5)
 
-df2 <- setNames(as.data.frame(log(out$param[seq(iter/2, iter, 20), ])), c("sigma2", "phi"))
+df2 <- setNames(as.data.frame(log(out$param[seq(iter/2, iter, 15), ])), c("sigma2", "phi"))
 ggplot(data = df2, aes(sigma2, phi)) +
   # stat_density2d() +
   stat_density2d(aes(fill=..level..,alpha=..level..),
@@ -102,13 +102,14 @@ ggplot(data = df2, aes(sigma2, phi)) +
 
 
 
-nrow(unique(out$param))
 nrow(unique(out$param))/(iter/2)
+
+nrow(unique(out$param[(iter/2 + 1):iter, ]))/(iter/2)
 
 plot(out$param[, 1], type = "b")
 abline(h = 1, col = 2)
 
-plot(out$param[seq(iter/2, iter, 10), 1], type = "b")
+plot(out$param[seq(iter/ 2, iter, 10), 1], type = "b")
 abline(h = 1, col = 2)
 
 plot(out$param[, 2], type = "b")
@@ -257,8 +258,8 @@ hist(exp(rnorm(50000, log(1), 0.4)), 200, freq = FALSE, xlim = c(0, 5))
 lines(density(out$param[(iter/2):iter, 1]), col = 2)
 quantile(out$param[(iter/2):iter, 1], c(0.025, 0.975))
 
-# acf(out$param[(iter/2):iter, 1])
-# acf(out$param[(iter/2):iter, 2])
+acf(out$param[(iter/2):iter, 1])
+acf(out$param[(iter/2):iter, 2])
 
 acf(out$param[seq((iter/2), iter, 10), 1])
 # acf(out$param[seq((iter/2), iter, 10), 2])
