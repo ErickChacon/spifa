@@ -82,6 +82,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// vec2corr
+arma::mat vec2corr(arma::vec x, double K);
+RcppExport SEXP _spmirt_vec2corr(SEXP xSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type K(KSEXP);
+    rcpp_result_gen = Rcpp::wrap(vec2corr(x, K));
+    return rcpp_result_gen;
+END_RCPP
+}
 // probit_gp_adap
 Rcpp::List probit_gp_adap(Rcpp::NumericVector y, arma::mat dist, arma::vec params, int iter, arma::mat Sigma_proposal);
 RcppExport SEXP _spmirt_probit_gp_adap(SEXP ySEXP, SEXP distSEXP, SEXP paramsSEXP, SEXP iterSEXP, SEXP Sigma_proposalSEXP) {
@@ -191,6 +203,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type sigma_inv(sigma_invSEXP);
     rcpp_result_gen = Rcpp::wrap(dmvnorm_prec(x, mean, sigma_inv));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dinvwish
+double dinvwish(double v, arma::mat X, arma::mat S);
+RcppExport SEXP _spmirt_dinvwish(SEXP vSEXP, SEXP XSEXP, SEXP SSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type v(vSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type S(SSEXP);
+    rcpp_result_gen = Rcpp::wrap(dinvwish(v, X, S));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -403,6 +428,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_vecsub1", (DL_FUNC) &_spmirt_vecsub1, 2},
     {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
+    {"_spmirt_vec2corr", (DL_FUNC) &_spmirt_vec2corr, 2},
     {"_spmirt_probit_gp_adap", (DL_FUNC) &_spmirt_probit_gp_adap, 5},
     {"_spmirt_probit_gp", (DL_FUNC) &_spmirt_probit_gp, 5},
     {"_spmirt_probit_gp_chol2", (DL_FUNC) &_spmirt_probit_gp_chol2, 5},
@@ -411,6 +437,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_dmvnorm_chol", (DL_FUNC) &_spmirt_dmvnorm_chol, 3},
     {"_spmirt_dmvnorm_cholinv", (DL_FUNC) &_spmirt_dmvnorm_cholinv, 3},
     {"_spmirt_dmvnorm_prec", (DL_FUNC) &_spmirt_dmvnorm_prec, 3},
+    {"_spmirt_dinvwish", (DL_FUNC) &_spmirt_dinvwish, 3},
     {"_spmirt_testing", (DL_FUNC) &_spmirt_testing, 2},
     {"_spmirt_logit", (DL_FUNC) &_spmirt_logit, 1},
     {"_spmirt_logistic", (DL_FUNC) &_spmirt_logistic, 1},

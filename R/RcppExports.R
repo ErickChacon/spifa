@@ -31,6 +31,11 @@ subset_cpp <- function(X, y) {
     .Call(`_spmirt_subset_cpp`, X, y)
 }
 
+#' @export
+vec2corr <- function(x, K) {
+    .Call(`_spmirt_vec2corr`, x, K)
+}
+
 #' @title Spatial Probit Model
 #'
 #' @description
@@ -137,6 +142,11 @@ dmvnorm_cholinv <- function(x, mean, L_inv) {
 #' @export
 dmvnorm_prec <- function(x, mean, sigma_inv) {
     .Call(`_spmirt_dmvnorm_prec`, x, mean, sigma_inv)
+}
+
+#' @export
+dinvwish <- function(v, X, S) {
+    .Call(`_spmirt_dinvwish`, v, X, S)
 }
 
 #' @export
