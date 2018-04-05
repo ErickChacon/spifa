@@ -73,9 +73,9 @@ double dinvwish(double v, arma::mat X, arma::mat S) {
 
 //' @export
 // [[Rcpp::export]]
-double dlkj_corr(arma::mat Corr, double eta) {
-  const int K = Corr.n_rows;
-  arma::mat L = arma::chol(Corr);
+double dlkj_corr(arma::mat R, double eta) {
+  const int K = R.n_rows;
+  arma::mat L = arma::chol(R);
   double loglike = 2 * (eta - 1) * arma::accu(log(L.diag()));
   return exp(loglike);
 }
