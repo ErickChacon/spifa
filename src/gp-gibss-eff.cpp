@@ -2,7 +2,7 @@
 #include <RcppArmadillo.h>
 #include <RcppTN.h>
 #include "arma-mat.h"
-#include "likelihood.h"
+#include "pdf.h"
 #include "links.h"
 // [[Rcpp::depends(RcppTN)]]
 // [[Rcpp::depends(RcppArmadillo)]]

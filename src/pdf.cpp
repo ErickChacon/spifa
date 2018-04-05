@@ -1,5 +1,7 @@
 
 #include <RcppArmadillo.h>
+#include "correlation.h"
+// [[Rcpp::depends(RcppArmadillo)]]
 
 //' @export
 // [[Rcpp::export]]
@@ -73,23 +75,51 @@ double dinvwish(double v, arma::mat X, arma::mat S) {
 
 //' @export
 // [[Rcpp::export]]
-double dlkj_corr(arma::mat R, double eta) {
+double dlkj_corr(arma::mat R, double eta, bool loglik = false) {
   const int K = R.n_rows;
   arma::mat L = arma::chol(R);
   double loglike = 2 * (eta - 1) * arma::accu(log(L.diag()));
-  return exp(loglike);
+
+  if (loglik) {
+    return loglike;
+  } else {
+    return exp(loglike);
+  }
 }
 
 //' @export
 // [[Rcpp::export]]
-double dlkj_corr_chol(arma::mat L, double eta) {
+double dlkj_corr_chol(arma::mat L, double eta, bool loglik = false) {
   const int K = L.n_rows;
   double loglike = 0;
   for (int i = 1; i < K; ++i) {
     loglike += (K - i-1 + 2*eta-2) * log(L(i, i));
   }
-  return exp(loglike);
+
+  if (loglik) {
+    return loglike;
+  } else {
+    return exp(loglike);
+  }
 }
+
+//' @export
+// [[Rcpp::export]]
+double dlkj_corr_free(arma::vec x, int K, double eta, bool loglik = false) {
+  arma::mat L = vec2trimatl(tanh(x), K, false);
+  arma::mat L_chol = vec2chol_corr(x, K);
+
+  double loglike = dlkj_corr_chol(L_chol, eta, true);
+  loglike -= 2 * arma::accu(log(cosh(x)));
+  loglike += arma::accu(log(trimatl2vec(L_chol / L, false)));
+
+  if (loglik) {
+    return loglike;
+  } else {
+    return exp(loglike);
+  }
+}
+
 
 //' @export
 // [[Rcpp::export]]
