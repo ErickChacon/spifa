@@ -82,15 +82,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// vec2corr
-arma::mat vec2corr(arma::vec x, double K);
-RcppExport SEXP _spmirt_vec2corr(SEXP xSEXP, SEXP KSEXP) {
+// vec2trimatl
+arma::mat vec2trimatl(arma::vec x, int K, bool diag);
+RcppExport SEXP _spmirt_vec2trimatl(SEXP xSEXP, SEXP KSEXP, SEXP diagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< double >::type K(KSEXP);
-    rcpp_result_gen = Rcpp::wrap(vec2corr(x, K));
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< bool >::type diag(diagSEXP);
+    rcpp_result_gen = Rcpp::wrap(vec2trimatl(x, K, diag));
+    return rcpp_result_gen;
+END_RCPP
+}
+// trimatl2vec
+arma::vec trimatl2vec(arma::mat L, bool diag);
+RcppExport SEXP _spmirt_trimatl2vec(SEXP LSEXP, SEXP diagSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type L(LSEXP);
+    Rcpp::traits::input_parameter< bool >::type diag(diagSEXP);
+    rcpp_result_gen = Rcpp::wrap(trimatl2vec(L, diag));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vec2chol_corr
+arma::mat vec2chol_corr(arma::vec x, int K);
+RcppExport SEXP _spmirt_vec2chol_corr(SEXP xSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    rcpp_result_gen = Rcpp::wrap(vec2chol_corr(x, K));
+    return rcpp_result_gen;
+END_RCPP
+}
+// chol_corr2vec
+arma::vec chol_corr2vec(arma::mat L_chol);
+RcppExport SEXP _spmirt_chol_corr2vec(SEXP L_cholSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type L_chol(L_cholSEXP);
+    rcpp_result_gen = Rcpp::wrap(chol_corr2vec(L_chol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -151,6 +187,88 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type Sigma_proposal(Sigma_proposalSEXP);
     rcpp_result_gen = Rcpp::wrap(probit_gp_chol(y, dist, params, iter, Sigma_proposal));
+    return rcpp_result_gen;
+END_RCPP
+}
+// logit
+double logit(double p);
+RcppExport SEXP _spmirt_logit(SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(logit(p));
+    return rcpp_result_gen;
+END_RCPP
+}
+// logistic
+double logistic(double x);
+RcppExport SEXP _spmirt_logistic(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(logistic(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ifa_gibbs
+Rcpp::List ifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
+RcppExport SEXP _spmirt_ifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type q(qSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    rcpp_result_gen = Rcpp::wrap(ifa_gibbs(y, n, q, N, m));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ifa_gibbs_nonide
+Rcpp::List ifa_gibbs_nonide(Rcpp::NumericVector y, int n, int q, int N, int m);
+RcppExport SEXP _spmirt_ifa_gibbs_nonide(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type q(qSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    rcpp_result_gen = Rcpp::wrap(ifa_gibbs_nonide(y, n, q, N, m));
+    return rcpp_result_gen;
+END_RCPP
+}
+// spifa_gibbs
+Rcpp::List spifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
+RcppExport SEXP _spmirt_spifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type q(qSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    rcpp_result_gen = Rcpp::wrap(spifa_gibbs(y, n, q, N, m));
+    return rcpp_result_gen;
+END_RCPP
+}
+// multi_lm
+Rcpp::List multi_lm(Rcpp::NumericVector y, arma::mat dist, arma::vec params, int iter, arma::mat Sigma_proposal);
+RcppExport SEXP _spmirt_multi_lm(SEXP ySEXP, SEXP distSEXP, SEXP paramsSEXP, SEXP iterSEXP, SEXP Sigma_proposalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type dist(distSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Sigma_proposal(Sigma_proposalSEXP);
+    rcpp_result_gen = Rcpp::wrap(multi_lm(y, dist, params, iter, Sigma_proposal));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -219,6 +337,46 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dlkj_corr
+double dlkj_corr(arma::mat R, double eta, bool loglik);
+RcppExport SEXP _spmirt_dlkj_corr(SEXP RSEXP, SEXP etaSEXP, SEXP loglikSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< bool >::type loglik(loglikSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlkj_corr(R, eta, loglik));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dlkj_corr_chol
+double dlkj_corr_chol(arma::mat L, double eta, bool loglik);
+RcppExport SEXP _spmirt_dlkj_corr_chol(SEXP LSEXP, SEXP etaSEXP, SEXP loglikSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type L(LSEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< bool >::type loglik(loglikSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlkj_corr_chol(L, eta, loglik));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dlkj_corr_free
+double dlkj_corr_free(arma::vec x, int K, double eta, bool loglik);
+RcppExport SEXP _spmirt_dlkj_corr_free(SEXP xSEXP, SEXP KSEXP, SEXP etaSEXP, SEXP loglikSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< bool >::type loglik(loglikSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlkj_corr_free(x, K, eta, loglik));
+    return rcpp_result_gen;
+END_RCPP
+}
 // testing
 Rcpp::List testing(arma::mat X, arma::vec y);
 RcppExport SEXP _spmirt_testing(SEXP XSEXP, SEXP ySEXP) {
@@ -228,73 +386,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
     rcpp_result_gen = Rcpp::wrap(testing(X, y));
-    return rcpp_result_gen;
-END_RCPP
-}
-// logit
-double logit(double p);
-RcppExport SEXP _spmirt_logit(SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(logit(p));
-    return rcpp_result_gen;
-END_RCPP
-}
-// logistic
-double logistic(double x);
-RcppExport SEXP _spmirt_logistic(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(logistic(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ifa_gibbs
-Rcpp::List ifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
-RcppExport SEXP _spmirt_ifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< int >::type q(qSEXP);
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(ifa_gibbs(y, n, q, N, m));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ifa_gibbs_nonide
-Rcpp::List ifa_gibbs_nonide(Rcpp::NumericVector y, int n, int q, int N, int m);
-RcppExport SEXP _spmirt_ifa_gibbs_nonide(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< int >::type q(qSEXP);
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(ifa_gibbs_nonide(y, n, q, N, m));
-    return rcpp_result_gen;
-END_RCPP
-}
-// spifa_gibbs
-Rcpp::List spifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
-RcppExport SEXP _spmirt_spifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< int >::type q(qSEXP);
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(spifa_gibbs(y, n, q, N, m));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -421,6 +512,8 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP _spmirt_vec2corr(SEXP, SEXP);
+
 static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_vec2mat", (DL_FUNC) &_spmirt_vec2mat, 3},
     {"_spmirt_vec2matt", (DL_FUNC) &_spmirt_vec2matt, 3},
@@ -428,22 +521,29 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_vecsub1", (DL_FUNC) &_spmirt_vecsub1, 2},
     {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
-    {"_spmirt_vec2corr", (DL_FUNC) &_spmirt_vec2corr, 2},
+    {"_spmirt_vec2trimatl", (DL_FUNC) &_spmirt_vec2trimatl, 3},
+    {"_spmirt_trimatl2vec", (DL_FUNC) &_spmirt_trimatl2vec, 2},
+    {"_spmirt_vec2chol_corr", (DL_FUNC) &_spmirt_vec2chol_corr, 2},
+    {"_spmirt_chol_corr2vec", (DL_FUNC) &_spmirt_chol_corr2vec, 1},
     {"_spmirt_probit_gp_adap", (DL_FUNC) &_spmirt_probit_gp_adap, 5},
     {"_spmirt_probit_gp", (DL_FUNC) &_spmirt_probit_gp, 5},
     {"_spmirt_probit_gp_chol2", (DL_FUNC) &_spmirt_probit_gp_chol2, 5},
     {"_spmirt_probit_gp_chol", (DL_FUNC) &_spmirt_probit_gp_chol, 5},
-    {"_spmirt_dmvnorm", (DL_FUNC) &_spmirt_dmvnorm, 3},
-    {"_spmirt_dmvnorm_chol", (DL_FUNC) &_spmirt_dmvnorm_chol, 3},
-    {"_spmirt_dmvnorm_cholinv", (DL_FUNC) &_spmirt_dmvnorm_cholinv, 3},
-    {"_spmirt_dmvnorm_prec", (DL_FUNC) &_spmirt_dmvnorm_prec, 3},
-    {"_spmirt_dinvwish", (DL_FUNC) &_spmirt_dinvwish, 3},
-    {"_spmirt_testing", (DL_FUNC) &_spmirt_testing, 2},
     {"_spmirt_logit", (DL_FUNC) &_spmirt_logit, 1},
     {"_spmirt_logistic", (DL_FUNC) &_spmirt_logistic, 1},
     {"_spmirt_ifa_gibbs", (DL_FUNC) &_spmirt_ifa_gibbs, 5},
     {"_spmirt_ifa_gibbs_nonide", (DL_FUNC) &_spmirt_ifa_gibbs_nonide, 5},
     {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},
+    {"_spmirt_multi_lm", (DL_FUNC) &_spmirt_multi_lm, 5},
+    {"_spmirt_dmvnorm", (DL_FUNC) &_spmirt_dmvnorm, 3},
+    {"_spmirt_dmvnorm_chol", (DL_FUNC) &_spmirt_dmvnorm_chol, 3},
+    {"_spmirt_dmvnorm_cholinv", (DL_FUNC) &_spmirt_dmvnorm_cholinv, 3},
+    {"_spmirt_dmvnorm_prec", (DL_FUNC) &_spmirt_dmvnorm_prec, 3},
+    {"_spmirt_dinvwish", (DL_FUNC) &_spmirt_dinvwish, 3},
+    {"_spmirt_dlkj_corr", (DL_FUNC) &_spmirt_dlkj_corr, 3},
+    {"_spmirt_dlkj_corr_chol", (DL_FUNC) &_spmirt_dlkj_corr_chol, 3},
+    {"_spmirt_dlkj_corr_free", (DL_FUNC) &_spmirt_dlkj_corr_free, 4},
+    {"_spmirt_testing", (DL_FUNC) &_spmirt_testing, 2},
     {"_spmirt_rcpp_hello_world", (DL_FUNC) &_spmirt_rcpp_hello_world, 0},
     {"_spmirt_matmatmat", (DL_FUNC) &_spmirt_matmatmat, 1},
     {"_spmirt_matmat", (DL_FUNC) &_spmirt_matmat, 1},
@@ -455,6 +555,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_inv_solve2", (DL_FUNC) &_spmirt_inv_solve2, 2},
     {"_spmirt_inv_form", (DL_FUNC) &_spmirt_inv_form, 2},
     {"_spmirt_rcpptn_hello_world", (DL_FUNC) &_spmirt_rcpptn_hello_world, 0},
+    {"_spmirt_vec2corr",           (DL_FUNC) &_spmirt_vec2corr,           2},
     {NULL, NULL, 0}
 };
 

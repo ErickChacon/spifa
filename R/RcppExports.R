@@ -32,8 +32,23 @@ subset_cpp <- function(X, y) {
 }
 
 #' @export
-vec2corr <- function(x, K) {
-    .Call(`_spmirt_vec2corr`, x, K)
+vec2trimatl <- function(x, K, diag = TRUE) {
+    .Call(`_spmirt_vec2trimatl`, x, K, diag)
+}
+
+#' @export
+trimatl2vec <- function(L, diag = TRUE) {
+    .Call(`_spmirt_trimatl2vec`, L, diag)
+}
+
+#' @export
+vec2chol_corr <- function(x, K) {
+    .Call(`_spmirt_vec2chol_corr`, x, K)
+}
+
+#' @export
+chol_corr2vec <- function(L_chol) {
+    .Call(`_spmirt_chol_corr2vec`, L_chol)
 }
 
 #' @title Spatial Probit Model
@@ -125,36 +140,6 @@ probit_gp_chol <- function(y, dist, params, iter, Sigma_proposal) {
 }
 
 #' @export
-dmvnorm <- function(x, mean, sigma) {
-    .Call(`_spmirt_dmvnorm`, x, mean, sigma)
-}
-
-#' @export
-dmvnorm_chol <- function(x, mean, L) {
-    .Call(`_spmirt_dmvnorm_chol`, x, mean, L)
-}
-
-#' @export
-dmvnorm_cholinv <- function(x, mean, L_inv) {
-    .Call(`_spmirt_dmvnorm_cholinv`, x, mean, L_inv)
-}
-
-#' @export
-dmvnorm_prec <- function(x, mean, sigma_inv) {
-    .Call(`_spmirt_dmvnorm_prec`, x, mean, sigma_inv)
-}
-
-#' @export
-dinvwish <- function(v, X, S) {
-    .Call(`_spmirt_dinvwish`, v, X, S)
-}
-
-#' @export
-testing <- function(X, y) {
-    .Call(`_spmirt_testing`, X, y)
-}
-
-#' @export
 logit <- function(p) {
     .Call(`_spmirt_logit`, p)
 }
@@ -228,6 +213,73 @@ ifa_gibbs_nonide <- function(y, n, q, N, m = 1L) {
 #' @export
 spifa_gibbs <- function(y, n, q, N, m = 1L) {
     .Call(`_spmirt_spifa_gibbs`, y, n, q, N, m)
+}
+
+#' @title Multivariate Linear Model
+#'
+#' @description
+#' \code{ifa_gibbs} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#'
+#'
+#' @export
+multi_lm <- function(y, dist, params, iter, Sigma_proposal) {
+    .Call(`_spmirt_multi_lm`, y, dist, params, iter, Sigma_proposal)
+}
+
+#' @export
+dmvnorm <- function(x, mean, sigma) {
+    .Call(`_spmirt_dmvnorm`, x, mean, sigma)
+}
+
+#' @export
+dmvnorm_chol <- function(x, mean, L) {
+    .Call(`_spmirt_dmvnorm_chol`, x, mean, L)
+}
+
+#' @export
+dmvnorm_cholinv <- function(x, mean, L_inv) {
+    .Call(`_spmirt_dmvnorm_cholinv`, x, mean, L_inv)
+}
+
+#' @export
+dmvnorm_prec <- function(x, mean, sigma_inv) {
+    .Call(`_spmirt_dmvnorm_prec`, x, mean, sigma_inv)
+}
+
+#' @export
+dinvwish <- function(v, X, S) {
+    .Call(`_spmirt_dinvwish`, v, X, S)
+}
+
+#' @export
+dlkj_corr <- function(R, eta, loglik = FALSE) {
+    .Call(`_spmirt_dlkj_corr`, R, eta, loglik)
+}
+
+#' @export
+dlkj_corr_chol <- function(L, eta, loglik = FALSE) {
+    .Call(`_spmirt_dlkj_corr_chol`, L, eta, loglik)
+}
+
+#' @export
+dlkj_corr_free <- function(x, K, eta, loglik = FALSE) {
+    .Call(`_spmirt_dlkj_corr_free`, x, K, eta, loglik)
+}
+
+#' @export
+testing <- function(X, y) {
+    .Call(`_spmirt_testing`, X, y)
 }
 
 #' @export
