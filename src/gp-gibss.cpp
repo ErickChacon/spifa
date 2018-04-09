@@ -2,7 +2,7 @@
 #include <RcppArmadillo.h>
 #include <RcppTN.h>
 #include "arma-mat.h"
-#include "densities_pdf.h"
+#include "pdf.h"
 #include "links.h"
 // [[Rcpp::depends(RcppTN)]]
 // [[Rcpp::depends(RcppArmadillo)]]

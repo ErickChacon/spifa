@@ -512,8 +512,6 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP _spmirt_vec2corr(SEXP, SEXP);
-
 static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_vec2mat", (DL_FUNC) &_spmirt_vec2mat, 3},
     {"_spmirt_vec2matt", (DL_FUNC) &_spmirt_vec2matt, 3},
@@ -555,7 +553,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spmirt_inv_solve2", (DL_FUNC) &_spmirt_inv_solve2, 2},
     {"_spmirt_inv_form", (DL_FUNC) &_spmirt_inv_form, 2},
     {"_spmirt_rcpptn_hello_world", (DL_FUNC) &_spmirt_rcpptn_hello_world, 0},
-    {"_spmirt_vec2corr",           (DL_FUNC) &_spmirt_vec2corr,           2},
     {NULL, NULL, 0}
 };
 
