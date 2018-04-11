@@ -50,7 +50,7 @@ Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::vec sigmas, int iter,
   arma::mat beta_samples(pq, iter);
 
   // Initializing Corr
-  arma::vec corr_free(n_corr);
+  arma::vec corr_free(n_corr, arma::fill::randn);
   arma::mat Corr_chol = vec2chol_corr(corr_free, q);
   arma::mat Cov_chol = Corr_chol;
   Cov_chol.each_col() %= sigmas;
