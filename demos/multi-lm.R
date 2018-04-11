@@ -52,7 +52,8 @@ Rcpp::sourceCpp("../src/multi-lm.cpp")
 
 iter <- 10000
 samples <- multi_lm(Y, X, sigmas, iter, 0.01 * Sigma_proposal)
-samples$corr_chol[1:5,]
+samples %>% map(~ tail(.))
+# samples$corr_chol[1:5,]
 
 apply(samples$beta, 2, mean)
 cor(samples$beta)
@@ -74,6 +75,8 @@ gg_trace <- function (samples, name) {
     ggplot(aes(iteration, varvalue, group = varname, col = varname)) +
       geom_path(alpha = 0.4, linetype = 1)
 }
+
+
 
 # Visualize traces
 gg_trace(samples_params$beta, "beta")

@@ -63,3 +63,15 @@ X <- riwish(p+1, S)
 
 sum(diag(S %*% solve(X)))
 sum(S * solve(X))
+
+
+
+library(dplyr)
+
+test <- function (a, b) {
+  a + b
+}
+
+test(3, 4)
+library()
+

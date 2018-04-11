@@ -1,9 +1,11 @@
 
 #include <RcppArmadillo.h>
+#include <string>
 #include "arma-mat.h"
 #include "links.h"
 #include "pdf.h"
 #include "correlation.h"
+#include "name-samples.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 
 //' @title Multivariate Linear Model
@@ -94,9 +96,17 @@ Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::vec sigmas, int iter,
     corr_samples.col(i) = trimatl2vec(Corr_chol, true);
   }
 
+  Rcpp::NumericMatrix beta_samples_rcpp = Rcpp::wrap(beta_samples.t());
+  Rcpp::colnames(beta_samples_rcpp) = name_samples_mat(p, q, "Beta");
+
+  Rcpp::NumericMatrix corr_samples_rcpp = Rcpp::wrap(corr_samples.t());
+  Rcpp::colnames(corr_samples_rcpp) = name_samples_lower(q, q, "Corr_chol");
+
   return Rcpp::List::create(
-      Rcpp::Named("beta") = beta_samples.t(),
-      Rcpp::Named("corr_chol") = corr_samples.t()
+      // Rcpp::Named("beta") = beta_samples.t(),
+      // Rcpp::Named("bla") = myvector,
+      Rcpp::Named("beta") = beta_samples_rcpp,
+      Rcpp::Named("corr_chol") = corr_samples_rcpp
       );
 
 }
