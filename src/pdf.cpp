@@ -5,8 +5,7 @@
 
 //' @export
 // [[Rcpp::export]]
-double dmvnorm(arma::mat X, arma::mat Mean, arma::mat Sigma,
-    bool logpdf = true) {
+double dmvnorm(arma::mat X, arma::mat Mean, arma::mat Sigma, bool logpdf = true) {
   const int q = X.n_rows;
   const int n = X.n_cols;
   const double pi = M_PI;
@@ -20,8 +19,7 @@ double dmvnorm(arma::mat X, arma::mat Mean, arma::mat Sigma,
 
 //' @export
 // [[Rcpp::export]]
-double dmvnorm_chol(arma::mat X, arma::mat Mean, arma::mat L,
-    bool logpdf = true) {
+double dmvnorm_chol(arma::mat X, arma::mat Mean, arma::mat L, bool logpdf = true) {
   const int q = X.n_rows;
   const int n = X.n_cols;
   const double pi = M_PI;
@@ -63,8 +61,7 @@ double dmvnorm_prec(arma::vec x, arma::vec mean, arma::mat sigma_inv) {
 
 //' @export
 // [[Rcpp::export]]
-double dinvwish(double v, arma::mat X, arma::mat S,
-    bool logpdf = true) {
+double dinvwish(double v, arma::mat X, arma::mat S, bool logpdf = true) {
   const int p = X.n_cols;
   const double pi = M_PI;
   arma::mat S_chol = arma::chol(S, "lower");
@@ -111,6 +108,13 @@ double dlkj_corr_free(arma::vec x, int K, double eta, bool logpdf = true) {
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
 
+//' @export
+// [[Rcpp::export]]
+arma::mat test1(arma::vec A, arma::mat B) {
+  B.each_col() %= A;
+  // B.each_col() %= A;
+  return B;
+}
 
 //' @export
 // [[Rcpp::export]]

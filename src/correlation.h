@@ -1,7 +1,7 @@
 #include <RcppArmadillo.h>
 
-#ifndef ARMA_MAT_H
-#define ARMA_MAT_H
+#ifndef CORRELATION_H
+#define CORRELATION_H
 
 arma::mat vec2trimatl(arma::vec x, int K, bool diag = true);
 arma::vec trimatl2vec(arma::mat L, bool diag = true);

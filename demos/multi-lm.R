@@ -50,8 +50,8 @@ Sigma_proposal <- diag(1, 3)
 getwd()
 Rcpp::sourceCpp("../src/multi-lm.cpp")
 
-iter <- 5000
-samples <- multi_lm(Y, X, Corr, sigmas, Cov, Beta, iter, Sigma_proposal)
+iter <- 5
+samples <- multi_lm(Y, X, sigmas, iter, Sigma_proposal)
 
 apply(samples$beta, 2, mean)
 cor(samples$beta)

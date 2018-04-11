@@ -1,8 +1,9 @@
 
 #include <RcppArmadillo.h>
 #include "arma-mat.h"
-#include "pdf.h"
 #include "links.h"
+#include "pdf.h"
+#include "correlation.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 
 //' @title Multivariate Linear Model
@@ -24,8 +25,8 @@
 //'
 //' @export
 // [[Rcpp::export]]
-Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::mat Corr, arma::vec sigmas,
-    arma::mat Cov, arma::mat Beta, int iter, arma::mat proposal_beta_Sigma) {
+Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::vec sigmas, int iter,
+    arma::mat proposal_corr_Sigma) {
 
   // Define global contants
   const int n = Y.n_rows;
@@ -40,56 +41,62 @@ Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::mat Corr, arma::vec sigmas,
   arma::mat eye_p = arma::eye<arma::mat>(p,p);
   arma::mat eye_pq = arma::eye<arma::mat>(pq,pq);
 
-  // Priors
+  // Hyperparameters of priors
   double prior_beta_sigma2 = 10;
 
   // Initializing beta
   arma::vec beta(pq, arma::fill::randn);
+  arma::mat Beta = vec2mat(beta, p, q);
   arma::mat beta_samples(pq, iter);
 
   // Initializing Corr
   arma::vec corr_free(n_corr);
   arma::mat Corr_chol = vec2chol_corr(corr_free, q);
+  arma::mat Cov_chol = Corr_chol;
+  Cov_chol.each_col() %= sigmas;
+  arma::mat Cov_chol_inv = arma::inv(trimatl(Cov_chol));
+  arma::mat Cov_inv = Cov_chol_inv.t() * Cov_chol_inv;
+  arma::mat corr_samples(round((q+1) * q / 2), iter);
 
   for (int i = 0; i < iter; ++i) {
 
     // Sampling beta: Gibbs
-    arma::mat Cov_inv = arma::inv_sympd(Cov);
     arma::mat beta_cov_inv =
       arma::kron(Cov_inv, X.t() * X) + eye_pq / pow(prior_beta_sigma2, 2);
     arma::mat beta_cov = arma::inv_sympd(beta_cov_inv);
     arma::mat beta_cov_chol = arma::chol(beta_cov, "lower");
     arma::vec beta_mean = beta_cov * arma::vectorise(X.t() * Y * Cov_inv);
     beta = beta_mean + beta_cov_chol * arma::randn<arma::vec>(pq);
+    Beta = vec2mat(beta, p, q);
 
-    // Sampling Corr: Metropolis Hastings
-    arma::vec proposal_beta_Sigma_chol = arma::chol(proposal_beta_Sigma);
+    // Sampling Corr: random walk Metropolis Hastings
+    arma::mat proposal_corr_Sigma_chol = arma::chol(proposal_corr_Sigma);
     arma::vec corr_free_aux =
-      corr_free + proposal_beta_Sigma_chol * arma::randn<arma::vec>(n_corr);
+      corr_free + proposal_corr_Sigma_chol * arma::randn<arma::vec>(n_corr);
     arma::mat Corr_chol_aux = vec2chol_corr(corr_free_aux, q);
+    arma::mat Cov_chol_aux = Corr_chol_aux;
+    Cov_chol_aux.each_col() %= sigmas;
     double prob_accept_log =
-
-      dmvnorm_cholinv(z, zeros_n, Sigma_z_aux_cholinv) +
-      R::dnorm(params_aux(0), log(1), 0.4, true) +
-      R::dnorm(params_aux(1), log(0.03), 0.4, true) -
-      dmvnorm_cholinv(z, zeros_n, Sigma_z_cholinv) -
-      R::dnorm(params(0), log(1), 0.4, true) -
-      R::dnorm(params(1), log(0.03), 0.4, true);
-    if (accept > log(R::runif(0,1))) {
-      params = params_aux;
-      Sigma_gp = Sigma_gp_aux;
-      Sigma_z_cholinv = Sigma_z_aux_cholinv;
-      Sigma_marginal = Sigma_marginal_aux;
-      tau2 = tau2_aux;
-      phi = phi_aux;
+      dmvnorm_chol(Y.t(), Beta.t() * X.t(), Cov_chol_aux, true) +
+      dlkj_corr_free(corr_free_aux, q, 1.5, true) -
+      dmvnorm_chol(Y.t(), Beta.t() * X.t(), Cov_chol, true) -
+      dlkj_corr_free(corr_free, q, 1.5, true);
+    if (prob_accept_log > log(R::runif(0,1))) {
+      corr_free = corr_free_aux;
+      Corr_chol = Corr_chol_aux;
+      Cov_chol = Cov_chol_aux;
+      Cov_chol_inv = arma::inv(trimatl(Cov_chol));
+      Cov_inv = Cov_chol_inv.t() * Cov_chol_inv;
     }
 
     // Save samples
     beta_samples.col(i) = beta;
+    corr_samples.col(i) = trimatl2vec(Corr_chol, true);
   }
 
   return Rcpp::List::create(
-      Rcpp::Named("beta") = beta_samples.t()
+      Rcpp::Named("beta") = beta_samples.t(),
+      Rcpp::Named("corr_chol") = corr_samples.t()
       );
 
 }
