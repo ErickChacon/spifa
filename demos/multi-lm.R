@@ -49,55 +49,43 @@ Sigma_proposal <- diag(1, 3)
 
 getwd()
 Rcpp::sourceCpp("../src/multi-lm.cpp")
+source("ggplot-mcmc.R")
 
 iter <- 10000
 samples <- multi_lm(Y, X, sigmas, iter, 0.01 * Sigma_proposal)
 samples %>% map(~ tail(.))
-# samples$corr_chol[1:5,]
+
 
 apply(samples$beta, 2, mean)
 cor(samples$beta)
 
-# Organize and summarise output
-samples_after_burin <- samples %>% purrr::map(~ .[1:iter, ])
-samples_params <- samples_after_burin
-samples_params_summary <- samples_params %>%
-  map(~ apply(., 2, function (x) quantile(x, c(0.025, 0.5, 0.975)))) %>%
-  map(~ as_tibble(t(.))) %>%
-  map(~ setNames(., make.names(names(.))))
-
-gg_trace <- function (samples, name) {
-  samples %>%
-    as_tibble() %>%
-    setNames(paste0(name, 1:ncol(samples))) %>%
-    mutate(iteration = 1:n()) %>%
-    gather(varname, varvalue, -iteration) %>%
-    ggplot(aes(iteration, varvalue, group = varname, col = varname)) +
-      geom_path(alpha = 0.4, linetype = 1)
-}
-
-
-
 # Visualize traces
-gg_trace(samples_params$beta, "beta")
-gg_trace(samples_params$corr_chol, "corr_chol")
 
-# Visualize results
-samples_params_summary$beta <- samples_params_summary$beta %>%
-  mutate(param = beta)
+samples_as_tibble(samples, "beta") %>% gg_trace(wrap = TRUE, alpha = 0.6)
+samples_as_tibble(samples, "corr_chol") %>% gg_trace(alpha = 0.6)
 
-samples_params_summary$beta %>%
-  ggplot(., aes(X50., param)) +
-    geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
-    geom_point(col = 2)
+# Visualize densities
 
-# Visualize results
+samples_as_tibble(samples, "corr_chol") %>%
+  gg_density_ridges(aes(fill = Parameters), scale = 2, alpha = 0.5)
+
+# Visualize credible intervals
+sample_summary(samples, "beta") %>%
+  mutate(param = beta) %>%
+  gg_errorbarh() +
+  geom_point(aes(param, Parameters), col = 3)
+
 Corr_chol <- t(chol(Corr))
-samples_params_summary$corr_chol <- samples_params_summary$corr_chol %>%
-  mutate(param = Corr_chol[lower.tri(Corr_chol, diag = TRUE)])
+corr_chol <- Corr_chol[lower.tri(Corr_chol, diag = TRUE)]
 
-samples_params_summary$corr_chol %>%
-  ggplot(., aes(X50., param)) +
-    geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
-    geom_point(col = 2)
+sample_summary(samples, "corr_chol") %>%
+  mutate(param = corr_chol) %>%
+  gg_errorbarh() +
+  geom_point(aes(param, Parameters), col = 3)
+
+# Visualize credible intervals for all Parameters
+sample_summary(samples) %>%
+  mutate(param = c(beta, corr_chol)) %>%
+  gg_errorbar() +
+  geom_point(aes(Parameters, param), col = 3)
 
