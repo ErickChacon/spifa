@@ -27,8 +27,8 @@
 //'
 //' @export
 // [[Rcpp::export]]
-Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::vec sigmas, int iter,
-    arma::mat proposal_corr_Sigma) {
+Rcpp::List multi_lm(arma::mat Y, arma::mat X, int iter,
+    arma::mat proposal_corr_Sigma, arma::mat proposal_sigmas_Sigma) {
 
   // Define global contants
   const int n = Y.n_rows;
@@ -45,11 +45,19 @@ Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::vec sigmas, int iter,
 
   // Hyperparameters of priors
   double prior_beta_sigma2 = 10;
+  double prior_corr_eta = 1.5;
+  double prior_sigmas_mean = 1;
+  double prior_sigmas_sd = 0.4;
 
   // Initializing beta
   arma::vec beta(pq, arma::fill::randn);
   arma::mat Beta = vec2mat(beta, p, q);
   arma::mat beta_samples(pq, iter);
+
+  // Initializing sigmas
+  arma::vec sigmas_log(q, arma::fill::randn);
+  arma::vec sigmas = exp(sigmas_log);
+  arma::mat sigmas_samples(q, iter);
 
   // Initializing Corr
   arma::vec corr_free(n_corr, arma::fill::randn);
@@ -80,9 +88,9 @@ Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::vec sigmas, int iter,
     Cov_chol_aux.each_col() %= sigmas;
     double prob_accept_log =
       dmvnorm_chol(Y.t(), Beta.t() * X.t(), Cov_chol_aux, true) +
-      dlkj_corr_free(corr_free_aux, q, 1.5, true) -
+      dlkj_corr_free(corr_free_aux, q, prior_corr_eta, true) -
       dmvnorm_chol(Y.t(), Beta.t() * X.t(), Cov_chol, true) -
-      dlkj_corr_free(corr_free, q, 1.5, true);
+      dlkj_corr_free(corr_free, q, prior_corr_eta, true);
     if (prob_accept_log > log(R::runif(0,1))) {
       corr_free = corr_free_aux;
       Corr_chol = Corr_chol_aux;
@@ -91,9 +99,29 @@ Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::vec sigmas, int iter,
       Cov_inv = Cov_chol_inv.t() * Cov_chol_inv;
     }
 
+    // Sampling sigmas: random walk Metropolis Hastings
+    arma::mat proposal_sigmas_Sigma_chol = arma::chol(proposal_sigmas_Sigma);
+    arma::vec sigmas_log_aux =
+      sigmas_log + proposal_sigmas_Sigma_chol * arma::randn<arma::vec>(q);
+    arma::vec sigmas_aux = exp(sigmas_log_aux);
+    arma::mat Cov_chol_aux2 = Corr_chol;
+    Cov_chol_aux2.each_col() %= sigmas_aux;
+    double prob_accept_log2 =
+      dmvnorm_chol(Y.t(), Beta.t() * X.t(), Cov_chol_aux2, true) +
+      dmvnorm(sigmas_aux, arma::ones<arma::vec>(q),
+          pow(prior_sigmas_sd, 2) * arma::eye<arma::mat>(q,q)) -
+      dmvnorm_chol(Y.t(), Beta.t() * X.t(), Cov_chol, true) -
+      dmvnorm(sigmas, arma::ones<arma::vec>(q),
+          pow(prior_sigmas_sd, 2) * arma::eye<arma::mat>(q,q));
+    if (prob_accept_log2 > log(R::runif(0,1))) {
+      sigmas_log = sigmas_log_aux;
+      sigmas = sigmas_aux;
+    }
+
     // Save samples
     beta_samples.col(i) = beta;
     corr_samples.col(i) = trimatl2vec(Corr_chol, true);
+    sigmas_samples.col(i) = sigmas;
   }
 
   Rcpp::NumericMatrix beta_samples_rcpp = Rcpp::wrap(beta_samples.t());
@@ -102,11 +130,14 @@ Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::vec sigmas, int iter,
   Rcpp::NumericMatrix corr_samples_rcpp = Rcpp::wrap(corr_samples.t());
   Rcpp::colnames(corr_samples_rcpp) = name_samples_lower(q, q, "Corr_chol");
 
+  Rcpp::NumericMatrix sigmas_samples_rcpp = Rcpp::wrap(sigmas_samples.t());
+  Rcpp::colnames(sigmas_samples_rcpp) = name_samples_vec(q, "sigmas");
+
+
   Rcpp::List output = Rcpp::List::create(
-      // Rcpp::Named("beta") = beta_samples.t(),
-      // Rcpp::Named("bla") = myvector,
       Rcpp::Named("beta") = beta_samples_rcpp,
-      Rcpp::Named("corr_chol") = corr_samples_rcpp
+      Rcpp::Named("corr_chol") = corr_samples_rcpp,
+      Rcpp::Named("sigmas") = sigmas_samples_rcpp
       );
 
   Rcpp::StringVector myclass(2);

@@ -52,16 +52,18 @@ Rcpp::sourceCpp("../src/multi-lm.cpp")
 source("../R/ggplot-mcmc.R")
 
 iter <- 10000
-samples <- multi_lm(Y, X, sigmas, iter, 0.01 * Sigma_proposal)
+samples <- multi_lm(Y, X, iter, 0.01 * Sigma_proposal, 0.001 * Sigma_proposal)
 samples %>% map(~ tail(.))
 
 # apply(samples$beta, 2, mean)
 # cor(samples$beta)
 
 # Visualize traces
-
 as_tibble(samples, "beta") %>% gg_trace(wrap = TRUE, alpha = 0.6)
+
+as_tibble(samples, "beta") %>% gg_trace(alpha = 0.6)
 as_tibble(samples, "corr_chol") %>% gg_trace(alpha = 0.6)
+as_tibble(samples, "sigmas") %>% gg_trace(alpha = 0.6)
 
 # Visualize densities
 
@@ -82,9 +84,15 @@ summary(samples, "corr_chol") %>%
   gg_errorbarh() +
   geom_point(aes(param, Parameters), col = 3)
 
+summary(samples, "sigmas") %>%
+  mutate(param = sigmas) %>%
+  gg_errorbarh() +
+  geom_point(aes(param, Parameters), col = 3)
+
+
 # Visualize credible intervals for all Parameters
 summary(samples) %>%
-  mutate(param = c(beta, corr_chol)) %>%
+  mutate(param = c(beta, corr_chol, sigmas)) %>%
   gg_errorbar() +
   geom_point(aes(Parameters, param), col = 3)
 
