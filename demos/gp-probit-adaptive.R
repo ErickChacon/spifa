@@ -2,7 +2,7 @@ library(spmirt)
 library(ggplot2)
 library(datasim)
 
-n <- 500
+n <- 300
 
 f <- list(
   prob ~ I(0) +
@@ -40,6 +40,7 @@ ggplot(vg, aes(dist, gamma)) +
   expand_limits(y = 0, x = 0) +
   scale_x_continuous(limits = c(0, 0.7))
 
+Rcpp::sourceCpp("../src/gp-gibss-adap.cpp")
 
 # 0.6
 # 50000 -> 17 minutes
@@ -52,24 +53,27 @@ sigma_prop <- matrix(c(0.1, -0.02, -0.02, 0.05), 2) * 2.38 ^ 2 / 2
 # system.time(
 #   out0 <- probit_gp(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 # )
-system.time(
-  out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
-)
 # system.time(
-#   out <- probit_gp_adap(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+#   out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 # )
-
-# 9%
-# DGEMM  performs one of the matrix-matrix operations
-#
-#     C := alpha*op( A )*op( B ) + beta*C,
-#
-#  where  op( X ) is one of
-#
-#     op( X ) = X   or   op( X ) = X**T,
+system.time(
+  out <- probit_gp_adap(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+)
 
 # plot(out$param[, 2])
 # abline(h = 0.03, col = 2)
+
+beta <- 0.05
+x <- 1
+y <- -1
+
+mixture <- function (x, y) {
+  (1-beta) * dnorm(y, x, 2.38 * 0.5) + beta * dnorm(y, x, 0.1)
+}
+
+mixture(x, y)
+mixture(y, x)
+
 
 plot(out$param, type = "b")
 points(1, 0.04, col = 2, pch = 19)
@@ -102,7 +106,7 @@ ggplot(data = df2, aes(sigma2, phi)) +
 
 
 
-nrow(unique(out$param))/(iter/2)
+nrow(unique(out$param))/(iter)
 
 nrow(unique(out$param[(iter/2 + 1):iter, ]))/(iter/2)
 
