@@ -49,28 +49,27 @@ Sigma_proposal <- diag(1, 3)
 
 getwd()
 Rcpp::sourceCpp("../src/multi-lm.cpp")
-source("ggplot-mcmc.R")
+source("../R/ggplot-mcmc.R")
 
 iter <- 10000
 samples <- multi_lm(Y, X, sigmas, iter, 0.01 * Sigma_proposal)
 samples %>% map(~ tail(.))
 
-
-apply(samples$beta, 2, mean)
-cor(samples$beta)
+# apply(samples$beta, 2, mean)
+# cor(samples$beta)
 
 # Visualize traces
 
-samples_as_tibble(samples, "beta") %>% gg_trace(wrap = TRUE, alpha = 0.6)
-samples_as_tibble(samples, "corr_chol") %>% gg_trace(alpha = 0.6)
+as_tibble(samples, "beta") %>% gg_trace(wrap = TRUE, alpha = 0.6)
+as_tibble(samples, "corr_chol") %>% gg_trace(alpha = 0.6)
 
 # Visualize densities
 
-samples_as_tibble(samples, "corr_chol") %>%
+as_tibble(samples, "corr_chol") %>%
   gg_density_ridges(aes(fill = Parameters), scale = 2, alpha = 0.5)
 
 # Visualize credible intervals
-sample_summary(samples, "beta") %>%
+summary(samples, "beta") %>%
   mutate(param = beta) %>%
   gg_errorbarh() +
   geom_point(aes(param, Parameters), col = 3)
@@ -78,13 +77,13 @@ sample_summary(samples, "beta") %>%
 Corr_chol <- t(chol(Corr))
 corr_chol <- Corr_chol[lower.tri(Corr_chol, diag = TRUE)]
 
-sample_summary(samples, "corr_chol") %>%
+summary(samples, "corr_chol") %>%
   mutate(param = corr_chol) %>%
   gg_errorbarh() +
   geom_point(aes(param, Parameters), col = 3)
 
 # Visualize credible intervals for all Parameters
-sample_summary(samples) %>%
+summary(samples) %>%
   mutate(param = c(beta, corr_chol)) %>%
   gg_errorbar() +
   geom_point(aes(Parameters, param), col = 3)

@@ -1,4 +1,6 @@
 
+# as_tibble <- function (x, ...) UseMethod("as_tibble", x)
+
 #' @title Convert Samples to Tibble
 #'
 #' @description
@@ -15,11 +17,11 @@
 #'
 #' @examples
 #'
-#' samples_as_tibble(samples)
-#' samples_as_tibble(samples, "beta")
+#' as_tibble(samples)
+#' as_tibble(samples, "beta")
 #'
 #' @export
-samples_as_tibble <- function (samples, select = names(samples)) {
+as_tibble.spmirt <- function (samples, select = names(samples)) {
   samples <- samples[select]
   params <- names(samples)
   samples %>%
@@ -43,10 +45,10 @@ samples_as_tibble <- function (samples, select = names(samples)) {
 #'
 #' @examples
 #'
-#' sample_summary(samples)
+#' summary(samples)
 #'
 #' @export
-sample_summary <- function (samples, select = names(samples)) {
+summary.spmirt <- function (samples, select = names(samples)) {
 
   df <- samples_as_tibble(samples, select)
   df_names <- names(df)
@@ -55,6 +57,7 @@ sample_summary <- function (samples, select = names(samples)) {
     reduce(rbind) %>%
     as_tibble() %>%
     mutate(Parameters = df_names)
+  df <- df[c(ncol(df), 1:(ncol(df)-1))]
   return(df)
 }
 
@@ -145,7 +148,7 @@ gg_density_ridges <- function (df, ...) {
 #'
 #' @examples
 #'
-#' sample_summary(samples, "corr_chol") %>%
+#' summary(samples, "corr_chol") %>%
 #'   mutate(param = blaa) %>%
 #'   gg_errorbarh() +
 #'   geom_point(aes(param, Parameters), col = 3)
@@ -184,7 +187,7 @@ gg_errorbarh <- function (df_summary, colors = c(rgb(1,0.5,0.1), "black"), ...) 
 #'
 #' @examples
 #'
-#' sample_summary(samples, "corr_chol") %>%
+#' summary(samples, "corr_chol") %>%
 #'   mutate(param = corr_chol) %>%
 #'   gg_errorbar() +
 #'   geom_point(aes(Parameters, param), col = 3)

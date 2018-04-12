@@ -102,12 +102,19 @@ Rcpp::List multi_lm(arma::mat Y, arma::mat X, arma::vec sigmas, int iter,
   Rcpp::NumericMatrix corr_samples_rcpp = Rcpp::wrap(corr_samples.t());
   Rcpp::colnames(corr_samples_rcpp) = name_samples_lower(q, q, "Corr_chol");
 
-  return Rcpp::List::create(
+  Rcpp::List output = Rcpp::List::create(
       // Rcpp::Named("beta") = beta_samples.t(),
       // Rcpp::Named("bla") = myvector,
       Rcpp::Named("beta") = beta_samples_rcpp,
       Rcpp::Named("corr_chol") = corr_samples_rcpp
       );
+
+  Rcpp::StringVector myclass(2);
+  myclass(0) = "spmirt";
+  myclass(1) = "list";
+  output.attr("class") = myclass;
+
+  return output;
 
 }
 
