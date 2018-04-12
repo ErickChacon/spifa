@@ -1,6 +1,4 @@
 
-# as_tibble <- function (x, ...) UseMethod("as_tibble", x)
-
 #' @title Convert Samples to Tibble
 #'
 #' @description
@@ -20,13 +18,48 @@
 #' as_tibble(samples)
 #' as_tibble(samples, "beta")
 #'
+#' @importFrom tibble as_tibble
+#'
 #' @export
 as_tibble.spmirt <- function (samples, select = names(samples)) {
   samples <- samples[select]
   params <- names(samples)
-  samples %>%
+  samples <- samples %>%
     purrr::map(as_tibble) %>%
     dplyr::bind_cols()
+  class(samples) <- c("spmirt.wide", class(samples))
+  return(samples)
+}
+
+#' @title Gather Parameters into a Long Format Tibble
+#'
+#' @description
+#' \code{function} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#'
+#' wide <- as_tibble(samples, "beta")
+#' (long <- gather(wide))
+#' class(long)
+#'
+#' @export
+gather.spmirt.wide <- function (samples_wide) {
+
+  samples_long <- samples_wide %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(iteration = 1:n()) %>%
+    tidyr:::gather(Parameters, Value, -iteration)
+  return(samples_long)
+
 }
 
 #' @title Summary of Samples
@@ -50,7 +83,7 @@ as_tibble.spmirt <- function (samples, select = names(samples)) {
 #' @export
 summary.spmirt <- function (samples, select = names(samples)) {
 
-  df <- samples_as_tibble(samples, select)
+  df <- as_tibble(samples, select)
   df_names <- names(df)
   df <- df %>%
     map(function (x) quantile(x, c(0.025, 0.1, 0.5, 0.9, 0.975))) %>%
@@ -77,16 +110,14 @@ summary.spmirt <- function (samples, select = names(samples)) {
 #'
 #' @examples
 #'
-#' samples_as_tibble(samples, "beta") %>% gg_trace(wrap = TRUE, alpha = 0.6)
-#' samples_as_tibble(samples, "corr_chol") %>% gg_trace(alpha = 0.6)
+#' as_tibble(samples, "beta") %>% gg_trace(wrap = TRUE, alpha = 0.6)
+#' as_tibble(samples, "corr_chol") %>% gg_trace(alpha = 0.6)
 #'
 #'
 #' @export
 gg_trace <- function (df, wrap = FALSE, ...) {
+  df <- gather(df)
   gg <- df %>%
-    as_tibble() %>%
-    mutate(iteration = 1:n()) %>%
-    gather(Parameters, Value, -iteration) %>%
     ggplot(aes(iteration, Value, group = Parameters, col = Parameters)) +
       geom_path(...)
   # in splits if required
@@ -114,15 +145,13 @@ gg_trace <- function (df, wrap = FALSE, ...) {
 #'
 #' @examples
 #'
-#' samples_as_tibble(samples, "corr_chol") %>%
+#' as_tibble(samples, "corr_chol") %>%
 #'   gg_density_ridges(aes(fill = Parameters), scale = 2, alpha = 0.5)
 #'
 #' @export
 gg_density_ridges <- function (df, ...) {
+  df <- gather(df)
   gg <- df %>%
-    as_tibble() %>%
-    mutate(iteration = 1:n()) %>%
-    gather(Parameters, Value, -iteration) %>%
     ggplot(aes(Value, Parameters, group = Parameters)) +
       ggridges::geom_density_ridges(...)
   # theme
@@ -149,7 +178,7 @@ gg_density_ridges <- function (df, ...) {
 #' @examples
 #'
 #' summary(samples, "corr_chol") %>%
-#'   mutate(param = blaa) %>%
+#'   mutate(param = corr_chol) %>%
 #'   gg_errorbarh() +
 #'   geom_point(aes(param, Parameters), col = 3)
 #'
