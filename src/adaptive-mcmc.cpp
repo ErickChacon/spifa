@@ -7,7 +7,7 @@
 // [[Rcpp::depends(RcppTN)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 
-//' @title Spatial Probit Model
+//' @title Testing Adative Sampling by Haario
 //'
 //' @description
 //' \code{ifa_gibbs} description.
@@ -40,7 +40,6 @@ Rcpp::List adaptive_haario(arma::vec mean, arma::mat Sigma, int iter) {
 
   for (int i = 0; i < iter; ++i) {
 
-    // Rcpp::Rcout << i << ",";
     arma::mat Sigma_proposal(n,n);
     if (i >= (2 * n) && R::runif(0,1) < 0.95) {
       Sigma_proposal = pow(2.38, 2) *
@@ -48,13 +47,6 @@ Rcpp::List adaptive_haario(arma::vec mean, arma::mat Sigma, int iter) {
     } else {
       Sigma_proposal = pow(0.1, 2) * arma::eye<arma::mat>(n,n) / n;
     }
-
-    // try {
-    //   Sigma_proposal_chol =
-    // } catch ( ... ) {
-    //   Rcpp::Rcout << "Exception" << i << ", " << "\n";
-    //   Sigma_proposal_chol = eye_n;
-    // }
 
     arma::mat Sigma_proposal_chol;
     bool nonsingular = arma::chol(Sigma_proposal_chol, Sigma_proposal, "lower");
@@ -66,8 +58,6 @@ Rcpp::List adaptive_haario(arma::vec mean, arma::mat Sigma, int iter) {
       if (accept > log(R::runif(0,1))) {
         params = params_aux;
       }
-    } else {
-      // Rcpp::Rcout << i << ": " << nonsingular <<"\n";
     }
 
     params_mat.col(i) = params;
@@ -76,21 +66,4 @@ Rcpp::List adaptive_haario(arma::vec mean, arma::mat Sigma, int iter) {
   return Rcpp::List::create(
       Rcpp::Named("params") = params_mat.t()
       );
-}
-
-//' @export
-// [[Rcpp::export]]
-void function_name()
-{
-  for (int i = 0; i < 5; ++i) {
-    if (i == 1) {
-      continue;
-    }
-    if (i == 3) {
-      break;
-    }
-    for (int j = 0; j < 7; ++j) {
-      Rcpp::Rcout << "Exception" << i << ", " << j << "\n";
-    }
-  }
 }
