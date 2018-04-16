@@ -10,6 +10,7 @@ f <- list(
        sigma2 = 1),
   size ~ I(1)
   )
+
 data <- sim_model(formula = f,
                   link_inv = list(pnorm, identity),
                   generator = rbinom,
@@ -25,8 +26,10 @@ ggplot(data, aes(s1, s2)) +
 ggplot(data, aes(s1, s2)) +
   geom_point(aes(col = factor(response)), size = 2)
 
+data$gp2 = data$gp + rnorm(300)
 
-vg <- gstat::variogram(gp ~ 1, ~ s1 + s2, data, cutoff = 0.7, width = 0.005)
+
+vg <- gstat::variogram(gp2 ~ 1, ~ s1 + s2, data, cutoff = 0.7, width = 0.005)
 ggplot(vg, aes(dist, gamma, weight = np)) +
   geom_point(aes(size = np)) +
   geom_smooth() +
@@ -40,6 +43,54 @@ ggplot(vg, aes(dist, gamma)) +
   expand_limits(y = 0, x = 0) +
   scale_x_continuous(limits = c(0, 0.7))
 
+noise <- rnorm(n)
+
+
+# library(reticulate)
+# spy <- import_from_path("spmirtpy.models.gpreg",
+#                         path = "/home/chaconmo/Documents/Repositories")
+reticulate::source_python("~/Documents/Repositories/spmirtpy/models/gpreg.py")
+
+iter <- 1000L
+dist <- as.matrix(dist(dplyr::select(data, s1, s2)))
+# sigma_prop <- matrix(c(0.1, -0.02, -0.02, 0.05), 2) * 2.38 ^ 2 / 2
+# sigma_prop <- matrix(c(0.2, -0.02, -0.02, 0.05), 2) * 2.38 ^ 2 / 2
+# sigma_prop <- matrix(c(0.2, -0.02, -0.02, 0.05), 2) * 2.38 ^ 2 / 2
+sigma_prop <- matrix(c(0.034, 0.011, 0.011, 0.067), 2) * 2.38 ^ 2 / 2
+sigma_prop <- matrix(c(0.034, 0.011, 0.011, 0.067), 2) * 1.5 ^ 2 / 2
+# sigma_prop <- matrix(c(0.27, -0.07, -0.07, 0.21), 2) * 2.38 ^ 2 / 2
+# system.time(
+#   (plop <- gpreg(cbind(data$gp + rnorm(n)) , dist, cbind(c(log(1.0), log(0.04))), iter, sigma_prop))
+#   )
+# plot(plop[,1])
+# plot(plop[,2])
+# # plop
+# nrow(unique(plop)) / iter
+# #   print(plop)
+# # plop[1:5, 1:5]
+# # test()
+plop <- geo_normal(cbind(data$gp + noise) , dist, cbind(c(log(1.0), log(0.04))))
+system.time(
+plop2 <- plop$sample(sigma_prop, iter, "mala")
+)
+
+plot(plop2[,1])
+plot(plop2[,2])
+# plop
+nrow(unique(plop2)) / iter
+summary(plop2[,2])
+
+
+# initialize(plop$callpost(), plop$feed_dict)
+
+# plop$posterior(cbind(c(log(1.0), log(0.04))), 1)
+
+# dmvnorm(c(0,0), cbind(c(0,0)), matrix(c(1,0.5,0.5,2)))
+# noise = rnorm(n)
+# test(cbind(c(log(1.0), log(0.04))), dist, cbind(data$gp + noise))
+
+
+
 Rcpp::sourceCpp("../src/gp-gibss-adap.cpp")
 
 # 0.6
@@ -49,16 +100,16 @@ dist <- as.matrix(dist(dplyr::select(data, s1, s2)))
 # out <- probit_gp(data$response, dist, c(psych::logit(0.5), log(0.02)), iter)
 # sigma_prop <- matrix(c(0.1, 0.05, 0.05, 0.1), 2) / 10
 # sigma_prop <- matrix(c(0.1, -0.02, -0.02, 0.05), 2) * 2.38^2/2
-sigma_prop <- matrix(c(0.1, -0.02, -0.02, 0.05), 2) * 2.38 ^ 2 / 2
+# sigma_prop <- matrix(c(0.1, -0.02, -0.02, 0.05), 2) * 2.38 ^ 2 / 2
+# system.time(
+#   out2 <- probit_gp_adap(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+# )
+system.time(
+  out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+)
 # system.time(
 #   out0 <- probit_gp(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
 # )
-# system.time(
-#   out <- probit_gp_chol2(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
-# )
-system.time(
-  out <- probit_gp_adap(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
-)
 
 # plot(out$param[, 2])
 # abline(h = 0.03, col = 2)
