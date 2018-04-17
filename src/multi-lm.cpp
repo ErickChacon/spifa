@@ -141,7 +141,7 @@ Rcpp::List multi_lm(arma::mat Y, arma::mat X, int iter,
       );
 
   Rcpp::StringVector myclass(2);
-  myclass(0) = "spmirt";
+  myclass(0) = "spmirt.list";
   myclass(1) = "list";
   output.attr("class") = myclass;
 

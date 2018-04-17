@@ -7,7 +7,7 @@ source("../R/ggplot-mcmc.R")
 
 # function_name()
 
-k <- 15
+k <- 25
 mean <- matrix(1:k, k, 1);
 N <- k * (k-1)/2
 x <- rnorm(N, 0,  0.3)
@@ -19,33 +19,26 @@ D_inv <- diag(d ^ (-1))
 Sigma <- D %*% Corr %*% D
 
 
-iter <- 500000
+iter <- 900000
 system.time(
   samples <- adaptive_haario(mean, Sigma, iter)
 )
-class(samples) <- c("spmirt", class(samples))
 
-samples_tib <- as_tibble(samples)
-# samples_tib %>% gg_trace(alpha = 0.6)
 
-samples_tib[(iter/3+1):iter, ] %>%
+samples_tib <- as_tibble.spmirt.list(samples, iter/2)
+summary(samples_tib)
+samples_long <- gather(samples_tib)
+
+as_tibble.spmirt.list(samples, 0, 500) %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble.spmirt.list(samples, iter/2, 50) %>%
   gg_density_ridges(aes(fill = Parameters), scale = 6, alpha = 0.5, bandwidth = 0.25)
 
-# hist(samples_tib$V1[(iter/10+1):iter], 100, probability = TRUE)
-# lines(density(samples_tib$V1[(iter/10+1):iter], bw = 0.25))
-# hist(rnorm(iter, 1, 1), 100)
-# cov(samples$params) - Sigma
-# apply(samples$params, 2, mean)
+nrow(unique(samples_tib)) / nrow(samples_tib)
+acf(samples_tib$V1, 500)
 
-# nrow(samples)
-
-nrow(unique(samples$params[(iter/2+1):iter, ])) / iter * 2
-nrow(unique(samples$params)) / iter
-
-# n = 8
-# i = n/2
-# test <- matrix(rnorm(n), ncol = 2)
-#
+# Covariance matrix recursive update
 # aux <- cbind(test[i,] - apply(test[-i, , drop = FALSE], 2, mean))
 # var(test)
 # variance(test)

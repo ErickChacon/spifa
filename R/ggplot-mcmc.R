@@ -21,13 +21,16 @@
 #' @importFrom tibble as_tibble
 #'
 #' @export
-as_tibble.spmirt <- function (samples, select = names(samples)) {
+as_tibble.spmirt.list <- function (samples, burnin = 0, thin = 1,
+                              select = names(samples)) {
   samples <- samples[select]
   params <- names(samples)
   samples <- samples %>%
-    purrr::map(as_tibble) %>%
+    purrr::map(tibble::as_tibble) %>%
     dplyr::bind_cols()
-  class(samples) <- c("spmirt.wide", class(samples))
+  niter <- nrow(samples)
+  samples <- samples[seq(burnin + 1, niter, thin),]
+  class(samples) <- c("spmirt", class(samples))
   return(samples)
 }
 
@@ -52,7 +55,7 @@ as_tibble.spmirt <- function (samples, select = names(samples)) {
 #' class(long)
 #'
 #' @export
-gather.spmirt.wide <- function (samples_wide) {
+gather.spmirt <- function (samples_wide) {
 
   samples_long <- samples_wide %>%
     tibble::as_tibble() %>%
@@ -84,7 +87,8 @@ gather.spmirt.wide <- function (samples_wide) {
 #' @export
 summary.spmirt <- function (samples, select = names(samples)) {
 
-  df <- as_tibble(samples, select)
+  # df <- as_tibble.spmirt(samples, select = select)
+  df <- samples
   df_names <- names(df)
   df <- df %>%
     map(function (x) quantile(x, c(0.025, 0.1, 0.5, 0.9, 0.975))) %>%
@@ -117,7 +121,7 @@ summary.spmirt <- function (samples, select = names(samples)) {
 #'
 #' @export
 gg_trace <- function (df, wrap = FALSE, ...) {
-  df <- gather(df)
+  df <- gather.spmirt(df)
   gg <- df %>%
     ggplot(aes(iteration, Value, group = Parameters, col = Parameters)) +
       geom_path(...)
@@ -151,10 +155,7 @@ gg_trace <- function (df, wrap = FALSE, ...) {
 #'
 #' @export
 gg_density_ridges <- function (df, ...) {
-  if (!inherits(df, "spmirt.wide")) {
-    class(df) <- c("spmirt.wide", class(samples))
-  }
-  df <- gather(df)
+  df <- gather.spmirt(df)
   gg <- df %>%
     ggplot(aes(Value, Parameters, group = Parameters)) +
       ggridges::geom_density_ridges(...)
