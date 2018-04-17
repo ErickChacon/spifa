@@ -51,13 +51,14 @@ noise <- rnorm(n)
 #                         path = "/home/chaconmo/Documents/Repositories")
 reticulate::source_python("~/Documents/Repositories/spmirtpy/models/gpreg.py")
 
-iter <- 1000L
+iter <- 5000L
 dist <- as.matrix(dist(dplyr::select(data, s1, s2)))
 # sigma_prop <- matrix(c(0.1, -0.02, -0.02, 0.05), 2) * 2.38 ^ 2 / 2
 # sigma_prop <- matrix(c(0.2, -0.02, -0.02, 0.05), 2) * 2.38 ^ 2 / 2
 # sigma_prop <- matrix(c(0.2, -0.02, -0.02, 0.05), 2) * 2.38 ^ 2 / 2
-sigma_prop <- matrix(c(0.034, 0.011, 0.011, 0.067), 2) * 2.38 ^ 2 / 2
-sigma_prop <- matrix(c(0.034, 0.011, 0.011, 0.067), 2) * 1.5 ^ 2 / 2
+sigma_prop0 <- matrix(c(0.034, 0.011, 0.011, 0.067), 2) * 2.38 ^ 2 / 2
+sigma_prop <- matrix(c(0.034, 0.011, 0.011, 0.067), 2) * 1.65 ^ 2 / (2 ^ (1/3))
+# sigma_prop <- matrix(c(0.1, 0.04, 0.04, 0.13), 2) * 1.65 ^ 2 / (2 ^ (1/3))
 # sigma_prop <- matrix(c(0.27, -0.07, -0.07, 0.21), 2) * 2.38 ^ 2 / 2
 # system.time(
 #   (plop <- gpreg(cbind(data$gp + rnorm(n)) , dist, cbind(c(log(1.0), log(0.04))), iter, sigma_prop))
@@ -69,16 +70,39 @@ sigma_prop <- matrix(c(0.034, 0.011, 0.011, 0.067), 2) * 1.5 ^ 2 / 2
 # #   print(plop)
 # # plop[1:5, 1:5]
 # # test()
-plop <- geo_normal(cbind(data$gp + noise) , dist, cbind(c(log(1.0), log(0.04))))
-system.time(
-plop2 <- plop$sample(sigma_prop, iter, "mala")
-)
+# plop <- geo_normal(cbind(data$gp + noise) , dist, cbind(c(log(0.95), log(0.07))))
+plop <- geo_normal(cbind(data$gp + noise) , dist, cbind(c(log(0.95), log(0.03))))
+plop$map()
 
-plot(plop2[,1])
-plot(plop2[,2])
+
+# system.time(
+# plop1 <- plop$sample(sigma_prop0, iter, "rwmh")
+# )
+# system.time(
+# plop2 <- plop$sample(sigma_prop, iter, "mala", 1)
+# )
+#
+# opar <- par(mfrow = c(1, 2))
+# plot(density(plop1[,1]))
+# lines(density(plop2[,1]), col = 2)
+# plot(density(plop1[,2]))
+# lines(density(plop2[,2]), col = 2)
+# par(opar)
+
+
+# plot(plop1[,1])
+# points(plop2[,1], col = 2)
+#
+# plot(plop1[,2], type = "l")
+# lines(plop2[,2], type = "l", col = 2)
+# abline(h = 0.04, col = 2)
 # plop
+nrow(unique(plop1)) / iter
 nrow(unique(plop2)) / iter
 summary(plop2[,2])
+
+coda::effectiveSize(plop1)
+coda::effectiveSize(plop2)
 
 
 # initialize(plop$callpost(), plop$feed_dict)

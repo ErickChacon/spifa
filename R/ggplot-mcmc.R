@@ -57,7 +57,8 @@ gather.spmirt.wide <- function (samples_wide) {
   samples_long <- samples_wide %>%
     tibble::as_tibble() %>%
     dplyr::mutate(iteration = 1:n()) %>%
-    tidyr:::gather(Parameters, Value, -iteration)
+    tidyr::gather(Parameters, Value, -iteration, factor_key = TRUE)
+    # tidyr:::gather(Parameters, Value, -iteration,factor_key = TRUE)
   return(samples_long)
 
 }
@@ -150,6 +151,9 @@ gg_trace <- function (df, wrap = FALSE, ...) {
 #'
 #' @export
 gg_density_ridges <- function (df, ...) {
+  if (!inherits(df, "spmirt.wide")) {
+    class(df) <- c("spmirt.wide", class(samples))
+  }
   df <- gather(df)
   gg <- df %>%
     ggplot(aes(Value, Parameters, group = Parameters)) +

@@ -37,16 +37,24 @@ Rcpp::List adaptive_haario(arma::vec mean, arma::mat Sigma, int iter) {
   arma::vec params = mean / 3;
   arma::mat params_mat(n, iter);
 
+  arma::vec params_mean(n, arma::fill::zeros);
+  arma::mat params_cov(n,n, arma::fill::zeros);
+
 
   for (int i = 0; i < iter; ++i) {
 
     arma::mat Sigma_proposal(n,n);
     if (i >= (2 * n) && R::runif(0,1) < 0.95) {
-      Sigma_proposal = pow(2.38, 2) *
-        arma::cov(params_mat.cols(0,i-1).t()) / n;
+      Sigma_proposal = pow(2.38, 2) * params_cov / n;
     } else {
       Sigma_proposal = pow(0.1, 2) * arma::eye<arma::mat>(n,n) / n;
     }
+
+    // if (i == 5000) {
+    //   Rcpp::Rcout << "Difference:" << std::endl <<
+    //     arma::accu(abs(arma::cov(params_mat.cols(0,i-1).t()) -
+    //           params_cov)) << std::endl;
+    // }
 
     arma::mat Sigma_proposal_chol;
     bool nonsingular = arma::chol(Sigma_proposal_chol, Sigma_proposal, "lower");
@@ -60,6 +68,13 @@ Rcpp::List adaptive_haario(arma::vec mean, arma::mat Sigma, int iter) {
       }
     }
 
+    if (i > 0) {
+      arma::vec params_center = params - params_mean;
+      params_cov = params_cov +
+        (params_center * params_center.t() - (i+1)/i * params_cov) / (i + 1);
+    }
+    params_mean = params_mean + (params - params_mean) / (i + 1);
+
     params_mat.col(i) = params;
   }
 
@@ -67,3 +82,10 @@ Rcpp::List adaptive_haario(arma::vec mean, arma::mat Sigma, int iter) {
       Rcpp::Named("params") = params_mat.t()
       );
 }
+
+//' @export
+// [[Rcpp::export]]
+arma::mat variance(arma::mat X) {
+  return arma::cov(X);
+}
+
