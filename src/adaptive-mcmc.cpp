@@ -65,10 +65,9 @@ Rcpp::List adaptive_haario(arma::vec mean, arma::mat Sigma, int iter) {
     // Update covariance of parameters recursively
     if (i > 0) {
       arma::vec params_center = params - params_mean;
-      params_cov = params_cov +
-        (params_center * params_center.t() - (i+1)/i * params_cov) / (i + 1);
+      params_cov += (params_center*params_center.t() - (i+1)/i*params_cov) / (i+1);
     }
-    params_mean = params_mean + (params - params_mean) / (i + 1);
+    params_mean += (params - params_mean) / (i + 1);
 
     // Store current parameter
     params_mat.col(i) = params;
@@ -107,6 +106,8 @@ arma::mat variance(arma::mat X) {
 // [[Rcpp::export]]
 Rcpp::List adaptive_haario_vanish(arma::vec mean, arma::mat Sigma, int iter) {
   // A tutorial on adaptive MCMC: Christophe Andrieu and Johannes Thoms
+  // lower alpha leads to faster convergence
+  // lower C lead to lower weight at the beginning
 
   // Constants
   const int n = mean.n_elem;
@@ -114,13 +115,15 @@ Rcpp::List adaptive_haario_vanish(arma::vec mean, arma::mat Sigma, int iter) {
 
   // Initializing parameter variables
   arma::vec params_mean(n, arma::fill::zeros);
-  arma::mat params_cov = 1 * arma::eye<arma::mat>(n,n);
+  arma::mat params_cov = 2 * arma::eye<arma::mat>(n,n);
   arma::vec params(n, arma::fill::randn);
   arma::mat params_mat(n, iter);
 
   // Adaptive stepsize
-  const double alpha = 0.8;
-  const double C = 0.9;
+  const double alpha = 0.8; // for 25 parameters
+  const double C = 0.7;
+  // const double alpha = 0.9; // for 35 parameters
+  // const double C = 0.9;
   double gamma;
 
   for (int i = 0; i < iter; ++i) {
@@ -144,9 +147,8 @@ Rcpp::List adaptive_haario_vanish(arma::vec mean, arma::mat Sigma, int iter) {
     // Update covariance of parameters with stochastic approximation
     gamma = C / pow(i+1, alpha);
     arma::vec params_center = params - params_mean;
-    params_mean = params_mean + gamma * params_center;
-    params_cov = params_cov + gamma * (params_center * params_center.t() -
-        params_cov);
+    params_mean += gamma * params_center;
+    params_cov += gamma * (params_center * params_center.t() - params_cov);
 
     // Store current parameter
     params_mat.col(i) = params;
@@ -192,8 +194,10 @@ Rcpp::List am_vanish_scaling(arma::vec mean, arma::mat Sigma, int iter) {
   double logscale = 0;
 
   // Adaptive stepsize
+  // As n increases alpha need to go towards 1
+  // For n=35, alpha = 0.8 and C = 0.7
   const double alpha = 0.8;
-  const double C = 0.9;
+  const double C = 0.7;
   double gamma;
   double accept;
 
@@ -221,9 +225,8 @@ Rcpp::List am_vanish_scaling(arma::vec mean, arma::mat Sigma, int iter) {
 
     // Update covariance of parameters with stochastic approximation
     arma::vec params_center = params - params_mean;
-    params_mean = params_mean + gamma * params_center;
-    params_cov = params_cov + gamma * (params_center * params_center.t() -
-        params_cov);
+    params_mean += gamma * params_center;
+    params_cov += gamma * (params_center * params_center.t() - params_cov);
 
     // Store current parameter
     params_mat.col(i) = params;

@@ -154,15 +154,53 @@ gg_trace <- function (df, wrap = FALSE, ...) {
 #'   gg_density_ridges(aes(fill = Parameters), scale = 2, alpha = 0.5)
 #'
 #' @export
-gg_density_ridges <- function (df, ...) {
+gg_density <- function (df, ..., ridges = FALSE) {
   df <- gather.spmirt(df)
-  gg <- df %>%
-    ggplot(aes(Value, Parameters, group = Parameters)) +
-      ggridges::geom_density_ridges(...)
+  if (ridges) {
+    gg <- df %>%
+      ggplot(aes(Value, Parameters, group = Parameters)) +
+        ggridges::geom_density_ridges(...)
+  } else  {
+    gg <- df %>%
+      ggplot(aes(Value, fill = Parameters)) +
+      geom_density(...) +
+      facet_wrap(~ Parameters, scales = "free")
+  }
   # theme
   gg <- gg + theme(legend.position = "none")
   return(gg)
 }
+
+#' @title 2D Densities of Samples
+#'
+#' @description
+#' \code{function} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#'
+#' as_tibble(samples, "corr_chol") %>%
+#'   gg_density_ridges(aes(fill = Parameters), scale = 2, alpha = 0.5)
+#'
+#' @export
+gg_density2d <- function (samples, var1, var2) {
+  gg <- ggplot(samples, aes_(substitute(var1), substitute(var2))) +
+    stat_density2d(aes(fill = ..level.., alpha = ..level..),
+                   geom = 'polygon', colour = 'black') +
+            scale_fill_continuous(low="green",high="red") +
+            guides(alpha="none") +
+            geom_point(alpha = 0.5)
+  return(gg)
+}
+
 
 
 

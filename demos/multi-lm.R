@@ -7,8 +7,8 @@ library(tidyverse)
 
 # SIMULATE DATA ----------------------------------------------------------------
 
-Corr <- matrix(c(1, -0.9, 0, -0.9, 1, 0, 0, 0, 1), nrow = 3)
-sigmas <- c(1,1,3)
+Corr <- matrix(c(1, -0.9, 0, -0.9, 1, 0.3, 0, 0.3, 1), nrow = 3)
+sigmas <- c(1,1.5,3)
 D <- diag(sigmas)
 Cov <- D %*% Corr %*% D
 beta <- c(-10, 0, 10)
@@ -51,28 +51,42 @@ getwd()
 Rcpp::sourceCpp("../src/multi-lm.cpp")
 source("../R/ggplot-mcmc.R")
 
-iter <- 10000
-samples <- multi_lm(Y, X, iter, 0.01 * Sigma_proposal, 0.001 * Sigma_proposal)
+iter <- 10^6
+system.time(
+  samples <- multi_lm(Y, X, iter, 0.01 * Sigma_proposal, 0.001 * Sigma_proposal)
+)
 samples %>% map(~ tail(.))
 
 # apply(samples$beta, 2, mean)
 # cor(samples$beta)
 
 # Visualize traces
-as_tibble(samples, select = "beta") %>%
+as_tibble(samples, 0, 100, select = "beta") %>%
   gg_trace(wrap = TRUE, alpha = 0.6)
 
-as_tibble(samples, select = "beta") %>% gg_trace(alpha = 0.6)
-as_tibble(samples, select = "corr_chol") %>% gg_trace(alpha = 0.6)
-as_tibble(samples, select = "sigmas") %>% gg_trace(alpha = 0.6)
+as_tibble(samples, 0, 100, select = "beta") %>% gg_trace(alpha = 0.6)
+as_tibble(samples, 0, 100, select = "corr_chol") %>% gg_trace(alpha = 0.6)
+as_tibble(samples, 0, 100, select = "corr") %>% gg_trace(alpha = 0.6)
+as_tibble(samples, 0, 100, select = "sigmas") %>% gg_trace(alpha = 0.6)
+
+bla <- as_tibble(samples, iter/2, select = "sigmas")
+cov(log(bla))
+nrow(unique(bla)) / nrow(bla)
+
+bla <- as_tibble(samples, iter/2, select = "corr_chol")
+cov(bla)
+nrow(unique(bla)) / nrow(bla)
 
 # Visualize densities
 
-as_tibble(samples, select = "corr_chol") %>%
-  gg_density_ridges(aes(fill = Parameters), scale = 2, alpha = 0.5)
+as_tibble(samples, iter / 2, select = "corr_chol") %>%
+  gg_density(aes(fill = Parameters), scale = 2, alpha = 0.5, ridges = TRUE)
+
+as_tibble(samples, iter / 2, select = "corr") %>%
+  gg_density(aes(fill = Parameters), scale = 1, alpha = 0.5, ridges = TRUE)
 
 # Visualize credible intervals
-as_tibble(samples, select = "beta") %>%
+as_tibble(samples, iter / 2, select = "beta") %>%
   summary() %>%
   mutate(param = beta) %>%
   gg_errorbarh() +
@@ -80,14 +94,22 @@ as_tibble(samples, select = "beta") %>%
 
 Corr_chol <- t(chol(Corr))
 corr_chol <- Corr_chol[lower.tri(Corr_chol, diag = TRUE)]
+corr <- Corr[lower.tri(Corr)]
 
-as_tibble(samples, select = "corr_chol") %>%
+as_tibble(samples, iter / 2, select = "corr_chol") %>%
   summary() %>%
   mutate(param = corr_chol) %>%
   gg_errorbarh() +
   geom_point(aes(param, Parameters), col = 3)
 
-as_tibble(samples, select = "sigmas") %>%
+as_tibble(samples, iter / 2, select = "corr") %>%
+  summary() %>%
+  mutate(param = corr) %>%
+  gg_errorbarh() +
+  geom_point(aes(param, Parameters), col = 3)
+
+
+as_tibble(samples, iter / 2 ,select = "sigmas") %>%
   summary() %>%
   mutate(param = sigmas) %>%
   gg_errorbarh() +
@@ -95,9 +117,9 @@ as_tibble(samples, select = "sigmas") %>%
 
 
 # Visualize credible intervals for all Parameters
-as_tibble(samples) %>%
+as_tibble(samples, iter / 2) %>%
   summary() %>%
-  mutate(param = c(beta, corr_chol, sigmas)) %>%
+  mutate(param = c(beta, corr_chol, corr, sigmas)) %>%
   gg_errorbar() +
   geom_point(aes(Parameters, param), col = 3)
 
