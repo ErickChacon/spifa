@@ -5,7 +5,7 @@ Rcpp::sourceCpp("../src/correlation.cpp")
 Rcpp::sourceCpp("../src/adaptive-mcmc.cpp")
 source("../R/ggplot-mcmc.R")
 
-k <- 2
+k <- 35
 mean <- matrix(1:k, k, 1);
 N <- k * (k-1)/2
 x <- rnorm(N, 0,  0.3)
@@ -44,7 +44,8 @@ as_tibble.spmirt.list(samples2, 0, 500) %>%
   gg_trace(alpha = 0.6)
 
 as_tibble.spmirt.list(samples2, iter/2, 50) %>%
-  gg_density(aes(fill = Parameters), scale = 6, alpha = 0.5, bandwidth = 0.25)
+  gg_density(aes(fill = Parameters), scale = 6, alpha = 0.5, bandwidth = 0.25,
+             ridges = TRUE)
 
 system.time(
   samples3 <- am_vanish_scaling(mean, Sigma, iter)
