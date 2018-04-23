@@ -1,10 +1,6 @@
 
 #include <RcppArmadillo.h>
-#include <RcppTN.h>
-#include "arma-mat.h"
 #include "pdf.h"
-#include "links.h"
-// [[Rcpp::depends(RcppTN)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 
 //' @title Testing Adative Sampling by Haario

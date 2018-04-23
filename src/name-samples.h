@@ -1,4 +1,4 @@
-#include <RcppArmadillo.h>
+// #include <RcppArmadillo.h>
 
 #ifndef NAME_SAMPLES_H
 #define NAME_SAMPLES_H
