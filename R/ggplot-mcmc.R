@@ -55,15 +55,33 @@ as_tibble.spmirt.list <- function (samples, burnin = 0, thin = 1,
 #' class(long)
 #'
 #' @export
-gather.spmirt <- function (samples_wide) {
+gather.spmirt <- function (samples_wide, each = NULL,
+                           keys = c("group", "Parameter")) {
 
+  # Convert to long format
   samples_long <- samples_wide %>%
     tibble::as_tibble() %>%
     dplyr::mutate(iteration = 1:n()) %>%
     tidyr::gather(Parameters, Value, -iteration, factor_key = TRUE)
-    # tidyr:::gather(Parameters, Value, -iteration,factor_key = TRUE)
-  return(samples_long)
 
+  if (!is.null(each)) {
+
+    # Auxiliary variables to group
+    groups <- paste0(keys[1], rep(1:each, ncol(samples_wide)/each))
+    groups <- factor(groups, unique(groups))
+    var <- paste0(keys[2], rep(1:(ncol(samples_wide)/each), each = each))
+    names(groups) <- levels(samples_long$Parameters)
+    names(var) <- levels(samples_long$Parameters)
+
+    # Group parameters
+    samples_long <- samples_long %>%
+      dplyr::mutate(groups = groups[Parameters], var = var[Parameters]) %>%
+    dplyr::select(-Parameters) %>%
+    tidyr::spread(var, Value)
+
+  }
+
+  return(samples_long)
 }
 
 #' @title Summary of Samples
@@ -94,7 +112,7 @@ summary.spmirt <- function (samples, select = names(samples)) {
     map(function (x) quantile(x, c(0.025, 0.1, 0.5, 0.9, 0.975))) %>%
     reduce(rbind) %>%
     as_tibble() %>%
-    mutate(Parameters = df_names)
+    mutate(Parameters = factor(df_names, df_names))
   df <- df[c(ncol(df), 1:(ncol(df)-1))]
   return(df)
 }
@@ -120,7 +138,7 @@ summary.spmirt <- function (samples, select = names(samples)) {
 #'
 #'
 #' @export
-gg_trace <- function (df, wrap = FALSE, ...) {
+gg_trace <- function (df, wrap = FALSE, legend = "bottom", ...) {
   df <- gather.spmirt(df)
   gg <- df %>%
     ggplot(aes(iteration, Value, group = Parameters, col = Parameters)) +
@@ -130,7 +148,7 @@ gg_trace <- function (df, wrap = FALSE, ...) {
     gg <- gg + facet_wrap(~ Parameters, ncol = 1, scales = "free")
   }
   # theme
-  gg <- gg + theme(legend.position = "bottom")
+  gg <- gg + theme(legend.position = legend)
   return(gg)
 }
 
@@ -191,15 +209,86 @@ gg_density <- function (df, ..., ridges = FALSE) {
 #'   gg_density_ridges(aes(fill = Parameters), scale = 2, alpha = 0.5)
 #'
 #' @export
-gg_density2d <- function (samples, var1, var2) {
+gg_density2d <- function (samples, var1, var2, each = NULL,
+                           keys = c("group", "Parameter"), highlight = NULL) {
+
+  if (!is.null(highlight)) {
+    aux_samples <- samples[1,]
+    aux_samples[1, ] <- highlight
+  }
+
+  if (!is.null(each)) {
+    samples <- gather.spmirt(samples, each, keys)
+    aux_samples <- gather.spmirt(aux_samples, each, keys)
+  }
+
   gg <- ggplot(samples, aes_(substitute(var1), substitute(var2))) +
     stat_density2d(aes(fill = ..level.., alpha = ..level..),
                    geom = 'polygon', colour = 'black') +
             scale_fill_continuous(low="green",high="red") +
             guides(alpha="none") +
             geom_point(alpha = 0.5)
+
+  if (!is.null(highlight)) {
+    gg <- gg + geom_point(data = aux_samples, col = 2, size = 2)
+  }
+
+  if (!is.null(each)) {
+    gg <- gg + facet_wrap(~ groups, scales = "free")
+  }
+
   return(gg)
 }
+
+
+
+#' @title 2D Scatterplot of Samples
+#'
+#' @description
+#' \code{function} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#'
+#'
+#' @export
+gg_scatter <- function (samples, var1, var2, each = NULL,
+                           keys = c("group", "Parameter"), highlight = NULL) {
+
+  if (!is.null(highlight)) {
+    aux_samples <- samples[1,]
+    aux_samples[1, ] <- highlight
+  }
+
+  if (!is.null(each)) {
+    samples <- gather.spmirt(samples, each, keys)
+    aux_samples <- gather.spmirt(aux_samples, each, keys)
+  }
+
+  gg <- ggplot(samples, aes_(substitute(var1), substitute(var2))) +
+    geom_point(alpha = 0.5) +
+    geom_path(alpha = 0.4, linetype = 2)
+
+  if (!is.null(highlight)) {
+    gg <- gg + geom_point(data = aux_samples, col = 2, size = 2)
+  }
+
+  if (!is.null(each)) {
+    gg <- gg + facet_wrap(~ groups, scales = "free")
+  }
+
+  return(gg)
+}
+
+
 
 
 
@@ -226,9 +315,16 @@ gg_density2d <- function (samples, var1, var2) {
 #'   geom_point(aes(param, Parameters), col = 3)
 #'
 #' @export
-gg_errorbarh <- function (df_summary, colors = c(rgb(1,0.5,0.1), "black"), ...) {
-  gg <- df_summary %>%
-    ggplot(., aes(`50%`, Parameters)) +
+gg_errorbarh <- function (df_summary, sorted = FALSE,
+                          colors = c(rgb(1,0.5,0.1), "black"), ...) {
+
+  if (sorted) {
+    gg <- df_summary %>% ggplot(., aes(`50%`, `50%`))
+  } else {
+    gg <- df_summary %>% ggplot(., aes(`50%`, Parameters))
+  }
+
+  gg <- gg +
     geom_errorbarh(aes(xmin = `2.5%`, xmax = `97.5%`, col = "95%"),
                    height = 0, ...) +
     geom_errorbarh(aes(xmin = `10%`, xmax = `90%`, col = "80%"), size = 2,
