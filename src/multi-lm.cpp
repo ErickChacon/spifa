@@ -1,8 +1,6 @@
 
 #include <RcppArmadillo.h>
-// #include <string>
 #include "arma-mat.h"
-// #include "links.h"
 #include "pdf.h"
 #include "correlation.h"
 #include "name-samples.h"
