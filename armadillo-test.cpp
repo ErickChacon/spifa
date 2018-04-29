@@ -23,5 +23,11 @@ int main(){
   std::cout << indices(2) << std::endl;
   std::cout << arma::join_cols(arma::ones(3), arma::zeros(4)) << std::endl;
   std::cout << indices.subvec(0, 4) << std::endl;
+  std::cout << "Testing subsetting:" << std::endl;
+  arma::vec low_thresh;
+  low_thresh << 1 << 2 << arma::endr;
+  std::cout << low_thresh << std::endl;
+  // low_thresh(0) = R_NegInf;
+  // low_thresh(1) = 0;
 
 }
