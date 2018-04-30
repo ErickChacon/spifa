@@ -48,7 +48,11 @@ library(tidyverse)
 
 ### Simulation of the data
 
+
+First, we define the parameters for the item response model.
+
 ```{r}
+
 q <- q1 <- q2 <- 10
 n <- 300
 difficulty <- matrix((1:q - 5)/10 * 2, nrow = 1)
@@ -57,6 +61,20 @@ discrimination2 <- matrix(runif(q, 0, 2), nrow = 1)
 discrimination1[1,1] = 1
 discrimination2[1,2] = 1
 discrimination2[1,1] <- 0
+
+```
+
+```{r, echo = FALSE, results = 'asis'}
+
+cbind(t(difficulty), t(discrimination1), t(discrimination2)) %>%
+  magrittr::set_colnames(c("difficulty", "discrimination1", "discrimination2")) %>%
+  knitr::kable()
+
+```
+
+Now we simulate the data using the `datasim` package.
+
+```{r}
 
 f <- list(
   prob ~ mfa(ones, beta = get("difficulty")) +
@@ -70,14 +88,12 @@ data_long <- sim_model(formula = f,
                         generator = rbinom,
                         responses = q,
                         n = n
-                        # ,
-                        # seed = 2
-                        # seed = 3
                         )
 
 data_long <- dplyr::rename(data_long, subject = id, ability1 = re.id.prob,
                            ability2 = re.id.prob.1,
                            item = response_label, y = response)
+
 ```
 
 ```{r, echo = FALSE, results = 'asis'}
@@ -104,10 +120,7 @@ ggplot(explor, aes(ability2, endorse)) + geom_point(alpha = 0.5)
 
 ```{r}
 
-iter <- 5000
-# system.time(samples <- ifa_gibbs(data_long$y, n, q, iter, 2))
-# purrr::map(samples, dim)
-
+iter <- 5 * 10 ^ 4
 disc_mat <- cbind(t(discrimination1), t(discrimination2))
 L_a <- lower.tri(disc_mat, diag = TRUE) * 1
 theta_init <- c(data_long$ability1[1:n], data_long$ability2[1:n])
@@ -122,10 +135,12 @@ source("../R/spmirt.R")
 source("../R/ggplot-mcmc.R")
 
 system.time(
-samples <- spmirt(response = data_long$y, nobs = n, nitems = q, nfactors = 2,
-                  L_rest = L_a, niter = iter, theta_init,
+samples <- spmirt(response = data_long$y,
+                  nobs = n, nitems = q, nfactors = 2, niter = iter,
+                  constrains = list(A = L_a),
                   c_opt = list(prior_mean = 1, prior_sd = 1),
-                  A_opt = list(prior_mean = a_mean, prior_sd = 1))
+                  A_opt = list(prior_mean = a_mean, prior_sd = 1),
+                  theta_init)
 )
 
 

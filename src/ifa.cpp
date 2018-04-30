@@ -7,9 +7,11 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 
 Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
-    arma::mat L_rest, arma::vec theta_init,
+    arma::mat constrain_L,
     arma::vec c_ini, arma::vec c_pr_mean, arma::vec c_pr_sd,
-    arma::mat A_ini, arma::mat A_pri_mean, arma::mat A_pri_sd):
+    arma::mat A_ini, arma::mat A_pri_mean, arma::mat A_pri_sd,
+    arma::vec theta_init
+    ):
   y(response), n(nobs), q(nitems), m(nfactors),
   n_corr((m-1) * m / 2),
   ones_n(arma::ones(n)),
@@ -19,7 +21,7 @@ Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
   eye_m(arma::eye(m,m)),
   low_thresh(Rcpp::NumericVector::create(R_NegInf, 0)),
   high_thresh(Rcpp::NumericVector::create(0, R_PosInf)),
-  L(L_rest),
+  L(constrain_L),
   c_prior_mean(c_pr_mean),
   c_prior_sd(c_pr_sd),
   a_prior_mean(arma::vectorise(A_pri_mean.t())),

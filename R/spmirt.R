@@ -1,10 +1,10 @@
 
-spmirt <- function (response, nobs, nitems, nfactors,
-                    L_rest,
-                    niter = 100,
-                    theta_init,
-                    c_opt = list(initial = 1, prior_mean = 1, prior_sd = 1),
-                    A_opt = list(initial = 1, prior_mean = 1, prior_sd = 1)) {
+spmirt <- function (response,
+                    nobs, nitems, nfactors, niter = 100,
+                    constrains = list(A = NULL, W = NULL),
+                    c_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
+                    A_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
+                    theta_init) {
 
   # Optional arguments for parameter c, checking adequate sizes
 
@@ -89,15 +89,29 @@ spmirt <- function (response, nobs, nitems, nfactors,
     }
   }
 
+  # Restrictions arguments for parameter A
+
+  if (is.null(constrains$A)) {
+    A_aux <- matrix(NA, nitems, nfactors)
+    constrain_L <- lower.tri(A_aux, diag = TRUE) * 1
+  } else {
+    if (all(dim(constrains$A) == c(nitems, nfactors))) {
+      constrain_L <- constrains$A
+    } else {
+      stop("element 'A' of 'constrains' must be of dimension c(nitems, nfactors)")
+    }
+  }
+
+  # Restrictions arguments for Gaussian Processes W(s)
+
   samples <- spmirt_cpp(
     response = response,
-    nobs = nobs, nitems = nitems, nfactors = nfactors,
-    L_rest = L_a,
-    niter = niter,
-    theta_init = theta_init,
+    nobs = nobs, nitems = nitems, nfactors = nfactors, niter = niter,
+    constrain_L = constrain_L,
     c_initial = c_initial, c_prior_mean = c_prior_mean, c_prior_sd = c_prior_sd,
-    A_initial = A_initial, A_prior_mean = A_prior_mean, A_prior_sd = A_prior_sd)
-
+    A_initial = A_initial, A_prior_mean = A_prior_mean, A_prior_sd = A_prior_sd,
+    theta_init = theta_init
+    )
   return(samples)
-  # return(list(c_initial, c_prior_mean, c_prior_sd, A_initial, A_prior_mean, A_prior_sd))
+  # return(constrain_L)
 }

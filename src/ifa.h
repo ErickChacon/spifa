@@ -38,9 +38,12 @@ private:
 public:
 
   Ifa(Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
-      arma::mat L_rest, arma::vec theta_init,
+      arma::mat constrain_L,
       arma::vec c_ini, arma::vec c_pr_mean, arma::vec c_pr_sd,
-      arma::mat A_ini, arma::mat A_pri_mean, arma::mat A_pri_sd);
+      arma::mat A_ini, arma::mat A_pri_mean, arma::mat A_pri_sd,
+      arma::vec theta_init
+      );
+
   void update_theta();
   void update_c();
   void update_a();
