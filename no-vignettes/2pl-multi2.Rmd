@@ -143,6 +143,13 @@ samples <- spmirt(response = data_long$y,
                   theta_init)
 )
 
+(samples <- spmirt(response = data_long$y,
+                  nobs = n, nitems = 2, nfactors = 2, niter = iter,
+                  A_opt = list(initial = 1, prior_mean = 2, prior_sd = 0.5),
+                  ))
+
+
+
 
 ```
 
