@@ -210,7 +210,8 @@ gg_density <- function (df, ..., ridges = FALSE) {
 #'
 #' @export
 gg_density2d <- function (samples, var1, var2, each = NULL,
-                           keys = c("group", "Parameter"), highlight = NULL) {
+                          keys = c("group", "Parameter"), highlight = NULL,
+                          ncol = NULL, points_alpha = 0.5) {
 
   if (!is.null(highlight)) {
     aux_samples <- samples[1,]
@@ -227,15 +228,20 @@ gg_density2d <- function (samples, var1, var2, each = NULL,
                    geom = 'polygon', colour = 'black') +
             scale_fill_continuous(low="green",high="red") +
             guides(alpha="none") +
-            geom_point(alpha = 0.5)
+            geom_point(alpha = points_alpha)
 
   if (!is.null(highlight)) {
     gg <- gg + geom_point(data = aux_samples, col = 2, size = 2)
   }
 
   if (!is.null(each)) {
-    gg <- gg + facet_wrap(~ groups, scales = "free")
+    if (!is.null(ncol)) {
+      gg <- gg + facet_wrap(~ groups, scales = "free", ncol = ncol)
+    } else {
+      gg <- gg + facet_wrap(~ groups, scales = "free")
+    }
   }
+
 
   return(gg)
 }
@@ -261,7 +267,8 @@ gg_density2d <- function (samples, var1, var2, each = NULL,
 #'
 #' @export
 gg_scatter <- function (samples, var1, var2, each = NULL,
-                           keys = c("group", "Parameter"), highlight = NULL) {
+                        keys = c("group", "Parameter"), highlight = NULL,
+                        ncol = NULL) {
 
   if (!is.null(highlight)) {
     aux_samples <- samples[1,]
@@ -282,7 +289,11 @@ gg_scatter <- function (samples, var1, var2, each = NULL,
   }
 
   if (!is.null(each)) {
-    gg <- gg + facet_wrap(~ groups, scales = "free")
+    if (!is.null(ncol)) {
+      gg <- gg + facet_wrap(~ groups, scales = "free", ncol = ncol)
+    } else {
+      gg <- gg + facet_wrap(~ groups, scales = "free")
+    }
   }
 
   return(gg)
@@ -361,9 +372,16 @@ gg_errorbarh <- function (df_summary, sorted = FALSE,
 #'   geom_point(aes(Parameters, param), col = 3)
 #'
 #' @export
-gg_errorbar <- function (df_summary, colors = c(rgb(1,0.5,0.1), "black"), ...) {
-  gg <- df_summary %>%
-    ggplot(., aes(Parameters, `50%`)) +
+gg_errorbar <- function (df_summary, sorted = TRUE,
+                         colors = c(rgb(1,0.5,0.1), "black"), ...) {
+
+  if (sorted) {
+    gg <- df_summary %>% ggplot(., aes(`50%`, `50%`))
+  } else {
+    gg <- df_summary %>% ggplot(., aes(Parameters, `50%`))
+  }
+
+  gg <- gg +
     geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`, col = "95%"),
                    width = 0, ...) +
     geom_errorbar(aes(ymin = `10%`, ymax = `90%`, col = "80%"), size = 2,

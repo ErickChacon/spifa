@@ -27,6 +27,19 @@ int main(){
   arma::vec low_thresh;
   low_thresh << 1 << 2 << arma::endr;
   std::cout << low_thresh << std::endl;
+  std::cout << "Testing diagonal row operator:" << std::endl;
+  std::cout << A << std::endl;
+  A.diag() += 1 / A.row(0);
+  std::cout << A << std::endl;
+  A.diag() += A.col(0);
+  std::cout << A << std::endl;
+  arma::vec b;
+  b << 1 << 2 << 3 << 4 << 5 << arma::endr;
+  arma::vec b2 = b - 3;
+  std::cout << b << std::endl;
+  std::cout << b2 << std::endl;
+  b %= b2;
+  std::cout << b << std::endl;
   // low_thresh(0) = R_NegInf;
   // low_thresh(1) = 0;
 

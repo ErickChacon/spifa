@@ -132,6 +132,7 @@ T_gp <- diag(m)
 
 Rcpp::sourceCpp("../src/mirt-gibss-sp.cpp")
 source("../R/ggplot-mcmc.R")
+Rcpp::sourceCpp("../src/ifa-main.cpp")
 
 # set.seed(5)
 system.time(
@@ -139,6 +140,11 @@ system.time(
                           Corr[1:2, 1:2], fix.sigma, sigma_prop, L_a, T_gp, 0.234,
                           iter)
 )
+
+# system.time(
+#   samples <- spmirt(response = response, nobs = n, nitems = q, nfactors = 2,
+#                     L_rest = L_a, niter = iter)
+#   )
 
 samples_tib <- as_tibble.spmirt.list(samples, iter/2)
 summary(samples_tib)

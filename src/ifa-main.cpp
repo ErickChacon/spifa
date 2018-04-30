@@ -2,6 +2,7 @@
 #include <RcppArmadillo.h>
 #include <RcppTN.h>
 #include "arma-mat.h"
+#include "name-samples.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::depends(RcppTN)]]
 
@@ -19,6 +20,11 @@ private:
   arma::vec z;                        // augmented variable
   // Restrictions
   const arma::mat L;                  // restrictions on discrimination
+  // Priors
+  const arma::vec c_prior_mean;
+  const arma::vec c_prior_sd;
+  const arma::vec a_prior_mean;
+  const arma::mat A_prior_sd;
   // Parameters-dependent objects
   arma::mat LA;                       // restricted discrimation
   // Constant objects usefull for sampling
@@ -33,7 +39,9 @@ private:
 public:
 
   Ifa(Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
-      arma::mat L_rest);
+      arma::mat L_rest, arma::vec theta_init,
+      arma::vec c_ini, arma::vec c_pr_mean, arma::vec c_pr_sd,
+      arma::mat A_ini, arma::mat A_pri_mean, arma::mat A_pri_sd);
   void update_theta();
   void update_c();
   void update_a();
@@ -43,7 +51,9 @@ public:
 };
 
 Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
-    arma::mat L_rest):
+    arma::mat L_rest, arma::vec theta_init,
+    arma::vec c_ini, arma::vec c_pr_mean, arma::vec c_pr_sd,
+    arma::mat A_ini, arma::mat A_pri_mean, arma::mat A_pri_sd):
   y(response), n(nobs), q(nitems), m(nfactors),
   n_corr((m-1) * m / 2),
   ones_n(arma::ones(n)),
@@ -53,13 +63,17 @@ Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
   eye_m(arma::eye(m,m)),
   low_thresh(Rcpp::NumericVector::create(R_NegInf, 0)),
   high_thresh(Rcpp::NumericVector::create(0, R_PosInf)),
-  L(L_rest)
+  L(L_rest),
+  c_prior_mean(c_pr_mean),
+  c_prior_sd(c_pr_sd),
+  a_prior_mean(arma::vectorise(A_pri_mean.t())),
+  A_prior_sd(A_pri_sd)
 {
 
   // Initializing c: difficulty parameters
   c = arma::randn(q) * 0.3;
   // Initializing a: discrimation parameters
-  a = arma::ones(q*m) * 0.5;
+  a = arma::vectorise(A_ini.t());
   LA = L % vec2matt(a, m, q);
   // Initializing z: auxiliary variables
   z = arma::zeros(y.size());
@@ -69,7 +83,7 @@ Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
     ity++;
   }
   // Initializing theta: latent abilities
-  theta = arma::vec(q, m).fill(NA_REAL);
+  theta = arma::vec(n*m).fill(NA_REAL);
 
 }
 
@@ -79,14 +93,16 @@ void Ifa::update_theta(){
   arma::mat aux_Sigma = aux_Sigma_chol * aux_Sigma_chol.t();
   arma::mat residual = vec2mat(z - arma::kron(c, ones_n), n, q);
   arma::vec theta_mu = arma::vectorise(residual * LA * aux_Sigma);
-  theta = theta_mu + arma::kron(aux_Sigma, eye_n) * arma::randn<arma::vec>(n*m);
+  theta = theta_mu + arma::kron(aux_Sigma_chol, eye_n) * arma::randn(n*m);
 }
 
 void Ifa::update_c() {
   arma::mat Theta = vec2mat(theta, n, m);
   arma::mat c_X = arma::kron(eye_q, ones_n);
-  arma::vec c_mu = c_X.t() * (z - arma::vectorise(Theta * LA.t())) / (n + 1);
-  c = c_mu + arma::randn<arma::vec>(q) / sqrt(n + 1);
+  arma::vec c_Sigma_diag = 1 / (pow(c_prior_sd, -2) + n);
+  arma::vec c_mu = c_X.t() * (z - arma::vectorise(Theta * LA.t()));
+  c_mu %= c_Sigma_diag;
+  c = c_mu + arma::randn(q) % sqrt(c_Sigma_diag);
 }
 
 void Ifa::update_a() {
@@ -99,7 +115,7 @@ void Ifa::update_a() {
     arma::mat aux_a_Sigma_inv = cross_Theta;
     aux_a_Sigma_inv.rows(find(L.row(j) == 0)) *= 0;
     aux_a_Sigma_inv.cols(find(L.row(j) == 0)) *= 0;
-    aux_a_Sigma_inv.diag() += 1 / 0.5;
+    aux_a_Sigma_inv.diag() += 1 / square(A_prior_sd.row(j));
     // aux_a_Sigma_inv.diag() += 1;
     arma::mat aux_a_Sigma_inv_chol = arma::chol(aux_a_Sigma_inv, "lower");
     arma::mat aux_a_Sigma_chol = arma::inv(trimatl(aux_a_Sigma_inv_chol)).t();
@@ -111,7 +127,8 @@ void Ifa::update_a() {
     a_Sigma_Lt.submat(j*m, j*m, arma::size(m, m)) = aux_a_Sigma;
   }
   arma::vec a_mu = a_Sigma_Lt * arma::kron(eye_q, Theta.t()) *
-    (z - arma::kron(c, ones_n));
+    (z - arma::kron(c, ones_n)) +
+    a_Sigma * (a_prior_mean / arma::square(arma::vectorise(A_prior_sd.t())));
   a = a_mu + a_Sigma_chol * arma::randn<arma::vec>(q*m);
   arma::mat A = vec2matt(a, m, q);
   LA = L % A;
@@ -121,7 +138,7 @@ void Ifa::update_z() {
   arma::mat Theta = vec2mat(theta, n, m);
   arma::vec z_mu = arma::kron(c, ones_n) + arma::vectorise(Theta * LA.t());
   Rcpp::NumericVector::iterator ity = y.begin();
-  Rcpp::NumericVector::iterator itz_mu = y.begin();
+  Rcpp::NumericVector::iterator itz_mu = z_mu.begin();
   for (arma::vec::iterator it = z.begin(); it != z.end() ; ++it) {
     *it = RcppTN::rtn1(*itz_mu, 1.0, low_thresh[*ity], high_thresh[*ity]);
     ity++;
@@ -149,12 +166,28 @@ Rcpp::List Ifa::sample(int niter) {
     z_samples.col(i) = z;
   }
 
-  return Rcpp::List::create(
-      Rcpp::Named("theta") = theta_samples.t(),
-      Rcpp::Named("c") = c_samples.t(),
-      Rcpp::Named("a") = a_samples.t(),
-      Rcpp::Named("z") = z_samples.t()
+  Rcpp::NumericMatrix theta_samples_rcpp = Rcpp::wrap(theta_samples.t());
+  Rcpp::colnames(theta_samples_rcpp) = name_samples_mat(n, m, "Theta");
+  Rcpp::NumericMatrix c_samples_rcpp = Rcpp::wrap(c_samples.t());
+  Rcpp::colnames(c_samples_rcpp) = name_samples_vec(q, "c");
+  Rcpp::NumericMatrix a_samples_rcpp = Rcpp::wrap(a_samples.t());
+  Rcpp::colnames(a_samples_rcpp) = name_samples_mat(q, m, "A");
+  Rcpp::NumericMatrix z_samples_rcpp = Rcpp::wrap(z_samples.t());
+  Rcpp::colnames(z_samples_rcpp) = name_samples_mat(n, q, "Z");
+
+  Rcpp::List output = Rcpp::List::create(
+      Rcpp::Named("theta") = theta_samples_rcpp,
+      Rcpp::Named("c") = c_samples_rcpp,
+      Rcpp::Named("a") = a_samples_rcpp,
+      Rcpp::Named("z") = z_samples_rcpp
       );
+
+  Rcpp::StringVector myclass(2);
+  myclass(0) = "spmirt.list";
+  myclass(1) = "list";
+  output.attr("class") = myclass;
+
+  return output;
 }
 
 arma::vec Ifa::get() {
@@ -162,12 +195,27 @@ arma::vec Ifa::get() {
 }
 
 // [[Rcpp::export]]
-Rcpp::List spmirt(Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
-    arma::mat L_rest, int niter) {
+Rcpp::List spmirt_cpp(Rcpp::NumericVector response,
+    int nobs, int nitems, int nfactors,
+    arma::mat L_rest, int niter, arma::vec theta_init,
+    arma::vec c_initial, arma::vec c_prior_mean, arma::vec c_prior_sd,
+    arma::mat A_initial, arma::mat A_prior_mean, arma::mat A_prior_sd) {
 
-  Ifa model(response, nobs, nitems, nfactors, L_rest);
+  // Rcpp::Rcout << arma::accu(A_prior_mean) << std::endl;
+  // Rcpp::Rcout << A_prior_mean.has_nan() << std::endl;
+  // Rcpp::Rcout << arma::is_finite( 0.123456789 ) << std::endl;
+  // Rcpp::Rcout << arma::is_finite( arma::datum::nan  ) << std::endl;
+  // Rcpp::Rcout << arma::is_finite( arma::datum::inf  ) << std::endl;
+  // Rcpp::Rcout << Rcpp::NumericVector::is_na(A_prior_mean(0,0)) << std::endl;
+
+  Ifa model(response, nobs, nitems, nfactors, L_rest, theta_init,
+      c_initial, c_prior_mean, c_prior_sd,
+      A_initial, A_prior_mean, A_prior_sd);
   Rcpp::List output = model.sample(niter);
   return output;
+//   return Rcpp::List::create(
+//       Rcpp::Named("z") = A_prior_mean
+//       );
 }
 
 
