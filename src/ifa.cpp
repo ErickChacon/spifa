@@ -134,9 +134,9 @@ Rcpp::List Ifa::sample(int niter) {
   Rcpp::colnames(z_samples_rcpp) = name_samples_mat(n, q, "Z");
 
   Rcpp::List output = Rcpp::List::create(
-      Rcpp::Named("theta") = theta_samples_rcpp,
       Rcpp::Named("c") = c_samples_rcpp,
       Rcpp::Named("a") = a_samples_rcpp,
+      Rcpp::Named("theta") = theta_samples_rcpp,
       Rcpp::Named("z") = z_samples_rcpp
       );
 

@@ -174,6 +174,9 @@ gg_trace <- function (df, wrap = FALSE, legend = "bottom", ...) {
 #' @export
 gg_density <- function (df, ..., ridges = FALSE) {
   df <- gather.spmirt(df)
+  df <- df %>%
+    group_by(Parameters) %>%
+    mutate(median = quantile(Value, 0.5))
   if (ridges) {
     gg <- df %>%
       ggplot(aes(Value, Parameters, group = Parameters)) +
@@ -211,7 +214,7 @@ gg_density <- function (df, ..., ridges = FALSE) {
 #' @export
 gg_density2d <- function (samples, var1, var2, each = NULL,
                           keys = c("group", "Parameter"), highlight = NULL,
-                          ncol = NULL, points_alpha = 0.5) {
+                          ncol = NULL, ...) {
 
   if (!is.null(highlight)) {
     aux_samples <- samples[1,]
@@ -224,14 +227,15 @@ gg_density2d <- function (samples, var1, var2, each = NULL,
   }
 
   gg <- ggplot(samples, aes_(substitute(var1), substitute(var2))) +
-    stat_density2d(aes(fill = ..level.., alpha = ..level..),
-                   geom = 'polygon', colour = 'black') +
-            scale_fill_continuous(low="green",high="red") +
-            guides(alpha="none") +
-            geom_point(alpha = points_alpha)
+    stat_density2d(aes(fill = log(..level..)),
+                   geom = 'polygon', col = "black", ...) +
+    # scale_fill_continuous(low="green",high="red") +
+    guides(alpha="none")
+  # +
+  #   geom_point(...)
 
   if (!is.null(highlight)) {
-    gg <- gg + geom_point(data = aux_samples, col = 2, size = 2)
+    gg <- gg + geom_point(data = aux_samples, col = 2)
   }
 
   if (!is.null(each)) {
@@ -268,7 +272,7 @@ gg_density2d <- function (samples, var1, var2, each = NULL,
 #' @export
 gg_scatter <- function (samples, var1, var2, each = NULL,
                         keys = c("group", "Parameter"), highlight = NULL,
-                        ncol = NULL) {
+                        ncol = NULL, points_alpha = 0.5) {
 
   if (!is.null(highlight)) {
     aux_samples <- samples[1,]
@@ -281,7 +285,7 @@ gg_scatter <- function (samples, var1, var2, each = NULL,
   }
 
   gg <- ggplot(samples, aes_(substitute(var1), substitute(var2))) +
-    geom_point(alpha = 0.5) +
+    geom_point(alpha = points_alpha) +
     geom_path(alpha = 0.4, linetype = 2)
 
   if (!is.null(highlight)) {
