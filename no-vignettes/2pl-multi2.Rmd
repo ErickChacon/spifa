@@ -148,6 +148,21 @@ samples <- spmirt(response = data_long$y,
                   A_opt = list(initial = 1, prior_mean = 2, prior_sd = 0.5),
                   ))
 
+(samples <- spmirt(
+  response = data_long$y,
+  nobs = n, nitems = 4, nfactors = 3, niter = iter,
+  constrains = list(A = NULL, W = NULL),
+  adaptive = list(Sigma_R = 1, Sigma_gp_sd = 1, Sigma_gp_phi = 1,
+                  scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
+  c_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
+  A_opt = list(prior_mean = 1, prior_sd = 1)
+  )
+)
+
+
+
+
+
 
 
 
