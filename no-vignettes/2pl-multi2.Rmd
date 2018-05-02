@@ -129,35 +129,50 @@ a_mean <- matrix(0, q, 2)
 diag(a_mean) <- 1
 # a_mean[1,] <- 1
 
+# Rcpp::sourceCpp("../src/correlation.cpp")
 # Rcpp::sourceCpp("../src/ifa-main.cpp")
 Rcpp::sourceCpp("../src/ifa-driver.cpp")
 source("../R/spmirt.R")
 source("../R/ggplot-mcmc.R")
 
+iter = 200
 system.time(
-samples <- spmirt(response = data_long$y,
-                  nobs = n, nitems = q, nfactors = 2, niter = iter,
-                  constrains = list(A = L_a),
-                  c_opt = list(prior_mean = 1, prior_sd = 1),
-                  A_opt = list(prior_mean = a_mean, prior_sd = 1),
-                  theta_init)
+samples <- spmirt(
+  response = data_long$y, predictors = matrix(1, 10, 2), coordinates = matrix(1, 10, 2),
+  nobs = n, nitems = q, nfactors = 3, niter = iter,
+  A_opt = list(prior_mean = NULL, prior_sd = NULL),
+  constrains = list(W = matrix(1, 3, 3))
 )
-
-(samples <- spmirt(response = data_long$y,
-                  nobs = n, nitems = 2, nfactors = 2, niter = iter,
-                  A_opt = list(initial = 1, prior_mean = 2, prior_sd = 0.5),
-                  ))
-
-(samples <- spmirt(
-  response = data_long$y,
-  nobs = n, nitems = 4, nfactors = 3, niter = iter,
-  constrains = list(A = NULL, W = NULL),
-  adaptive = list(Sigma_R = 1, Sigma_gp_sd = 1, Sigma_gp_phi = 1,
-                  scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
-  c_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-  A_opt = list(prior_mean = 1, prior_sd = 1)
-  )
 )
+samples[["A_prior_mean"]]
+samples[["A_prior_sd"]]
+# samples[["constrain_L"]]
+# samples[["constrain_T"]]
+
+
+  # constrains = list(A = L_a),
+  # adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = 1:3,
+  # Sigma_gp_phi = NULL),
+  # c_opt = list(prior_mean = 0, prior_sd = 1),
+  # A_opt = list(prior_mean = a_mean, prior_sd = 1)
+  # )
+
+# (samples <- spmirt(response = data_long$y,
+# nobs = n, nitems = 2, nfactors = 2, niter = iter,
+# A_opt = list(initial = 1, prior_mean = 2, prior_sd = 0.5),
+# ))
+
+
+# (samples <- spmirt(
+# response = data_long$y,
+# nobs = n, nitems = 4, nfactors = 3, niter = iter,
+# constrains = list(A = NULL, W = NULL),
+# adaptive = list(Sigma_R = 1, Sigma_gp_sd = 1, Sigma_gp_phi = 1,
+# scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
+# c_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
+# A_opt = list(prior_mean = 1, prior_sd = 1)
+# )
+# )
 
 
 

@@ -3,13 +3,15 @@
 #include <RcppTN.h>
 #include "arma-mat.h"
 #include "name-samples.h"
+#include "correlation.h"
 #include "ifa.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 
 Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
     arma::mat constrain_L,
-    arma::vec c_ini, arma::vec c_pr_mean, arma::vec c_pr_sd,
-    arma::mat A_ini, arma::mat A_pri_mean, arma::mat A_pri_sd,
+    arma::vec c_ini,
+    arma::mat A_ini,
+    arma::mat R_ini,
     arma::vec theta_init
     ):
   y(response), n(nobs), q(nitems), m(nfactors),
@@ -21,11 +23,7 @@ Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
   eye_m(arma::eye(m,m)),
   low_thresh(Rcpp::NumericVector::create(R_NegInf, 0)),
   high_thresh(Rcpp::NumericVector::create(0, R_PosInf)),
-  L(constrain_L),
-  c_prior_mean(c_pr_mean),
-  c_prior_sd(c_pr_sd),
-  a_prior_mean(arma::vectorise(A_pri_mean.t())),
-  A_prior_sd(A_pri_sd)
+  L(constrain_L)
 {
 
   // Initializing c: difficulty parameters
@@ -40,21 +38,31 @@ Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
     *it = RcppTN::rtn1(0.0, 1.0, low_thresh[*ity], high_thresh[*ity]);
     ity++;
   }
+  // Initializing correlation parameters
+  arma::mat Corr_chol = arma::chol(R_ini, "lower");
+  corr_free = chol_corr2vec(Corr_chol);
   // Initializing theta: latent abilities
   theta = arma::vec(n*m).fill(NA_REAL);
-
 }
 
-void Ifa::update_theta(){
-  arma::mat aux_Sigma_inv_chol = arma::chol(LA.t() * LA + eye_m, "lower");
-  arma::mat aux_Sigma_chol = arma::inv(trimatl(aux_Sigma_inv_chol)).t();
-  arma::mat aux_Sigma = aux_Sigma_chol * aux_Sigma_chol.t();
-  arma::mat residual = vec2mat(z - arma::kron(c, ones_n), n, q);
-  arma::vec theta_mu = arma::vectorise(residual * LA * aux_Sigma);
-  theta = theta_mu + arma::kron(aux_Sigma_chol, eye_n) * arma::randn(n*m);
+
+
+void Ifa::update_theta()
+{
+  // if (model_type == "eifa") {
+    arma::mat aux_Sigma_inv_chol = arma::chol(LA.t() * LA + eye_m, "lower");
+    arma::mat aux_Sigma_chol = arma::inv(trimatl(aux_Sigma_inv_chol)).t();
+    arma::mat aux_Sigma = aux_Sigma_chol * aux_Sigma_chol.t();
+    arma::mat residual = vec2mat(z - arma::kron(c, ones_n), n, q);
+    arma::vec theta_mu = arma::vectorise(residual * LA * aux_Sigma);
+    theta = theta_mu + arma::kron(aux_Sigma_chol, eye_n) * arma::randn(n*m);
+  // } else if (model_type == "cifa"){
+  //
+  // }
 }
 
-void Ifa::update_c() {
+void Ifa::update_c(const arma::vec& c_prior_mean, const arma::vec& c_prior_sd)
+{
   arma::mat Theta = vec2mat(theta, n, m);
   arma::mat c_X = arma::kron(eye_q, ones_n);
   arma::vec c_Sigma_diag = 1 / (pow(c_prior_sd, -2) + n);
@@ -63,7 +71,7 @@ void Ifa::update_c() {
   c = c_mu + arma::randn(q) % sqrt(c_Sigma_diag);
 }
 
-void Ifa::update_a() {
+void Ifa::update_a(const arma::vec& a_prior_mean, const arma::mat& A_prior_sd) {
   arma::mat a_Sigma(q*m, q*m, arma::fill::zeros);
   arma::mat a_Sigma_Lt(q*m, q*m, arma::fill::zeros);
   arma::mat a_Sigma_chol(q*m, q*m, arma::fill::zeros);
@@ -104,18 +112,31 @@ void Ifa::update_z() {
   }
 }
 
-Rcpp::List Ifa::sample(int niter) {
+void Ifa::update_cov_params(const double C, const double alpha, const double target,
+    const double R_prior_eta) {
 
+}
+
+Rcpp::List Ifa::sample(
+    arma::vec c_prior_mean, arma::vec c_prior_sd,
+    arma::mat A_prior_mean, arma::mat A_prior_sd,
+    int niter) {
+
+  // Transformation of prior parameters
+  arma::vec a_prior_mean = arma::vectorise(A_prior_mean.t());
+
+  // Define matrices to save samples 
   arma::mat c_samples(q, niter);
   arma::mat a_samples(q*m, niter);
   arma::mat theta_samples(n*m, niter);
   arma::mat z_samples(q*n, niter);
 
+
   for (int i = 0; i < niter; ++i) {
     // Update parameters
     update_theta();
-    update_c();
-    update_a();
+    update_c(c_prior_mean, c_prior_sd);
+    update_a(a_prior_mean, A_prior_sd);
     update_z();
     // Save samples
     theta_samples.col(i) = theta;
@@ -146,9 +167,5 @@ Rcpp::List Ifa::sample(int niter) {
   output.attr("class") = myclass;
 
   return output;
-}
-
-arma::vec Ifa::get() {
-  return zeros_nm;
 }
 

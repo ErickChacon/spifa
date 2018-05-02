@@ -8,6 +8,8 @@
 class Ifa {
 private:
 
+  // Model type: eifa, cifa, cifa_pred, spifa, spifa_pred
+  const std::string model_type;
   // Metadata
   const int n, q, m, n_corr;
   // Data
@@ -17,13 +19,10 @@ private:
   arma::vec a;                        // discrimination
   arma::vec theta;                    // latent abilities
   arma::vec z;                        // augmented variable
+  arma::vec corr_free;
   // Restrictions
   const arma::mat L;                  // restrictions on discrimination
   // Priors
-  const arma::vec c_prior_mean;
-  const arma::vec c_prior_sd;
-  const arma::vec a_prior_mean;
-  const arma::mat A_prior_sd;
   // Parameters-dependent objects
   arma::mat LA;                       // restricted discrimation
   // Constant objects usefull for sampling
@@ -37,19 +36,26 @@ private:
 
 public:
 
-  Ifa(Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
+  Ifa(Rcpp::NumericVector response,
+      int nobs, int nitems, int nfactors,
       arma::mat constrain_L,
-      arma::vec c_ini, arma::vec c_pr_mean, arma::vec c_pr_sd,
-      arma::mat A_ini, arma::mat A_pri_mean, arma::mat A_pri_sd,
+      arma::vec c_ini,
+      arma::mat A_ini,
+      arma::mat R_ini,
       arma::vec theta_init
       );
 
   void update_theta();
-  void update_c();
-  void update_a();
+  void update_c(const arma::vec& c_prior_mean, const arma::vec& c_prior_sd);
+  void update_a(const arma::vec& a_prior_mean, const arma::mat& A_prior_sd);
   void update_z();
-  Rcpp::List sample(int niter);
-  arma::vec get();
+  void update_cov_params(const double C, const double alpha, const double target,
+      const double R_prior_eta);
+  Rcpp::List sample(
+      arma::vec c_prior_mean, arma::vec c_prior_sd,
+      arma::mat A_prior_mean, arma::mat A_prior_sd,
+      int niter
+      );
 };
 
 
