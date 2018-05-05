@@ -42,5 +42,10 @@ int main(){
   std::cout << b << std::endl;
   // low_thresh(0) = R_NegInf;
   // low_thresh(1) = 0;
+  int n1 = 100;
+  int n2 = 3;
+  std::cout << 100/3 << std::endl;
+  std::cout << 100 % 3 << std::endl;
+  std::cout << 0 % 10 << std::endl;
 
 }

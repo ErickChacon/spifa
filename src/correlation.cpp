@@ -72,6 +72,37 @@ arma::mat vec2chol_corr(arma::vec x, int K) {
   return L_chol;
 }
 
+//' @export
+// [[Rcpp::export]]
+Rcpp::List vec2chol_corr2(arma::vec x, int K) {
+  x = tanh(x);
+  arma::mat L = vec2trimatl(x, K, false);
+  arma::mat L_chol(K, K, arma::fill::zeros);
+  arma::mat L_grad(K, K, arma::fill::zeros);
+  L_grad.col(0) += 1;
+  L_grad(0,0) = 0;
+
+  L_chol.col(0) = L.col(0);
+  L_chol(0,0) = 1.0;
+
+  for (int i = 2; i < K; ++i) {
+    for (int j = 1; j < i; ++j) {
+      L_grad(i,j) = sqrt(1 - accu(square(L_chol.submat(i,0, i,j-1))));
+      L_chol(i,j) = L(i,j) * L_grad(i,j);
+    }
+  }
+  for (int i = 1; i < K; ++i) {
+    L_chol(i,i) = sqrt(1 - accu(square(L_chol.submat(i,0, i,i-1))));
+  }
+
+  Rcpp::List output = Rcpp::List::create(
+      Rcpp::Named("L_chol") = L_chol,
+      Rcpp::Named("L_grad") = L_grad
+      );
+
+  return output;
+}
+
 
 //' @export
 // [[Rcpp::export]]

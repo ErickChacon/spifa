@@ -100,6 +100,7 @@ double dlkj_corr_chol(arma::mat L, double eta, bool logpdf = true) {
 //' @export
 // [[Rcpp::export]]
 double dlkj_corr_free(arma::vec x, int K, double eta, bool logpdf = true) {
+  // There is problems when some element on x is equal to zero
   arma::mat L = vec2trimatl(tanh(x), K, false);
   arma::mat L_chol = vec2chol_corr(x, K);
   double log_pdf = dlkj_corr_chol(L_chol, eta, true);
@@ -107,6 +108,20 @@ double dlkj_corr_free(arma::vec x, int K, double eta, bool logpdf = true) {
   log_pdf += arma::accu(log(trimatl2vec(L_chol / L, false)));
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
+
+//' @export
+// [[Rcpp::export]]
+double dlkj_corr_free2(arma::vec x, int K, double eta, bool logpdf = true) {
+  arma::mat L = vec2trimatl(tanh(x), K, false);
+  Rcpp::List aux = vec2chol_corr2(x, K);
+  arma::mat L_chol = aux["L_chol"];
+  arma::mat L_grad = aux["L_grad"];
+  double log_pdf = dlkj_corr_chol(L_chol, eta, true);
+  log_pdf -= 2 * arma::accu(log(cosh(x)));
+  log_pdf += arma::accu(log(trimatl2vec(L_grad, false)));
+  return (logpdf) ? log_pdf: exp(log_pdf);
+}
+
 
 //' @export
 // [[Rcpp::export]]

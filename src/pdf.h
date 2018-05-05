@@ -11,6 +11,7 @@ double dinvwish(double v, arma::mat X, arma::mat S, bool logpdf = true);
 double dlkj_corr(arma::mat R, double eta, bool logpdf = true);
 double dlkj_corr_chol(arma::mat L, double eta, bool logpdf = true);
 double dlkj_corr_free(arma::vec x, int K, double eta, bool logpdf = true);
+double dlkj_corr_free2(arma::vec x, int K, double eta, bool logpdf = true);
 
 #endif
 

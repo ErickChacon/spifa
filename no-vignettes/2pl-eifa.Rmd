@@ -120,7 +120,8 @@ ggplot(explor, aes(ability2, endorse)) + geom_point(alpha = 0.5)
 
 ```{r}
 
-iter <- 5 * 10 ^ 4
+iter <- 5 * 10 ^ 3
+thin <- 10
 disc_mat <- cbind(t(discrimination1), t(discrimination2))
 L_a <- lower.tri(disc_mat, diag = TRUE) * 1
 theta_init <- c(data_long$ability1[1:n], data_long$ability2[1:n])
@@ -135,17 +136,16 @@ Rcpp::sourceCpp("../src/ifa-driver.cpp")
 source("../R/spmirt.R")
 source("../R/ggplot-mcmc.R")
 
-iter = 200
+# iter = 200
 system.time(
 samples <- spmirt(
-  response = data_long$y, predictors = matrix(1, 10, 2), coordinates = matrix(1, 10, 2),
-  nobs = n, nitems = q, nfactors = 3, niter = iter,
-  A_opt = list(prior_mean = NULL, prior_sd = NULL),
-  constrains = list(W = matrix(1, 3, 3))
+  response = data_long$y, predictors = NULL, coordinates = NULL,
+  nobs = n, nitems = q, nfactors = 2, niter = iter, thin = 10
 )
 )
-samples[["A_prior_mean"]]
-samples[["A_prior_sd"]]
+iter <- iter / thin
+# samples[["A_prior_mean"]]
+# samples[["A_prior_sd"]]
 # samples[["constrain_L"]]
 # samples[["constrain_T"]]
 

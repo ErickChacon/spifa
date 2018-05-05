@@ -5,15 +5,18 @@
 #include "name-samples.h"
 #include "correlation.h"
 #include "ifa.h"
+#include "pdf.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 
-Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
-    arma::mat constrain_L,
-    arma::vec c_ini,
-    arma::mat A_ini,
-    arma::mat R_ini,
-    arma::vec theta_init
+Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distances,
+    int nobs, int nitems, int nfactors,
+    arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd,
+    arma::mat adap_Sigma, double adap_scale,
+    arma::vec c_ini, arma::mat A_ini, arma::mat R_ini,
+    arma::mat B_ini, arma::vec sigmas_gp_ini, arma::vec phi_gp_ini,
+    std::string mod_type
     ):
+  model_type(mod_type),
   y(response), n(nobs), q(nitems), m(nfactors),
   n_corr((m-1) * m / 2),
   ones_n(arma::ones(n)),
@@ -23,11 +26,15 @@ Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
   eye_m(arma::eye(m,m)),
   low_thresh(Rcpp::NumericVector::create(R_NegInf, 0)),
   high_thresh(Rcpp::NumericVector::create(0, R_PosInf)),
-  L(constrain_L)
+  L(constrain_L),
+  T(constrain_T),
+  V_sd(constrain_V_sd),
+  logscale(log(adap_scale)),
+  params_cov(adap_Sigma)
 {
 
   // Initializing c: difficulty parameters
-  c = arma::randn(q) * 0.3;
+  c = c_ini;
   // Initializing a: discrimation parameters
   a = arma::vectorise(A_ini.t());
   LA = L % vec2matt(a, m, q);
@@ -39,26 +46,37 @@ Ifa::Ifa (Rcpp::NumericVector response, int nobs, int nitems, int nfactors,
     ity++;
   }
   // Initializing correlation parameters
-  arma::mat Corr_chol = arma::chol(R_ini, "lower");
+  Corr_chol = arma::chol(R_ini, "lower");
   corr_free = chol_corr2vec(Corr_chol);
+  arma::mat Cov_chol = Corr_chol;
+  Cov_chol.each_col() %= V_sd;
+
+  // Join covariance parameters
+  // params = arma::join_cols(mgp_sd_log, mgp_phi_log);
+  // params = arma::join_cols(params, corr_free);
+  if (model_type != "spifa" && model_type != "spifa_pred") {
+    params = corr_free;
+    params_mean = params;
+  }
+
   // Initializing theta: latent abilities
+  arma::mat theta_prior_Sigma_chol = Cov_chol;
+  theta_prior_Sigma_chol_inv = arma::inv(trimatl(theta_prior_Sigma_chol));
+  theta_prior_Sigma_inv = theta_prior_Sigma_chol_inv.t() * theta_prior_Sigma_chol_inv;
   theta = arma::vec(n*m).fill(NA_REAL);
+
 }
-
-
 
 void Ifa::update_theta()
 {
-  // if (model_type == "eifa") {
-    arma::mat aux_Sigma_inv_chol = arma::chol(LA.t() * LA + eye_m, "lower");
+  if (model_type == "eifa" || model_type == "cifa" || model_type == "cifa_pred") {
+    arma::mat aux_Sigma_inv_chol = arma::chol(LA.t()*LA + theta_prior_Sigma_inv, "lower");
     arma::mat aux_Sigma_chol = arma::inv(trimatl(aux_Sigma_inv_chol)).t();
     arma::mat aux_Sigma = aux_Sigma_chol * aux_Sigma_chol.t();
     arma::mat residual = vec2mat(z - arma::kron(c, ones_n), n, q);
     arma::vec theta_mu = arma::vectorise(residual * LA * aux_Sigma);
     theta = theta_mu + arma::kron(aux_Sigma_chol, eye_n) * arma::randn(n*m);
-  // } else if (model_type == "cifa"){
-  //
-  // }
+  }
 }
 
 void Ifa::update_c(const arma::vec& c_prior_mean, const arma::vec& c_prior_sd)
@@ -113,23 +131,68 @@ void Ifa::update_z() {
 }
 
 void Ifa::update_cov_params(const double C, const double alpha, const double target,
-    const double R_prior_eta) {
+    const double R_prior_eta, int index) {
+
+  double accept;
+
+  if (model_type == "cifa") {
+    // Define current Sigma_proposal and propose new covariance matrix
+    arma::mat Sigma_proposal = exp(logscale) * params_cov;
+    arma::mat Sigma_proposal_chol = arma::chol(Sigma_proposal, "lower");
+    arma::vec params_aux = params + Sigma_proposal_chol * arma::randn(params.size());
+    arma::vec corr_free_aux = params_aux;
+    arma::mat Corr_chol_aux = vec2chol_corr(params_aux, m);
+    // Update covariance structure of latent factors (theta)
+    arma::mat theta_prior_Sigma_chol_aux = Corr_chol_aux;
+    theta_prior_Sigma_chol_aux.each_col() %= V_sd;
+    arma::mat theta_prior_Sigma_chol_inv_aux = arma::inv(trimatl(theta_prior_Sigma_chol_aux));
+    // Compute probability of acceptance for the RW update
+    arma::mat Theta = vec2mat(theta, n, m);
+    arma::mat Theta_mean = arma::zeros(n, m);
+    accept = dmvnorm_cholinv(Theta.t(), Theta_mean.t(), theta_prior_Sigma_chol_inv_aux);
+    accept += dlkj_corr_free2(corr_free_aux, m, R_prior_eta);
+    accept -= dmvnorm_cholinv(Theta.t(), Theta_mean.t(), theta_prior_Sigma_chol_inv);
+    accept -= dlkj_corr_free2(corr_free, m, R_prior_eta);
+    // Accept or reject new proposal and update associated parameters
+    if (accept > log(R::runif(0,1))) {
+      params = params_aux;
+      corr_free = corr_free_aux;
+      Corr_chol = Corr_chol_aux;
+      theta_prior_Sigma_chol_inv = theta_prior_Sigma_chol_inv_aux;
+      theta_prior_Sigma_inv = theta_prior_Sigma_chol_inv.t() * theta_prior_Sigma_chol_inv;
+    }
+  }
+
+  if (model_type != "eifa") {
+    // Update scaling parameter
+    double gamma = C / pow(index + 1, alpha);
+    logscale += gamma * (std::min(exp(accept), 1.0) - target);
+    // Update covariance of parameters with stochastic approximation
+    arma::vec params_center = params - params_mean;
+    params_mean += gamma * params_center;
+    params_cov += gamma * (params_center * params_center.t() - params_cov);
+  }
 
 }
 
 Rcpp::List Ifa::sample(
     arma::vec c_prior_mean, arma::vec c_prior_sd,
     arma::mat A_prior_mean, arma::mat A_prior_sd,
-    int niter) {
+    int niter, int thin,
+    double C, double alpha, double target, double R_prior_eta
+    ) {
+
+  int nsave = niter / thin;
 
   // Transformation of prior parameters
   arma::vec a_prior_mean = arma::vectorise(A_prior_mean.t());
 
-  // Define matrices to save samples 
-  arma::mat c_samples(q, niter);
-  arma::mat a_samples(q*m, niter);
-  arma::mat theta_samples(n*m, niter);
-  arma::mat z_samples(q*n, niter);
+  // Define matrices to save samples
+  arma::mat c_samples(q, nsave);
+  arma::mat a_samples(q*m, nsave);
+  arma::mat theta_samples(n*m, nsave);
+  arma::mat z_samples(q*n, nsave);
+  arma::mat corr_samples(n_corr, nsave);
 
 
   for (int i = 0; i < niter; ++i) {
@@ -138,11 +201,15 @@ Rcpp::List Ifa::sample(
     update_c(c_prior_mean, c_prior_sd);
     update_a(a_prior_mean, A_prior_sd);
     update_z();
+    update_cov_params(C, alpha, target, R_prior_eta, i);
     // Save samples
-    theta_samples.col(i) = theta;
-    c_samples.col(i) = c;
-    a_samples.col(i) = arma::vectorise(LA);
-    z_samples.col(i) = z;
+    if (niter % thin == 0) {
+      theta_samples.col(i/thin) = theta;
+      c_samples.col(i/thin) = c;
+      a_samples.col(i/thin) = arma::vectorise(LA);
+      z_samples.col(i/thin) = z;
+      corr_samples.col(i/thin) = trimatl2vec(Corr_chol * Corr_chol.t(), false);
+    }
   }
 
   Rcpp::NumericMatrix theta_samples_rcpp = Rcpp::wrap(theta_samples.t());
@@ -153,12 +220,15 @@ Rcpp::List Ifa::sample(
   Rcpp::colnames(a_samples_rcpp) = name_samples_mat(q, m, "A");
   Rcpp::NumericMatrix z_samples_rcpp = Rcpp::wrap(z_samples.t());
   Rcpp::colnames(z_samples_rcpp) = name_samples_mat(n, q, "Z");
+  Rcpp::NumericMatrix corr_samples_rcpp = Rcpp::wrap(corr_samples.t());
+  Rcpp::colnames(corr_samples_rcpp) = name_samples_lower(m, m, "Corr", false);
 
   Rcpp::List output = Rcpp::List::create(
       Rcpp::Named("c") = c_samples_rcpp,
       Rcpp::Named("a") = a_samples_rcpp,
       Rcpp::Named("theta") = theta_samples_rcpp,
-      Rcpp::Named("z") = z_samples_rcpp
+      Rcpp::Named("z") = z_samples_rcpp,
+      Rcpp::Named("corr") = corr_samples_rcpp
       );
 
   Rcpp::StringVector myclass(2);

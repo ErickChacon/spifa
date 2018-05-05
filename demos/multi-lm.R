@@ -65,8 +65,11 @@ as_tibble(samples, 0, 100, select = "beta") %>%
   gg_trace(wrap = TRUE, alpha = 0.6)
 
 as_tibble(samples, 0, 100, select = "beta") %>% gg_trace(alpha = 0.6)
+
 as_tibble(samples, 0, 100, select = "corr_chol") %>% gg_trace(alpha = 0.6)
+
 as_tibble(samples, 0, 100, select = "corr") %>% gg_trace(alpha = 0.6)
+
 as_tibble(samples, 0, 100, select = "sigmas") %>% gg_trace(alpha = 0.6)
 
 bla <- as_tibble(samples, iter/2, select = "sigmas")

@@ -94,7 +94,7 @@ Rcpp::List multi_lm(arma::mat Y, arma::mat X, int iter,
     // Sampling Corr: random walk Metropolis Hastings
     // arma::mat proposal_corr_Sigma_chol = arma::chol(proposal_corr_Sigma);
     arma::mat proposal_corr_Sigma_chol =
-      arma::chol(exp(corr_free_logscale) * corr_free_cov);
+      arma::chol(exp(corr_free_logscale) * corr_free_cov, "lower");
     arma::vec corr_free_aux =
       corr_free + proposal_corr_Sigma_chol * arma::randn<arma::vec>(n_corr);
     arma::mat Corr_chol_aux = vec2chol_corr(corr_free_aux, q);
