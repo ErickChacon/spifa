@@ -15,14 +15,18 @@ private:
   const int n, q, m, n_corr;
   // Data
   Rcpp::NumericVector y;
+  arma::mat dist;
   // Parameters to sample
   arma::vec c;                        // difficulty
   arma::vec a;                        // discrimination
   arma::vec theta;                    // latent abilities
   arma::vec z;                        // augmented variable
-  arma::vec corr_free;
+  arma::vec corr_free;                // V's correlation parameters on free scale
+  arma::vec mgp_sd;                   // Standard deviations of Gaussian processes
+  arma::vec mgp_phi;                  // Scale parameters of Gaussian processes
   // Transformed parameters
-  arma::mat Corr_chol;
+  arma::mat Corr_chol;                // cholesky of V's correlation matrix
+  arma::mat LA;                       // restricted discrimation
   // Restrictions
   const arma::mat L;                  // restrictions on discrimination
   const arma::mat T;                  // restrictions on Gaussian Processes
@@ -35,8 +39,6 @@ private:
   // Hierarquical Priors
   arma::mat theta_prior_Sigma_chol_inv;
   arma::mat theta_prior_Sigma_inv;
-  // Parameters-dependent objects
-  arma::mat LA;                       // restricted discrimation
   // Constant objects usefull for sampling
   const arma::vec ones_n;
   const arma::mat eye_q;
@@ -61,13 +63,20 @@ public:
   void update_c(const arma::vec& c_prior_mean, const arma::vec& c_prior_sd);
   void update_a(const arma::vec& a_prior_mean, const arma::mat& A_prior_sd);
   void update_z();
-  void update_cov_params(const double C, const double alpha, const double target,
-      const double R_prior_eta, int index);
+  void update_cov_params(
+      const arma::vec sigmas_gp_mean, const arma::vec sigmas_gp_sd,
+      const arma::vec phi_gp_mean, const arma::vec phi_gp_sd,
+      const double R_prior_eta,
+      const double C, const double alpha, const double target, int index);
   Rcpp::List sample(
+      int niter, int thin,
       arma::vec c_prior_mean, arma::vec c_prior_sd,
       arma::mat A_prior_mean, arma::mat A_prior_sd,
-      int niter, int thin,
-      double C, double alpha, double target, double R_prior_eta
+      double R_prior_eta,
+      arma::mat B_prior_mean, arma::mat B_prior_sd,
+      arma::vec sigmas_gp_mean, arma::vec sigmas_gp_sd,
+      arma::vec phi_gp_mean, arma::vec phi_gp_sd,
+      double C, double alpha, double target
       );
 };
 

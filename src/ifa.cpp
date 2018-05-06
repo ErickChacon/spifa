@@ -17,7 +17,7 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
     std::string mod_type
     ):
   model_type(mod_type),
-  y(response), n(nobs), q(nitems), m(nfactors),
+  y(response), dist(distances),  n(nobs), q(nitems), m(nfactors),
   n_corr((m-1) * m / 2),
   ones_n(arma::ones(n)),
   zeros_nm(arma::zeros(n*m)),
@@ -45,25 +45,46 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
     *it = RcppTN::rtn1(0.0, 1.0, low_thresh[*ity], high_thresh[*ity]);
     ity++;
   }
-  // Initializing correlation parameters
+  // Initializing correlation parameters of multivariate independent noise (V)
   Corr_chol = arma::chol(R_ini, "lower");
   corr_free = chol_corr2vec(Corr_chol);
   arma::mat Cov_chol = Corr_chol;
   Cov_chol.each_col() %= V_sd;
+  // Initializing sigmas and phis: spatial covariance parameters of MGP
+  mgp_sd = sigmas_gp_ini;
+  mgp_phi = phi_gp_ini;
+  // Update full covariance structure of latent abilities depending of model type
+  if (model_type == "spifa" || model_type == "spifa_pred") {
+    arma::mat mgp_Sigma(n*m, n*m, arma::fill::zeros);
+    for (int i = 0; i < m; ++i) {
+      mgp_Sigma.submat(i*n, i*n, arma::size(n, n)) =
+        pow(mgp_sd(i), 2) * exp(- dist / mgp_phi(i));
+    }
+    arma::mat theta_prior_Sigma = mgp_Sigma + arma::kron(Cov_chol * Cov_chol.t(), eye_n);
+    arma::mat theta_prior_Sigma_chol = arma::chol(theta_prior_Sigma, "lower");
+    theta_prior_Sigma_chol_inv = arma::inv(trimatl(theta_prior_Sigma_chol));
+    theta_prior_Sigma_inv =
+      theta_prior_Sigma_chol_inv.t() * theta_prior_Sigma_chol_inv;
+    // Rcpp::Rcout << theta_prior_Sigma.diag() << std::endl;
+  } else if (model_type == "eifa" || model_type == "cifa" || model_type == "cifa_pred") {
+    arma::mat theta_prior_Sigma_chol = Cov_chol;
+    theta_prior_Sigma_chol_inv = arma::inv(trimatl(theta_prior_Sigma_chol));
+    theta_prior_Sigma_inv = theta_prior_Sigma_chol_inv.t() * theta_prior_Sigma_chol_inv;
 
-  // Join covariance parameters
-  // params = arma::join_cols(mgp_sd_log, mgp_phi_log);
-  // params = arma::join_cols(params, corr_free);
-  if (model_type != "spifa" && model_type != "spifa_pred") {
-    params = corr_free;
-    params_mean = params;
   }
-
   // Initializing theta: latent abilities
-  arma::mat theta_prior_Sigma_chol = Cov_chol;
-  theta_prior_Sigma_chol_inv = arma::inv(trimatl(theta_prior_Sigma_chol));
-  theta_prior_Sigma_inv = theta_prior_Sigma_chol_inv.t() * theta_prior_Sigma_chol_inv;
   theta = arma::vec(n*m).fill(NA_REAL);
+
+  // Join covariance parameters depending of model type
+  if (model_type == "spifa" || model_type == "spifa_pred") {
+    params = arma::join_cols(log(mgp_sd), log(mgp_phi));
+    params = arma::join_cols(params, corr_free);
+    // Rcpp::Rcout << params << std::endl;
+  } else if (model_type == "eifa" || model_type == "cifa" || model_type == "cifa_pred") {
+    params = corr_free;
+  }
+  // Variables for adaptive MH
+  params_mean = params;
 
 }
 
@@ -76,6 +97,13 @@ void Ifa::update_theta()
     arma::mat residual = vec2mat(z - arma::kron(c, ones_n), n, q);
     arma::vec theta_mu = arma::vectorise(residual * LA * aux_Sigma);
     theta = theta_mu + arma::kron(aux_Sigma_chol, eye_n) * arma::randn(n*m);
+  } else if (model_type == "spifa" || model_type == "spifa_pred") {
+    arma::mat theta_Sigma_inv = arma::kron(LA.t() * LA, eye_n) +  theta_prior_Sigma_inv;
+    arma::mat theta_Sigma_inv_chol = arma::chol(theta_Sigma_inv, "lower");
+    arma::mat theta_Sigma_chol = arma::inv(trimatl(theta_Sigma_inv_chol)).t();
+    arma::vec theta_mu = arma::kron(LA.t(), eye_n) * (z - arma::kron(c, ones_n));
+    theta_mu = theta_Sigma_chol * theta_Sigma_chol.t() * theta_mu;
+    theta = theta_mu +  theta_Sigma_chol * arma::randn(n*m);
   }
 }
 
@@ -130,9 +158,12 @@ void Ifa::update_z() {
   }
 }
 
-void Ifa::update_cov_params(const double C, const double alpha, const double target,
-    const double R_prior_eta, int index) {
-
+void Ifa::update_cov_params(
+    const arma::vec sigmas_gp_mean, const arma::vec sigmas_gp_sd,
+    const arma::vec phi_gp_mean, const arma::vec phi_gp_sd,
+    const double R_prior_eta,
+    const double C, const double alpha, const double target, int index)
+{
   double accept;
 
   if (model_type == "cifa") {
@@ -142,6 +173,8 @@ void Ifa::update_cov_params(const double C, const double alpha, const double tar
     arma::vec params_aux = params + Sigma_proposal_chol * arma::randn(params.size());
     arma::vec corr_free_aux = params_aux;
     arma::mat Corr_chol_aux = vec2chol_corr(params_aux, m);
+    // Rcpp::Rcout << Corr_chol_aux << std::endl;
+    // Rcpp::Rcout << Corr_chol << std::endl;
     // Update covariance structure of latent factors (theta)
     arma::mat theta_prior_Sigma_chol_aux = Corr_chol_aux;
     theta_prior_Sigma_chol_aux.each_col() %= V_sd;
@@ -155,13 +188,70 @@ void Ifa::update_cov_params(const double C, const double alpha, const double tar
     accept -= dlkj_corr_free2(corr_free, m, R_prior_eta);
     // Accept or reject new proposal and update associated parameters
     if (accept > log(R::runif(0,1))) {
+      // All parameters
       params = params_aux;
+      // Correlation updates
       corr_free = corr_free_aux;
       Corr_chol = Corr_chol_aux;
+      // Latent abilities prior update
       theta_prior_Sigma_chol_inv = theta_prior_Sigma_chol_inv_aux;
       theta_prior_Sigma_inv = theta_prior_Sigma_chol_inv.t() * theta_prior_Sigma_chol_inv;
     }
+  } else if (model_type == "spifa" || model_type == "spifa_pred") {
+    // Rcpp::Rcout << "Running spifa" << std::endl;
+    // Define current Sigma_proposal and update covariance matrix
+    arma::mat Sigma_proposal = exp(logscale) * params_cov;
+    arma::mat Sigma_proposal_chol = arma::chol(Sigma_proposal, "lower");
+    arma::vec params_aux = params + Sigma_proposal_chol * arma::randn(params.size());
+    // Build proposed mgp covariance structure
+    arma::vec mgp_sd_aux = exp(params_aux.subvec(0, m-1));
+    arma::vec mgp_phi_aux = exp(params_aux.subvec(m, 2*m-1));
+    arma::mat mgp_Sigma_aux(n*m, n*m, arma::fill::zeros);
+    for (int j = 0; j < m; ++j) {
+      mgp_Sigma_aux.submat(j*n, j*n, arma::size(n, n)) =
+        pow(mgp_sd_aux(j), 2) * exp(- dist / mgp_phi_aux(j));
+    }
+    // Build proposed multivariate noise covariance structure
+    arma::vec corr_free_aux = params_aux.subvec(2*m, params.size()-1);
+    arma::mat Corr_chol_aux = vec2chol_corr(corr_free_aux, m);
+    arma::mat Cov_chol_aux = Corr_chol_aux;
+    Cov_chol_aux.each_col() %= V_sd;
+    arma::mat Cov_aux = Cov_chol_aux * Cov_chol_aux.t();
+    // Build full proposed covariance structure
+    arma::mat theta_prior_Sigma_aux = mgp_Sigma_aux + arma::kron(Cov_aux, eye_n);
+    arma::mat theta_prior_Sigma_chol_aux = arma::chol(theta_prior_Sigma_aux, "lower");
+    arma::mat theta_prior_Sigma_chol_inv_aux =
+      arma::inv(trimatl(theta_prior_Sigma_chol_aux));
+    // Update
+    accept = dmvnorm_cholinv(theta, zeros_nm, theta_prior_Sigma_chol_inv_aux, true);
+    accept += dlkj_corr_free2(corr_free_aux, m, R_prior_eta, true);
+    accept -= dmvnorm_cholinv(theta, zeros_nm, theta_prior_Sigma_chol_inv, true);
+    accept -= dlkj_corr_free2(corr_free, m, R_prior_eta, true);
+    for (int j = 0; j < m; ++j) {
+     accept += R::dnorm(log(mgp_sd_aux(j)), log(pow(sigmas_gp_mean(j),2)),
+         sigmas_gp_sd(j), true);
+     accept += R::dnorm(log(mgp_phi_aux(j)), log(phi_gp_mean(j)), phi_gp_sd(j), true);
+     accept -= R::dnorm(log(mgp_sd(j)), log(pow(sigmas_gp_mean(j),2)),
+         sigmas_gp_sd(j), true);
+     accept -= R::dnorm(log(mgp_phi(j)), log(phi_gp_mean(j)), phi_gp_sd(j), true);
+    }
+    // Rcpp::Rcout << accept << std::endl;
+    if (accept > log(R::runif(0,1))) {
+      // All parameters
+      params = params_aux;
+      // Correlation updates
+      corr_free = corr_free_aux;
+      Corr_chol = Corr_chol_aux;
+      // Gaussian processes parameters updates
+      mgp_sd = mgp_sd_aux;
+      mgp_phi = mgp_phi_aux;
+      // Latent abilities prior update
+      theta_prior_Sigma_chol_inv = theta_prior_Sigma_chol_inv_aux;
+      theta_prior_Sigma_inv =
+        theta_prior_Sigma_chol_inv.t() * theta_prior_Sigma_chol_inv;
+    }
   }
+
 
   if (model_type != "eifa") {
     // Update scaling parameter
@@ -176,11 +266,15 @@ void Ifa::update_cov_params(const double C, const double alpha, const double tar
 }
 
 Rcpp::List Ifa::sample(
+    int niter, int thin,
     arma::vec c_prior_mean, arma::vec c_prior_sd,
     arma::mat A_prior_mean, arma::mat A_prior_sd,
-    int niter, int thin,
-    double C, double alpha, double target, double R_prior_eta
-    ) {
+    double R_prior_eta,
+    arma::mat B_prior_mean, arma::mat B_prior_sd,
+    arma::vec sigmas_gp_mean, arma::vec sigmas_gp_sd,
+    arma::vec phi_gp_mean, arma::vec phi_gp_sd,
+    double C, double alpha, double target)
+{
 
   int nsave = niter / thin;
 
@@ -193,7 +287,8 @@ Rcpp::List Ifa::sample(
   arma::mat theta_samples(n*m, nsave);
   arma::mat z_samples(q*n, nsave);
   arma::mat corr_samples(n_corr, nsave);
-
+  arma::mat mgp_sd_samples(m, nsave);
+  arma::mat mgp_phi_samples(m, nsave);
 
   for (int i = 0; i < niter; ++i) {
     // Update parameters
@@ -201,7 +296,9 @@ Rcpp::List Ifa::sample(
     update_c(c_prior_mean, c_prior_sd);
     update_a(a_prior_mean, A_prior_sd);
     update_z();
-    update_cov_params(C, alpha, target, R_prior_eta, i);
+    update_cov_params(sigmas_gp_mean, sigmas_gp_sd, phi_gp_mean, phi_gp_sd,
+        R_prior_eta, C, alpha, target, i);
+
     // Save samples
     if (niter % thin == 0) {
       theta_samples.col(i/thin) = theta;
@@ -209,6 +306,8 @@ Rcpp::List Ifa::sample(
       a_samples.col(i/thin) = arma::vectorise(LA);
       z_samples.col(i/thin) = z;
       corr_samples.col(i/thin) = trimatl2vec(Corr_chol * Corr_chol.t(), false);
+      mgp_sd_samples.col(i/thin) = mgp_sd;
+      mgp_phi_samples.col(i/thin) = mgp_phi;
     }
   }
 
@@ -222,13 +321,19 @@ Rcpp::List Ifa::sample(
   Rcpp::colnames(z_samples_rcpp) = name_samples_mat(n, q, "Z");
   Rcpp::NumericMatrix corr_samples_rcpp = Rcpp::wrap(corr_samples.t());
   Rcpp::colnames(corr_samples_rcpp) = name_samples_lower(m, m, "Corr", false);
+  Rcpp::NumericMatrix mgp_sd_samples_rcpp = Rcpp::wrap(mgp_sd_samples.t());
+  Rcpp::colnames(mgp_sd_samples_rcpp) = name_samples_vec(m, "mgp_sd");
+  Rcpp::NumericMatrix mgp_phi_samples_rcpp = Rcpp::wrap(mgp_phi_samples.t());
+  Rcpp::colnames(mgp_phi_samples_rcpp) = name_samples_vec(m, "mgp_phi");
 
   Rcpp::List output = Rcpp::List::create(
       Rcpp::Named("c") = c_samples_rcpp,
       Rcpp::Named("a") = a_samples_rcpp,
       Rcpp::Named("theta") = theta_samples_rcpp,
       Rcpp::Named("z") = z_samples_rcpp,
-      Rcpp::Named("corr") = corr_samples_rcpp
+      Rcpp::Named("corr") = corr_samples_rcpp,
+      Rcpp::Named("mgp_sd") = mgp_sd_samples_rcpp,
+      Rcpp::Named("mgp_phi") = mgp_phi_samples_rcpp
       );
 
   Rcpp::StringVector myclass(2);

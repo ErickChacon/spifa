@@ -27,12 +27,22 @@ Rcpp::List spmirt_cpp(
       model_type);
 
   Rcpp::List output = model.sample(
+      niter, thin,
       c_prior_mean, c_prior_sd,
       A_prior_mean, A_prior_sd,
-      niter, thin,
-      adap_C, adap_alpha, adap_accep_prob, R_prior_eta
+      R_prior_eta,
+      B_prior_mean, B_prior_sd,
+      sigmas_gp_mean, sigmas_gp_sd,
+      phi_gp_mean, phi_gp_sd,
+      adap_C, adap_alpha, adap_accep_prob
       );
 
+  // Rcpp::List output = Rcpp::List::create(
+  //     Rcpp::Named("beta") = 1,
+  //     Rcpp::Named("corr_chol") = 2,
+  //     Rcpp::Named("corr") = 3,
+  //     Rcpp::Named("sigmas") = 5
+  //     );
   return output;
 }
 

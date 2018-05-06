@@ -119,6 +119,7 @@ n
 q
 m <- 2
 iter <- 5 * 10 ^ 4
+# iter <- 5 * 10 ^ 2
 cor.params <- c(0.04, 0.04)
 sig.params <- c(0.6 ^ 0.5, 0.6 ^ 0.5)
 fix.sigma <- 0.4^0.5

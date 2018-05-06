@@ -104,7 +104,7 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
          sprintf("c(%i, %i)", nfactors, nfactors))
   }
 
-  R_prior_eta <- ifelse(is.null(R_opt$prior_eta), 1.5, R_opt$prior_eta)
+  R_prior_eta <- ifelse(is.null(R_opt$prior_eta), 1, R_opt$prior_eta)
 
   # Optional arguments for parameter of fixed effects (Beta)
 
@@ -140,11 +140,15 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
   # Compute predictors and distances as matrices
 
   if (is.null(predictors))  predictors <- matrix(NA)
-  if (is.null(coordinates))  coordinates <- matrix(NA)
+  if (is.null(coordinates)) {
+    coordinates <- matrix(NA)
+  } else {
+    distances <- as.matrix(dist(coordinates))
+  }
 
   # Execute model calling c++ spmirt function
   samples <- spmirt_cpp(
-    response = response, predictors = predictors, distances = coordinates,
+    response = response, predictors = predictors, distances = distances,
     nobs = nobs, nitems = nitems, nfactors = nfactors, niter = niter, thin = thin,
     constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
     adap_Sigma = adap_Sigma, adap_scale = adap_scale, adap_C = adap_C,
@@ -161,23 +165,23 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
 
   attr(samples, "model") <- model_type
 
-  # samples <- list(
-  #   response = response, predictors = predictors, distances = coordinates,
-  #   nobs = nobs, nitems = nitems, nfactors = nfactors, niter = niter, thin = thin,
-  #   constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
-  #   adap_Sigma = adap_Sigma, adap_scale = adap_scale, adap_C = adap_C,
-  #   adap_alpha = adap_alpha, adap_accep_prob = adap_accep_prob,
-  #   c_initial = c_initial, c_prior_mean = c_prior_mean, c_prior_sd = c_prior_sd,
-  #   A_initial = A_initial, A_prior_mean = A_prior_mean, A_prior_sd = A_prior_sd,
-  #   R_initial = R_initial, R_prior_eta = R_prior_eta,
-  #   B_initial = B_initial, B_prior_mean = B_prior_mean, B_prior_sd = B_prior_sd,
-  #   sigmas_gp_initial = sigmas_gp_initial, sigmas_gp_mean = sigmas_gp_mean,
-  #   sigmas_gp_sd = sigmas_gp_sd,
-  #   phi_gp_initial = phi_gp_initial, phi_gp_mean = phi_gp_mean, phi_gp_sd = phi_gp_sd,
-  #   model_type = model_type
-  #   )
-  #
-  #
+  model_info <- list(
+    response = response, predictors = predictors, distances = distances,
+    nobs = nobs, nitems = nitems, nfactors = nfactors, niter = niter, thin = thin,
+    constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
+    adap_Sigma = adap_Sigma, adap_scale = adap_scale, adap_C = adap_C,
+    adap_alpha = adap_alpha, adap_accep_prob = adap_accep_prob,
+    c_initial = c_initial, c_prior_mean = c_prior_mean, c_prior_sd = c_prior_sd,
+    A_initial = A_initial, A_prior_mean = A_prior_mean, A_prior_sd = A_prior_sd,
+    R_initial = R_initial, R_prior_eta = R_prior_eta,
+    B_initial = B_initial, B_prior_mean = B_prior_mean, B_prior_sd = B_prior_sd,
+    sigmas_gp_initial = sigmas_gp_initial, sigmas_gp_mean = sigmas_gp_mean,
+    sigmas_gp_sd = sigmas_gp_sd,
+    phi_gp_initial = phi_gp_initial, phi_gp_mean = phi_gp_mean, phi_gp_sd = phi_gp_sd,
+    model_type = model_type
+    )
+
+  attr(samples, "model_info") <- model_info
 
   return(samples)
 }

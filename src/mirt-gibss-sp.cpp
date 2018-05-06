@@ -115,7 +115,6 @@ Rcpp::List ifa_gibbs_sp(Rcpp::NumericVector y, arma::mat dist, int n, int q, int
   arma::vec theta_mu(n*m);
   arma::mat theta_samples(n*m, niter);
 
-
   // Initializing parameter variables
   arma::vec params = arma::join_cols(mgp_sd_log, mgp_phi_log);
   params = arma::join_cols(params, corr_free);
@@ -251,8 +250,6 @@ Rcpp::List ifa_gibbs_sp(Rcpp::NumericVector y, arma::mat dist, int n, int q, int
     corr_samples.col(i) = trimatl2vec(Corr_chol * Corr_chol.t(), false);
 
   }
-
-    Rcpp::Rcout << "acceptance " << exp(accept) << std::endl;
 
   return Rcpp::List::create(
       Rcpp::Named("theta") = theta_samples.t(),

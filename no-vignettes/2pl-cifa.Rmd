@@ -15,6 +15,7 @@ knitr::opts_chunk$set(fig.width = 7, fig.height = 4)
 # knitr::opts_chunk$set(fig.width = 6, fig.height = 4)
 knitr::opts_chunk$set(comment = "#>")
 options(width = 100)
+# set.seed(1)
 ```
 
 In this vignette, we show how to use the **spmirt** package to fit a
@@ -185,18 +186,22 @@ Rcpp::sourceCpp("../src/ifa-driver.cpp")
 source("../R/spmirt.R")
 source("../R/ggplot-mcmc.R")
 
-# iter = 10^2
+# iter = 10^4
 system.time(
 samples <- spmirt(
   response = data_long$y, predictors = NULL, coordinates = NULL,
-  nobs = n, nitems = q, nfactors = 2, niter = iter, thin = 10,
-  constrains = list(A = L_a)
-  # ,
+  nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
+  constrains = list(A = L_a) ,
   # adaptive = list(Sigma_R = matrix(0.001, 1,1))
+  A_opt = list(initial = L_a),
+  R_opt = list(prior_eta = 1)
 )
 )
 attr(samples, "model")
 iter <- iter / thin
+
+
+attr(samples, "model_info")
 
 #
 # Rcpp::sourceCpp("../src/pdf.cpp")
@@ -254,7 +259,9 @@ iter <- iter / thin
 
 # Tibble as wide format: default
 samples_tib <- as_tibble(samples, burnin = iter / 2, thin = 1)
+
 knitr::kable(samples_tib[1:10, 1:15], digits = 2)
+
 # Tibble as long format: default
 samples_long <- gather(samples_tib)
 knitr::kable(head(samples_long, 10), digits = 2)
