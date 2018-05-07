@@ -12,18 +12,20 @@ private:
   // Model type: eifa, cifa, cifa_pred, spifa, spifa_pred
   const std::string model_type;
   // Metadata
-  const int n, q, m, n_corr;
+  const int n, q, m, p, n_corr;
   // Data
-  Rcpp::NumericVector y;
-  arma::mat dist;
+  Rcpp::NumericVector y;              // response variable
+  arma::mat dist;                     // distance matrix
+  arma::mat X;                        // predictors design matrix
   // Parameters to sample
+  arma::vec z;                        // augmented variable
   arma::vec c;                        // difficulty
   arma::vec a;                        // discrimination
   arma::vec theta;                    // latent abilities
-  arma::vec z;                        // augmented variable
+  arma::mat B;                        // multivariate fixed effects (pxm)
   arma::vec corr_free;                // V's correlation parameters on free scale
-  arma::vec mgp_sd;                   // Standard deviations of Gaussian processes
-  arma::vec mgp_phi;                  // Scale parameters of Gaussian processes
+  arma::vec mgp_sd;                   // standard deviations of Gaussian processes
+  arma::vec mgp_phi;                  // scale parameters of Gaussian processes
   // Transformed parameters
   arma::mat Corr_chol;                // cholesky of V's correlation matrix
   arma::mat LA;                       // restricted discrimation
@@ -37,6 +39,7 @@ private:
   arma::mat params_cov;
   double logscale;
   // Hierarquical Priors
+  arma::vec theta_prior_mean;
   arma::mat theta_prior_Sigma_chol_inv;
   arma::mat theta_prior_Sigma_inv;
   // Constant objects usefull for sampling
@@ -63,6 +66,7 @@ public:
   void update_c(const arma::vec& c_prior_mean, const arma::vec& c_prior_sd);
   void update_a(const arma::vec& a_prior_mean, const arma::mat& A_prior_sd);
   void update_z();
+  void update_B(const arma::vec& B_prior_sd);
   void update_cov_params(
       const arma::vec sigmas_gp_mean, const arma::vec sigmas_gp_sd,
       const arma::vec phi_gp_mean, const arma::vec phi_gp_sd,

@@ -17,7 +17,8 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
     std::string mod_type
     ):
   model_type(mod_type),
-  y(response), dist(distances),  n(nobs), q(nitems), m(nfactors),
+  y(response), dist(distances), X(predictors),
+  n(nobs), q(nitems), m(nfactors), p(predictors.n_cols),
   n_corr((m-1) * m / 2),
   ones_n(arma::ones(n)),
   zeros_nm(arma::zeros(n*m)),
@@ -45,6 +46,8 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
     *it = RcppTN::rtn1(0.0, 1.0, low_thresh[*ity], high_thresh[*ity]);
     ity++;
   }
+  // Initializing B: multivariate fixed effects
+  B = B_ini;
   // Initializing correlation parameters of multivariate independent noise (V)
   Corr_chol = arma::chol(R_ini, "lower");
   corr_free = chol_corr2vec(Corr_chol);
@@ -72,6 +75,12 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
     theta_prior_Sigma_inv = theta_prior_Sigma_chol_inv.t() * theta_prior_Sigma_chol_inv;
 
   }
+  // Initializing mean of latent abilities depending of model type
+  if (model_type == "cifa_pred" || model_type == "spifa_pred") {
+    theta_prior_mean = arma::vectorise(X * B);
+  } else {
+    theta_prior_mean = arma::zeros(n*m);
+  }
   // Initializing theta: latent abilities
   theta = arma::vec(n*m).fill(NA_REAL);
 
@@ -96,12 +105,18 @@ void Ifa::update_theta()
     arma::mat aux_Sigma = aux_Sigma_chol * aux_Sigma_chol.t();
     arma::mat residual = vec2mat(z - arma::kron(c, ones_n), n, q);
     arma::vec theta_mu = arma::vectorise(residual * LA * aux_Sigma);
+    if (model_type == "cifa_pred") {
+      theta_mu += arma::vectorise(X * B * theta_prior_Sigma_inv * aux_Sigma);
+    }
     theta = theta_mu + arma::kron(aux_Sigma_chol, eye_n) * arma::randn(n*m);
   } else if (model_type == "spifa" || model_type == "spifa_pred") {
     arma::mat theta_Sigma_inv = arma::kron(LA.t() * LA, eye_n) +  theta_prior_Sigma_inv;
     arma::mat theta_Sigma_inv_chol = arma::chol(theta_Sigma_inv, "lower");
     arma::mat theta_Sigma_chol = arma::inv(trimatl(theta_Sigma_inv_chol)).t();
     arma::vec theta_mu = arma::kron(LA.t(), eye_n) * (z - arma::kron(c, ones_n));
+    if (model_type == "spifa_pred") {
+      theta_mu += theta_prior_Sigma_inv * theta_prior_mean;
+    }
     theta_mu = theta_Sigma_chol * theta_Sigma_chol.t() * theta_mu;
     theta = theta_mu +  theta_Sigma_chol * arma::randn(n*m);
   }
@@ -146,7 +161,8 @@ void Ifa::update_a(const arma::vec& a_prior_mean, const arma::mat& A_prior_sd) {
   LA = L % A;
 }
 
-void Ifa::update_z() {
+void Ifa::update_z()
+{
   arma::mat Theta = vec2mat(theta, n, m);
   arma::vec z_mu = arma::kron(c, ones_n) + arma::vectorise(Theta * LA.t());
   Rcpp::NumericVector::iterator ity = y.begin();
@@ -158,6 +174,32 @@ void Ifa::update_z() {
   }
 }
 
+void Ifa::update_B(const arma::vec& B_prior_sd)
+{
+    arma::mat Theta = vec2mat(theta, n, m);
+  if (model_type == "cifa_pred") {
+    arma::mat B_Sigma_inv = arma::kron(theta_prior_Sigma_inv, X.t()*X);
+    B_Sigma_inv.diag() += arma::vectorise(arma::square(B_prior_sd));
+    arma::mat B_Sigma_inv_chol = arma::chol(B_Sigma_inv, "lower");
+    arma::mat B_Sigma_chol = arma::inv(trimatl(B_Sigma_inv_chol)).t();
+    arma::mat B_Sigma = B_Sigma_chol * B_Sigma_chol.t();
+    arma::vec B_mean = B_Sigma * arma::vectorise(X.t() * Theta * theta_prior_Sigma_inv);
+    arma::vec betas = B_mean + B_Sigma_chol * arma::randn(p*m);
+    B = vec2mat(betas, p, m);
+  } else if (model_type == "spifa_pred") {
+    arma::mat Xt_kron = arma::kron(eye_m, X.t());
+    arma::mat B_Sigma_inv = Xt_kron * theta_prior_Sigma_inv * Xt_kron.t();
+    B_Sigma_inv.diag() += arma::vectorise(arma::square(B_prior_sd));
+    arma::mat B_Sigma_inv_chol = arma::chol(B_Sigma_inv, "lower");
+    arma::mat B_Sigma_chol = arma::inv(trimatl(B_Sigma_inv_chol)).t();
+    arma::mat B_Sigma = B_Sigma_chol * B_Sigma_chol.t();
+    arma::vec B_mean = arma::vectorise(X.t()*vec2mat(theta_prior_Sigma_inv*theta, n, m));
+    B_mean = B_Sigma * B_mean;
+    arma::vec betas = B_mean + B_Sigma_chol * arma::randn(p*m);
+    B = vec2mat(betas, p, m);
+  }
+}
+
 void Ifa::update_cov_params(
     const arma::vec sigmas_gp_mean, const arma::vec sigmas_gp_sd,
     const arma::vec phi_gp_mean, const arma::vec phi_gp_sd,
@@ -166,7 +208,7 @@ void Ifa::update_cov_params(
 {
   double accept;
 
-  if (model_type == "cifa") {
+  if (model_type == "cifa" || model_type == "cifa_pred") {
     // Define current Sigma_proposal and propose new covariance matrix
     arma::mat Sigma_proposal = exp(logscale) * params_cov;
     arma::mat Sigma_proposal_chol = arma::chol(Sigma_proposal, "lower");
@@ -181,7 +223,7 @@ void Ifa::update_cov_params(
     arma::mat theta_prior_Sigma_chol_inv_aux = arma::inv(trimatl(theta_prior_Sigma_chol_aux));
     // Compute probability of acceptance for the RW update
     arma::mat Theta = vec2mat(theta, n, m);
-    arma::mat Theta_mean = arma::zeros(n, m);
+    arma::mat Theta_mean = vec2mat(theta_prior_mean, n, m);
     accept = dmvnorm_cholinv(Theta.t(), Theta_mean.t(), theta_prior_Sigma_chol_inv_aux);
     accept += dlkj_corr_free2(corr_free_aux, m, R_prior_eta);
     accept -= dmvnorm_cholinv(Theta.t(), Theta_mean.t(), theta_prior_Sigma_chol_inv);
@@ -223,9 +265,9 @@ void Ifa::update_cov_params(
     arma::mat theta_prior_Sigma_chol_inv_aux =
       arma::inv(trimatl(theta_prior_Sigma_chol_aux));
     // Update
-    accept = dmvnorm_cholinv(theta, zeros_nm, theta_prior_Sigma_chol_inv_aux, true);
+    accept = dmvnorm_cholinv(theta, theta_prior_mean, theta_prior_Sigma_chol_inv_aux, true);
     accept += dlkj_corr_free2(corr_free_aux, m, R_prior_eta, true);
-    accept -= dmvnorm_cholinv(theta, zeros_nm, theta_prior_Sigma_chol_inv, true);
+    accept -= dmvnorm_cholinv(theta, theta_prior_mean, theta_prior_Sigma_chol_inv, true);
     accept -= dlkj_corr_free2(corr_free, m, R_prior_eta, true);
     for (int j = 0; j < m; ++j) {
      accept += R::dnorm(log(mgp_sd_aux(j)), log(pow(sigmas_gp_mean(j),2)),
