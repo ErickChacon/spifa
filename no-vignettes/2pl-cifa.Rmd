@@ -54,8 +54,8 @@ Firtst, simulate correlated factors:
 ```{r}
 
 m <- 2
-# set.seed(4)
-Corr <- matrix(c(1, -0.3, -0.3, 1), nrow = m)
+# set.seed(5)
+Corr <- matrix(c(1, +0.0, +0.0, 1), nrow = m)
 sigmas <- rep(1, m)
 D <- diag(sigmas)
 Cov <- D %*% Corr %*% D
@@ -96,10 +96,11 @@ q <- q1 <- q2 <- 10
 init_data <- purrr::map(1:q, ~ data_geo_wide) %>%
   purrr::reduce(rbind)
 
-n <- 300
+# n <- 300
 difficulty <- matrix((1:q - 5)/10 * 2, nrow = 1)
 discrimination1 <- seq(0.4, 1.5, length.out = q)
 discrimination2 <- runif(q, 0, 2)
+# discrimination2 <- c(0, 1, 1.6777, 0.5975, 0, 0.5199, 0.034, 1.26876, 1.1125, 1.3469)
 discrimination1[1] = 1
 discrimination2[2] = 1
 discrimination2[1] <- 0
@@ -165,7 +166,7 @@ ggplot(explor, aes(ability2, endorse)) + geom_point(alpha = 0.5)
 
 ```{r}
 
-iter <- 5 * 10 ^ 4
+iter <- 1 * 10 ^ 5
 thin <- 10
 disc_mat <- cbind(cbind(discrimination1), cbind(discrimination2))
 L_a <- lower.tri(disc_mat, diag = TRUE) * 1
@@ -178,6 +179,9 @@ theta_init <- c(data_long$ability1[1:n], data_long$ability2[1:n])
 a_init <- as.numeric(t(disc_mat))
 a_mean <- matrix(0, q, 2)
 diag(a_mean) <- 1
+A_prior_sd <-  matrix(2, q, m)
+diag(A_prior_sd) <- 0.01
+
 # a_mean[1,] <- 1
 
 # Rcpp::sourceCpp("../src/correlation.cpp")
@@ -186,22 +190,24 @@ Rcpp::sourceCpp("../src/ifa-driver.cpp")
 source("../R/spmirt.R")
 source("../R/ggplot-mcmc.R")
 
-# iter = 10^4
+iter = 10^4
+thin = 1
 system.time(
 samples <- spmirt(
   response = data_long$y, predictors = NULL, coordinates = NULL,
   nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
   constrains = list(A = L_a) ,
   # adaptive = list(Sigma_R = matrix(0.001, 1,1))
-  A_opt = list(initial = L_a),
-  R_opt = list(prior_eta = 1)
+  # A_opt = list(initial = disc_mat, prior_mean = disc_mat, prior_sd = 1),
+  R_opt = list(initial = Corr, prior_eta = 1)
+  # R_opt = list(initial = Corr, prior_eta = 1)
 )
 )
 attr(samples, "model")
 iter <- iter / thin
 
 
-attr(samples, "model_info")
+attr(samples, "model_info")[-c(1,2,3)]
 
 #
 # Rcpp::sourceCpp("../src/pdf.cpp")
@@ -389,14 +395,14 @@ as_tibble(samples, iter/2, select = "c") %>%
   geom_point(aes(y = param), col = 3)
 
 as_tibble(samples, iter/2, select = "theta") %>%
-  dplyr::select(1:300) %>%
+  dplyr::select(1:n) %>%
   summary() %>%
   mutate(param = unique(data_long$ability1)) %>%
   gg_errorbar(sorted = TRUE) +
   geom_point(aes(y = param), col = 3)
 
 as_tibble(samples, iter/2, select = "theta") %>%
-  dplyr::select(301:600) %>%
+  dplyr::select((n+1):(2*n)) %>%
   summary() %>%
   mutate(param = unique(data_long$ability2)) %>%
   gg_errorbar(sorted = TRUE) +

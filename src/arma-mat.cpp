@@ -39,6 +39,51 @@ double matsub1(arma::mat x, int index_row, int index_col) {
 
 //' @export
 // [[Rcpp::export]]
+arma::mat TST(arma::mat mgp_Sigma, arma::mat T) {
+  const int m = T.n_rows;
+  const int nm = mgp_Sigma.n_rows;
+  const int n = nm/m;
+  arma::mat output = arma::zeros(nm, nm);
+
+  // upper triangular
+  for (int i = 0; i < (m-1); ++i) {
+    for (int j = i + 1; j < m; ++j) {
+      for (int k = 0; k < m; ++k) {
+        if (T(i,k) == 1 && T(j,k) == 1) {
+          output.submat(i*n, j*n, arma::size(n, n)) +=
+            mgp_Sigma.submat(k*n, k*n, arma::size(n,n));
+        }
+      }
+    }
+  }
+
+  // diagonal
+  for (int i = 0; i < m; ++i) {
+    for (int k = 0; k < m; ++k) {
+      if (T(i,k) == 1) {
+        output.submat(i*n, i*n, arma::size(n,n)) +=
+          mgp_Sigma.submat(k*n, k*n, arma::size(n,n));
+      }
+    }
+  }
+
+  // lower triangular
+  for (int i = 1; i < m; ++i) {
+    for (int j = 0; j < i; ++j) {
+      output.submat(i*n, j*n, arma::size(n, n)) +=
+        output.submat(j*n, i*n, arma::size(n,n));
+    }
+  }
+
+  return output;
+}
+
+
+
+
+
+//' @export
+// [[Rcpp::export]]
 Rcpp::List subset_cpp(arma::mat X, arma::vec y) {
   // X(arma::span(0, 0), arma::span(0, 0)) = 5.0;
   X.submat(0, 0, 0, 0) = 5.1;

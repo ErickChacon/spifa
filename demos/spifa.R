@@ -120,6 +120,7 @@ n
 q
 m <- 2
 iter <- 5 * 10 ^ 4
+thin <- 5
 # iter <- 5 * 10 ^ 3
 cor.params <- c(0.04, 0.04)
 sig.params <- c(0.6 ^ 0.5, 0.6 ^ 0.5)
@@ -144,10 +145,12 @@ source("../R/spmirt.R")
 #                           iter)
 # )
 
+iter <- 100
+thin <- 1
 system.time(
   samples <- spmirt(
     response = response,  predictors = NULL, coordinates = coordinates,
-    nobs = n, nitems = q, nfactors = 2, niter = iter, thin = 5,
+    nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
     constrains = list(A = L_a, W = NULL, V_sd = sigmas[1:2]),
     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
                     Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
@@ -161,7 +164,7 @@ iter = iter / 5
 attr(samples, "model_info")[-c(1, 2, 3)]
 
 samples_tib <- as_tibble(samples, iter/2)
-summary(samples_tib)
+#summary(samples_tib)
 samples_long <- gather(samples_tib)
 
 as_tibble.spmirt.list(samples, 0, 10, "c") %>%

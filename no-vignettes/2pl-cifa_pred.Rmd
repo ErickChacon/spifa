@@ -60,7 +60,7 @@ sigmas <- rep(0.5^0.5, m)
 D <- diag(sigmas)
 Cov <- D %*% Corr %*% D
 beta1 <- c(0.7, -0.3)
-beta2 <- c(0.3, 0.7)
+beta2 <- c(0.3, 0.5)
 
 # mean ~ mre(factor(id), sigma = get("Cov")),
 f <- list(
@@ -204,12 +204,13 @@ Rcpp::sourceCpp("../src/ifa-driver.cpp")
 source("../R/spmirt.R")
 source("../R/ggplot-mcmc.R")
 
-# iter = 10^4
+# iter = 10^2
+# thin = 1
 system.time(
 samples <- spmirt(
-  response = data_long$y, predictors = NULL, coordinates = NULL,
+  response = data_long$y, predictors = predictors, coordinates = NULL,
   nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
-  constrains = list(A = L_a) ,
+  constrains = list(A = L_a, V_sd = sigmas) ,
   # adaptive = list(Sigma_R = matrix(0.001, 1,1))
   A_opt = list(initial = L_a),
   R_opt = list(prior_eta = 1)
@@ -219,7 +220,7 @@ attr(samples, "model")
 iter <- iter / thin
 
 
-attr(samples, "model_info")
+attr(samples, "model_info")[-c(1,2,3)]
 
 #
 # Rcpp::sourceCpp("../src/pdf.cpp")
@@ -301,6 +302,10 @@ as_tibble(samples, 0, 10, select = "theta") %>%
 
 as_tibble(samples, 0, 1, select = "corr") %>%
   gg_trace(alpha = 0.6)
+
+as_tibble(samples, 0, 1, select = "betas") %>%
+  gg_trace(alpha = 0.6)
+
 
 ```
 

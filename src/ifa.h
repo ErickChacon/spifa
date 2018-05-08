@@ -66,7 +66,7 @@ public:
   void update_c(const arma::vec& c_prior_mean, const arma::vec& c_prior_sd);
   void update_a(const arma::vec& a_prior_mean, const arma::mat& A_prior_sd);
   void update_z();
-  void update_B(const arma::vec& B_prior_sd);
+  void update_B(const arma::mat& B_prior_sd);
   void update_cov_params(
       const arma::vec sigmas_gp_mean, const arma::vec sigmas_gp_sd,
       const arma::vec phi_gp_mean, const arma::vec phi_gp_sd,

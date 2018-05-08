@@ -120,7 +120,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">spmirt.R</h1>
 <h4 class="author"><em>chaconmo</em></h4>
-<h4 class="date"><em>Sat May 5 15:44:52 2018</em></h4>
+<h4 class="date"><em>Mon May 7 16:06:23 2018</em></h4>
 
 </div>
 
@@ -229,14 +229,14 @@ $(document).ready(function () {
          sprintf(&quot;c(%i, %i)&quot;, nfactors, nfactors))
   }
 
-  R_prior_eta &lt;- ifelse(is.null(R_opt$prior_eta), 1.5, R_opt$prior_eta)
+  R_prior_eta &lt;- ifelse(is.null(R_opt$prior_eta), 1, R_opt$prior_eta)
 
   # Optional arguments for parameter of fixed effects (Beta)
 
   if (is.null(predictors)) {
-    B_prior_mean &lt;- matrix(NA)
-    B_prior_sd &lt;- matrix(NA)
-    B_initial &lt;- matrix(NA)
+    B_prior_mean &lt;- matrix(NA, 1, nfactors)
+    B_prior_sd &lt;- matrix(NA, 1, nfactors)
+    B_initial &lt;- matrix(NA, 1, nfactors)
   } else {
     npred &lt;- ncol(predictors)
     B_prior_mean &lt;- check_param_mat2(B_opt, &quot;prior_mean&quot;, c(npred, nfactors), 0)
@@ -247,12 +247,12 @@ $(document).ready(function () {
   # Optional arguments for GP standard deviations and  scale parameters
 
   if (is.null(coordinates)) {
-    sigmas_gp_mean &lt;- NA
-    sigmas_gp_sd &lt;- NA
-    sigmas_gp_initial &lt;- NA
-    phi_gp_mean &lt;- NA
-    phi_gp_sd &lt;- NA
-    phi_gp_initial &lt;- NA
+    sigmas_gp_mean &lt;- rep(NA, nfactors)
+    sigmas_gp_sd &lt;- rep(NA, nfactors)
+    sigmas_gp_initial &lt;- rep(NA, nfactors)
+    phi_gp_mean &lt;- rep(NA, nfactors)
+    phi_gp_sd &lt;- rep(NA, nfactors)
+    phi_gp_initial &lt;- rep(NA, nfactors)
   } else {
     sigmas_gp_mean &lt;- check_param_vec(sigmas_gp_opt, &quot;prior_mean&quot;, nfactors, 0.6)
     sigmas_gp_sd &lt;- check_param_vec(sigmas_gp_opt, &quot;prior_sd&quot;, nfactors, 0.2)
@@ -265,11 +265,15 @@ $(document).ready(function () {
   # Compute predictors and distances as matrices
 
   if (is.null(predictors))  predictors &lt;- matrix(NA)
-  if (is.null(coordinates))  coordinates &lt;- matrix(NA)
+  if (is.null(coordinates)) {
+    distances &lt;- matrix(NA)
+  } else {
+    distances &lt;- as.matrix(dist(coordinates))
+  }
 
   # Execute model calling c++ spmirt function
   samples &lt;- spmirt_cpp(
-    response = response, predictors = predictors, distances = coordinates,
+    response = response, predictors = predictors, distances = distances,
     nobs = nobs, nitems = nitems, nfactors = nfactors, niter = niter, thin = thin,
     constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
     adap_Sigma = adap_Sigma, adap_scale = adap_scale, adap_C = adap_C,
@@ -286,23 +290,23 @@ $(document).ready(function () {
 
   attr(samples, &quot;model&quot;) &lt;- model_type
 
-  # samples &lt;- list(
-  #   response = response, predictors = predictors, distances = coordinates,
-  #   nobs = nobs, nitems = nitems, nfactors = nfactors, niter = niter, thin = thin,
-  #   constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
-  #   adap_Sigma = adap_Sigma, adap_scale = adap_scale, adap_C = adap_C,
-  #   adap_alpha = adap_alpha, adap_accep_prob = adap_accep_prob,
-  #   c_initial = c_initial, c_prior_mean = c_prior_mean, c_prior_sd = c_prior_sd,
-  #   A_initial = A_initial, A_prior_mean = A_prior_mean, A_prior_sd = A_prior_sd,
-  #   R_initial = R_initial, R_prior_eta = R_prior_eta,
-  #   B_initial = B_initial, B_prior_mean = B_prior_mean, B_prior_sd = B_prior_sd,
-  #   sigmas_gp_initial = sigmas_gp_initial, sigmas_gp_mean = sigmas_gp_mean,
-  #   sigmas_gp_sd = sigmas_gp_sd,
-  #   phi_gp_initial = phi_gp_initial, phi_gp_mean = phi_gp_mean, phi_gp_sd = phi_gp_sd,
-  #   model_type = model_type
-  #   )
-  #
-  #
+  model_info &lt;- list(
+    response = response, predictors = predictors, distances = distances,
+    nobs = nobs, nitems = nitems, nfactors = nfactors, niter = niter, thin = thin,
+    constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
+    adap_Sigma = adap_Sigma, adap_scale = adap_scale, adap_C = adap_C,
+    adap_alpha = adap_alpha, adap_accep_prob = adap_accep_prob,
+    c_initial = c_initial, c_prior_mean = c_prior_mean, c_prior_sd = c_prior_sd,
+    A_initial = A_initial, A_prior_mean = A_prior_mean, A_prior_sd = A_prior_sd,
+    R_initial = R_initial, R_prior_eta = R_prior_eta,
+    B_initial = B_initial, B_prior_mean = B_prior_mean, B_prior_sd = B_prior_sd,
+    sigmas_gp_initial = sigmas_gp_initial, sigmas_gp_mean = sigmas_gp_mean,
+    sigmas_gp_sd = sigmas_gp_sd,
+    phi_gp_initial = phi_gp_initial, phi_gp_mean = phi_gp_mean, phi_gp_sd = phi_gp_sd,
+    model_type = model_type
+    )
+
+  attr(samples, &quot;model_info&quot;) &lt;- model_info
 
   return(samples)
 }
@@ -381,6 +385,8 @@ check_param_matdiag &lt;- function (param_list, element, dimension, default) {
   }
   return(output)
 }</code></pre>
+<pre class="python"><code>x = 1</code></pre>
+<p>```</p>
 
 
 

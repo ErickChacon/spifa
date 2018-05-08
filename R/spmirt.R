@@ -109,9 +109,9 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
   # Optional arguments for parameter of fixed effects (Beta)
 
   if (is.null(predictors)) {
-    B_prior_mean <- matrix(NA)
-    B_prior_sd <- matrix(NA)
-    B_initial <- matrix(NA)
+    B_prior_mean <- matrix(NA, 1, nfactors)
+    B_prior_sd <- matrix(NA, 1, nfactors)
+    B_initial <- matrix(NA, 1, nfactors)
   } else {
     npred <- ncol(predictors)
     B_prior_mean <- check_param_mat2(B_opt, "prior_mean", c(npred, nfactors), 0)
@@ -122,12 +122,12 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
   # Optional arguments for GP standard deviations and  scale parameters
 
   if (is.null(coordinates)) {
-    sigmas_gp_mean <- NA
-    sigmas_gp_sd <- NA
-    sigmas_gp_initial <- NA
-    phi_gp_mean <- NA
-    phi_gp_sd <- NA
-    phi_gp_initial <- NA
+    sigmas_gp_mean <- rep(NA, nfactors)
+    sigmas_gp_sd <- rep(NA, nfactors)
+    sigmas_gp_initial <- rep(NA, nfactors)
+    phi_gp_mean <- rep(NA, nfactors)
+    phi_gp_sd <- rep(NA, nfactors)
+    phi_gp_initial <- rep(NA, nfactors)
   } else {
     sigmas_gp_mean <- check_param_vec(sigmas_gp_opt, "prior_mean", nfactors, 0.6)
     sigmas_gp_sd <- check_param_vec(sigmas_gp_opt, "prior_sd", nfactors, 0.2)
@@ -141,7 +141,7 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
 
   if (is.null(predictors))  predictors <- matrix(NA)
   if (is.null(coordinates)) {
-    coordinates <- matrix(NA)
+    distances <- matrix(NA)
   } else {
     distances <- as.matrix(dist(coordinates))
   }
@@ -260,3 +260,5 @@ check_param_matdiag <- function (param_list, element, dimension, default) {
   }
   return(output)
 }
+
+
