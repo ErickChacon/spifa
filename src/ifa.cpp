@@ -276,11 +276,9 @@ void Ifa::update_cov_params(
     accept -= dmvnorm_cholinv(theta, theta_prior_mean, theta_prior_Sigma_chol_inv, true);
     accept -= dlkj_corr_free2(corr_free, m, R_prior_eta, true);
     for (int j = 0; j < m; ++j) {
-     accept += R::dnorm(log(mgp_sd_aux(j)), log(pow(sigmas_gp_mean(j),2)),
-         sigmas_gp_sd(j), true);
+     accept += R::dnorm(log(mgp_sd_aux(j)), log(sigmas_gp_mean(j)), sigmas_gp_sd(j), true);
      accept += R::dnorm(log(mgp_phi_aux(j)), log(phi_gp_mean(j)), phi_gp_sd(j), true);
-     accept -= R::dnorm(log(mgp_sd(j)), log(pow(sigmas_gp_mean(j),2)),
-         sigmas_gp_sd(j), true);
+     accept -= R::dnorm(log(mgp_sd(j)), log(sigmas_gp_mean(j)), sigmas_gp_sd(j), true);
      accept -= R::dnorm(log(mgp_phi(j)), log(phi_gp_mean(j)), phi_gp_sd(j), true);
     }
     // Rcpp::Rcout << accept << std::endl;

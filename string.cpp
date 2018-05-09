@@ -27,8 +27,8 @@ std::vector<std::string> string_in(std::vector<std::string> v)
   // output.attr("class") = myclass;
 
 
-  std::vector<std::string> text;
-  text = {"one", "two", "three"};
+  // std::vector<std::string> text;
+  // text = {"one", "two", "three"};
   // if (text == "hello") {
   //   return "yes";
   // } else {
@@ -47,3 +47,8 @@ return input;
 }
 
 
+// [[Rcpp::export]]
+double nullR(double plop)
+{
+  return plop;
+}

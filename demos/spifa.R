@@ -145,21 +145,22 @@ source("../R/spmirt.R")
 #                           iter)
 # )
 
-iter <- 100
+iter <- 10000
 thin <- 1
 system.time(
   samples <- spmirt(
     response = response,  predictors = NULL, coordinates = coordinates,
     nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
-    constrains = list(A = L_a, W = NULL, V_sd = sigmas[1:2]),
+    constrains = list(A = L_a, W = T_gp, V_sd = sigmas[1:2]),
     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
                     Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
                     accep_prob = 0.234),
-    sigmas_gp_opt = list(initial = 1, prior_mean = 0.9, prior_sd = NULL),
-    phi_gp_opt = list(initial = 0.08, prior_mean = 0.1, prior_sd = NULL))
+    sigmas_gp_opt = list(initial = 1, prior_mean = 0.5, prior_sd = 0.4),
+    phi_gp_opt = list(initial = 0.08, prior_mean = 0.2, prior_sd = 0.4))
   )
 
-iter = iter / 5
+iter = iter / thin
+thin2 <- 1
 
 attr(samples, "model_info")[-c(1, 2, 3)]
 
@@ -167,38 +168,51 @@ samples_tib <- as_tibble(samples, iter/2)
 #summary(samples_tib)
 samples_long <- gather(samples_tib)
 
-as_tibble.spmirt.list(samples, 0, 10, "c") %>%
+as_tibble.spmirt.list(samples, 0, thin2, "c") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, 0, 10, "a") %>%
+as_tibble.spmirt.list(samples, 0, thin2, "a") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, iter/2, 10, "a") %>%
+as_tibble.spmirt.list(samples, iter/2, thin2, "a") %>%
   gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 4)
 
-as_tibble.spmirt.list(samples, iter/2, 10, "theta") %>%
+as_tibble.spmirt.list(samples, iter/2, thin2, "theta") %>%
   dplyr::select(1:100) %>%
   gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 4)
 
-as_tibble.spmirt.list(samples, 0, 10, "theta") %>%
+as_tibble.spmirt.list(samples, 0, thin2, "theta") %>%
   select(1:10) %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, 0, 1, "corr") %>%
+as_tibble.spmirt.list(samples, 0, thin2, "corr") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, 0, 10, "mgp_sd") %>%
+as_tibble.spmirt.list(samples, 0, thin2, "mgp_sd") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, 0, 10, "mgp_phi") %>%
+as_tibble.spmirt.list(samples, iter/2, thin2, "mgp_sd") %>%
+  gg_density(alpha = 0.5, ridges = FALSE, aes(fill = Parameters), scale = 4) +
+  stat_function(fun = dlnorm, colour = "red",
+                args = list(meanlog = log(0.5), sdlog = 0.4))
+
+
+as_tibble.spmirt.list(samples, 0, thin2, "mgp_phi") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, 0, 10, "a") %>%
+as_tibble.spmirt.list(samples, iter/2, thin2, "mgp_phi") %>%
+  gg_density(alpha = 0.5, ridges = FALSE, aes(fill = Parameters), scale = 4) +
+  stat_function(fun = dlnorm, colour = "red",
+                args = list(meanlog = log(0.2), sdlog = 0.4))
+
+
+
+as_tibble.spmirt.list(samples, 0, thin2, "a") %>%
   gg_density2d(`Discrimination 1`, `Discrimination 2`, each = 10,
                keys = c("Item ", "Discrimination "),
                highlight = c(discrimination1, discrimination2))
 
-as_tibble.spmirt.list(samples, 0, 10, "a") %>%
+as_tibble.spmirt.list(samples, 0, thin2, "a") %>%
   gg_scatter(`Discrimination 1`, `Discrimination 2`, each = 10,
                keys = c("Item ", "Discrimination "),
                highlight = c(discrimination1, discrimination2))
