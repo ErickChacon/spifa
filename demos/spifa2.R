@@ -132,7 +132,7 @@ sigma_prop <- 0.001 * diag(5)
 disc_mat <- cbind(discrimination1, discrimination2)
 L_a <- lower.tri(disc_mat, diag = TRUE) * 1
 T_gp <- diag(m)
-T_gp[2,2] <- 0
+# T_gp[2,2] <- 0
 
 # RUN --------------------------------------------------------------------------
 
@@ -148,21 +148,22 @@ source("../R/spmirt.R")
 #                           iter)
 # )
 
-# iter <- 1000
-# thin <- 1
+iter <- 1000
+thin <- 1
 system.time(
   samples <- spmirt(
     response = response,  predictors = NULL, coordinates = coordinates,
-    nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
+    nobs = n, nitems = q, nfactors = 2, ngp = 2, niter = iter, thin = thin,
+    standardize = FALSE,
     constrains = list(A = L_a, W = T_gp, V_sd = sigmas[1:2]),
     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
                     Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
                     accep_prob = 0.234),
-    sigmas_gp_opt = list(initial = 1, prior_mean = 0.9, prior_sd = NULL),
+    # sigmas_gp_opt = list(initial = 1, prior_mean = 0.9, prior_sd = NULL),
     phi_gp_opt = list(initial = 0.08, prior_mean = 0.1, prior_sd = NULL))
   )
 
-iter = iter / 5
+iter = iter / thin
 
 attr(samples, "model_info")[-c(1, 2, 3)]
 

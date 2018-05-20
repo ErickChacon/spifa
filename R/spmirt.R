@@ -1,7 +1,26 @@
 
 
+#' @title Spatial Multidimensional Item Response Model with Predictors
+#'
+#' @description
+#' \code{function} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#'
+#' 
+#'
+#' @export
 spmirt <- function (response, predictors = NULL, coordinates = NULL,
-    nobs, nitems, nfactors, niter = 1000, thin = 10,
+    nobs, nitems, nfactors, ngp = nfactors, niter = 1000, thin = 10, standardize = TRUE,
     constrains = list(A = NULL, W = NULL, V_sd = rep(1, nfactors)),
     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL, Sigma_gp_phi = NULL,
                     scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
@@ -18,7 +37,7 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
   constrain_L_explo <- matrix(NA, nitems, nfactors)
   constrain_L_explo <- lower.tri(constrain_L_explo, diag = TRUE) * 1
   constrain_L <- check_param_mat(constrains, "A", c(nitems, nfactors), constrain_L_explo)
-  constrain_T <- check_param_mat(constrains, "W", c(nfactors, nfactors), diag(nfactors))
+  constrain_T <- check_param_mat(constrains, "W", c(nfactors, ngp), diag(1, nfactors, ngp))
 
   # Detect type of model to be fitted: EIFA, CIFA, CIFA_PRED, SPIFA, SPIFA_PRED
 
@@ -121,20 +140,21 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
 
   # Optional arguments for GP standard deviations and  scale parameters
 
+  nsigmas <- sum(constrain_T)
   if (is.null(coordinates)) {
-    sigmas_gp_mean <- rep(NA, nfactors)
-    sigmas_gp_sd <- rep(NA, nfactors)
-    sigmas_gp_initial <- rep(NA, nfactors)
-    phi_gp_mean <- rep(NA, nfactors)
-    phi_gp_sd <- rep(NA, nfactors)
-    phi_gp_initial <- rep(NA, nfactors)
+    sigmas_gp_mean <- rep(NA, nsigmas)
+    sigmas_gp_sd <- rep(NA, nsigmas)
+    sigmas_gp_initial <- rep(NA, nsigmas)
+    phi_gp_mean <- rep(NA, ngp)
+    phi_gp_sd <- rep(NA, ngp)
+    phi_gp_initial <- rep(NA, ngp)
   } else {
-    sigmas_gp_mean <- check_param_vec(sigmas_gp_opt, "prior_mean", nfactors, 0.6)
-    sigmas_gp_sd <- check_param_vec(sigmas_gp_opt, "prior_sd", nfactors, 0.2)
-    sigmas_gp_initial <- check_param_vec(sigmas_gp_opt, "initial", nfactors, sigmas_gp_mean)
-    phi_gp_mean <- check_param_vec(phi_gp_opt, "prior_mean", nfactors, 0.05)
-    phi_gp_sd <- check_param_vec(phi_gp_opt, "prior_sd", nfactors, 0.2)
-    phi_gp_initial <- check_param_vec(phi_gp_opt, "initial", nfactors, phi_gp_mean)
+    sigmas_gp_mean <- check_param_vec(sigmas_gp_opt, "prior_mean", nsigmas, 0.6)
+    sigmas_gp_sd <- check_param_vec(sigmas_gp_opt, "prior_sd", nsigmas, 0.2)
+    sigmas_gp_initial <- check_param_vec(sigmas_gp_opt, "initial", nsigmas, sigmas_gp_mean)
+    phi_gp_mean <- check_param_vec(phi_gp_opt, "prior_mean", ngp, 0.05)
+    phi_gp_sd <- check_param_vec(phi_gp_opt, "prior_sd", ngp, 0.2)
+    phi_gp_initial <- check_param_vec(phi_gp_opt, "initial", ngp, phi_gp_mean)
   }
 
   # Compute predictors and distances as matrices
@@ -149,7 +169,8 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
   # Execute model calling c++ spmirt function
   samples <- spmirt_cpp(
     response = response, predictors = predictors, distances = distances,
-    nobs = nobs, nitems = nitems, nfactors = nfactors, niter = niter, thin = thin,
+    nobs = nobs, nitems = nitems, nfactors = nfactors, ngp = ngp,
+    niter = niter, thin = thin, standardize = standardize,
     constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
     adap_Sigma = adap_Sigma, adap_scale = adap_scale, adap_C = adap_C,
     adap_alpha = adap_alpha, adap_accep_prob = adap_accep_prob,
@@ -162,12 +183,14 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
     phi_gp_initial = phi_gp_initial, phi_gp_mean = phi_gp_mean, phi_gp_sd = phi_gp_sd,
     model_type = model_type
     )
+  # samples <- 1:10
 
-  attr(samples, "model") <- model_type
+  # attr(samples, "model") <- model_type
 
   model_info <- list(
     response = response, predictors = predictors, distances = distances,
-    nobs = nobs, nitems = nitems, nfactors = nfactors, niter = niter, thin = thin,
+    nobs = nobs, nitems = nitems, nfactors = nfactors, ngp = ngp,
+    niter = niter, thin = thin, standardize = standardize,
     constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
     adap_Sigma = adap_Sigma, adap_scale = adap_scale, adap_C = adap_C,
     adap_alpha = adap_alpha, adap_accep_prob = adap_accep_prob,

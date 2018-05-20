@@ -40,18 +40,20 @@ double matsub1(arma::mat x, int index_row, int index_col) {
 //' @export
 // [[Rcpp::export]]
 arma::mat TST(arma::mat mgp_Sigma, arma::mat T) {
-  const int m = T.n_rows;
-  const int nm = mgp_Sigma.n_rows;
-  const int n = nm/m;
+  const int m = T.n_rows;              // number of factors
+  const int g = T.n_cols;              // number of Gaussian processes
+  const int ng = mgp_Sigma.n_rows;     // individuals times Gaussian processes
+  const int n = ng/g;                  // number of individuals
+  const int nm = n*m;                  // individuals times number of factors
   arma::mat output = arma::zeros(nm, nm);
 
   // upper triangular
   for (int i = 0; i < (m-1); ++i) {
     for (int j = i + 1; j < m; ++j) {
-      for (int k = 0; k < m; ++k) {
-        if (T(i,k) == 1 && T(j,k) == 1) {
+      for (int k = 0; k < g; ++k) {
+        if (T(i,k) != 0 && T(j,k) != 0) {
           output.submat(i*n, j*n, arma::size(n, n)) +=
-            mgp_Sigma.submat(k*n, k*n, arma::size(n,n));
+            T(i,k) * T(j,k) * mgp_Sigma.submat(k*n, k*n, arma::size(n,n));
         }
       }
     }
@@ -59,10 +61,10 @@ arma::mat TST(arma::mat mgp_Sigma, arma::mat T) {
 
   // diagonal
   for (int i = 0; i < m; ++i) {
-    for (int k = 0; k < m; ++k) {
-      if (T(i,k) == 1) {
+    for (int k = 0; k < g; ++k) {
+      if (T(i,k) != 0) {
         output.submat(i*n, i*n, arma::size(n,n)) +=
-          mgp_Sigma.submat(k*n, k*n, arma::size(n,n));
+          pow(T(i,k), 2) * mgp_Sigma.submat(k*n, k*n, arma::size(n,n));
       }
     }
   }

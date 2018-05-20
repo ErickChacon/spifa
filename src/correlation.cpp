@@ -2,8 +2,8 @@
 #include <RcppArmadillo.h>
 #include "arma-mat.h"
 // [[Rcpp::depends(RcppArmadillo)]]
-#include <omp.h>
-// [[Rcpp::plugins(openmp)]]
+// #include <omp.h>
+// // [[Rcpp::plugins(openmp)]]
 
 //' @export
 // [[Rcpp::export]]
@@ -103,7 +103,7 @@ arma::mat vec2chol_corr(arma::vec x, int K) {
 
   // #pragma omp parallel for
   //
-  #pragma omp parallel for num_threads(4)
+  // #pragma omp parallel for num_threads(4)
   for (int i = (K-1); i > 1; --i) {
   // for (int i = 2; i < K; ++i) {
     // Rcpp::Rcout << i << std::endl;
@@ -118,19 +118,19 @@ arma::mat vec2chol_corr(arma::vec x, int K) {
   return L_chol;
 }
 
-//' @export
-// [[Rcpp::export]]
-double sum_cpp(arma::vec x)
-{
-  omp_set_num_threads(3);
-  double out = 0;
-  #pragma omp parallel for
-  for (int i = 0; i < x.n_elem; ++i) {
-    // Rcpp::Rcout << i << std::endl;
-    out += x(i);
-  }
-  return out;
-}
+// //' @export
+// // [[Rcpp::export]]
+// double sum_cpp(arma::vec x)
+// {
+//   omp_set_num_threads(3);
+//   double out = 0;
+//   #pragma omp parallel for
+//   for (int i = 0; i < x.n_elem; ++i) {
+//     // Rcpp::Rcout << i << std::endl;
+//     out += x(i);
+//   }
+//   return out;
+// }
 
 //' @export
 // [[Rcpp::export]]

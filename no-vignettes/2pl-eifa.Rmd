@@ -136,11 +136,12 @@ Rcpp::sourceCpp("../src/ifa-driver.cpp")
 source("../R/spmirt.R")
 source("../R/ggplot-mcmc.R")
 
-# iter = 200
+iter <- 2000
+thin <- 1
 system.time(
 samples <- spmirt(
   response = data_long$y, predictors = NULL, coordinates = NULL,
-  nobs = n, nitems = q, nfactors = 2, niter = iter, thin = 10
+  nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin
 )
 )
 iter <- iter / thin

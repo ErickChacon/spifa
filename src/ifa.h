@@ -9,10 +9,15 @@ class Ifa {
 
 private:
 
-  // Model type: eifa, cifa, cifa_pred, spifa, spifa_pred
-  const std::string model_type;
+  // Model type
+  const std::string model_type;       // eifa, cifa, cifa_pred, spifa, spifa_pred
   // Metadata
-  const int n, q, m, p, n_corr;
+  const int n;                        // number of individuals
+  const int q;                        // number of items
+  const int m;                        // number of latent abilities
+  const int ngp;                      // number of gaussian processes
+  const int p;                        // number of predictors
+  const int n_corr;                   // number of correlation parameters
   // Data
   Rcpp::NumericVector y;              // response variable
   arma::mat dist;                     // distance matrix
@@ -29,10 +34,11 @@ private:
   // Transformed parameters
   arma::mat Corr_chol;                // cholesky of V's correlation matrix
   arma::mat LA;                       // restricted discrimation
+  arma::mat T;                        // restrictions on Gaussian Processes
   // Restrictions
   const arma::mat L;                  // restrictions on discrimination
-  const arma::mat T;                  // restrictions on Gaussian Processes
-  const arma::vec V_sd;
+  const arma::uvec T_index;           // restrictions on Gaussian Processes
+  arma::vec V_sd;                     // restrictions on standard deviation of residuals
   // Adaptive sampling parameters
   arma::vec params;
   arma::vec params_mean;
@@ -54,7 +60,7 @@ private:
 public:
 
   Ifa(Rcpp::NumericVector response, arma::mat predictors, arma::mat distances,
-      int nobs, int nitems, int nfactors,
+      int nobs, int nitems, int nfactors, int ngps,
       arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd,
       arma::mat adap_Sigma, double adap_scale,
       arma::vec c_ini, arma::mat A_ini, arma::mat R_ini,
@@ -73,7 +79,7 @@ public:
       const double R_prior_eta,
       const double C, const double alpha, const double target, int index);
   Rcpp::List sample(
-      int niter, int thin,
+      int niter, int thin, bool standardize,
       arma::vec c_prior_mean, arma::vec c_prior_sd,
       arma::mat A_prior_mean, arma::mat A_prior_sd,
       double R_prior_eta,

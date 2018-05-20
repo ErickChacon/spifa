@@ -9,7 +9,7 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 
 Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distances,
-    int nobs, int nitems, int nfactors,
+    int nobs, int nitems, int nfactors, int ngps,
     arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd,
     arma::mat adap_Sigma, double adap_scale,
     arma::vec c_ini, arma::mat A_ini, arma::mat R_ini,
@@ -18,8 +18,7 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
     ):
   model_type(mod_type),
   y(response), dist(distances), X(predictors),
-  n(nobs), q(nitems), m(nfactors), p(predictors.n_cols),
-  n_corr((m-1) * m / 2),
+  n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols), n_corr((m-1)*m / 2),
   ones_n(arma::ones(n)),
   zeros_nm(arma::zeros(n*m)),
   eye_q(arma::eye(q,q)),
@@ -29,6 +28,7 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
   high_thresh(Rcpp::NumericVector::create(0, R_PosInf)),
   L(constrain_L),
   T(constrain_T),
+  T_index(find(T != 0)),
   V_sd(constrain_V_sd),
   logscale(log(adap_scale)),
   params_cov(adap_Sigma)
@@ -60,11 +60,11 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
   mgp_phi = phi_gp_ini;
   // Update full covariance structure of latent abilities depending of model type
   if (model_type == "spifa" || model_type == "spifa_pred") {
-    arma::mat mgp_Sigma(n*m, n*m, arma::fill::zeros);
-    for (int i = 0; i < m; ++i) {
-      mgp_Sigma.submat(i*n, i*n, arma::size(n, n)) =
-        pow(mgp_sd(i), 2) * exp(- dist / mgp_phi(i));
+    arma::mat mgp_Sigma(n*ngp, n*ngp, arma::fill::zeros);
+    for (int i = 0; i < ngp; ++i) {
+      mgp_Sigma.submat(i*n, i*n, arma::size(n, n)) = exp(- dist / mgp_phi(i));
     }
+    T(T_index) = mgp_sd;
     mgp_Sigma = TST(mgp_Sigma, T);
     arma::mat theta_prior_Sigma = mgp_Sigma + arma::kron(Cov_chol * Cov_chol.t(), eye_n);
     arma::mat theta_prior_Sigma_chol = arma::chol(theta_prior_Sigma, "lower");
@@ -251,14 +251,15 @@ void Ifa::update_cov_params(
     arma::mat Sigma_proposal_chol = arma::chol(Sigma_proposal, "lower");
     arma::vec params_aux = params + Sigma_proposal_chol * arma::randn(params.size());
     // Build proposed mgp covariance structure
-    arma::vec mgp_sd_aux = exp(params_aux.subvec(0, m-1));
-    arma::vec mgp_phi_aux = exp(params_aux.subvec(m, 2*m-1));
-    arma::mat mgp_Sigma_aux(n*m, n*m, arma::fill::zeros);
-    for (int j = 0; j < m; ++j) {
-      mgp_Sigma_aux.submat(j*n, j*n, arma::size(n, n)) =
-        pow(mgp_sd_aux(j), 2) * exp(- dist / mgp_phi_aux(j));
+    arma::vec mgp_sd_aux = exp(params_aux.subvec(0, ngp-1));
+    arma::vec mgp_phi_aux = exp(params_aux.subvec(ngp, 2*ngp-1));
+    arma::mat mgp_Sigma_aux(n*ngp, n*ngp, arma::fill::zeros);
+    for (int j = 0; j < ngp; ++j) {
+      mgp_Sigma_aux.submat(j*n, j*n, arma::size(n, n)) = exp(-dist / mgp_phi_aux(j));
     }
-    mgp_Sigma_aux = TST(mgp_Sigma_aux, T);
+    arma::mat T_aux = arma::zeros(m, ngp);
+    T_aux(T_index) = mgp_sd_aux;
+    mgp_Sigma_aux = TST(mgp_Sigma_aux, T_aux);
     // Build proposed multivariate noise covariance structure
     arma::vec corr_free_aux = params_aux.subvec(2*m, params.size()-1);
     arma::mat Corr_chol_aux = vec2chol_corr(corr_free_aux, m);
@@ -275,7 +276,7 @@ void Ifa::update_cov_params(
     accept += dlkj_corr_free2(corr_free_aux, m, R_prior_eta, true);
     accept -= dmvnorm_cholinv(theta, theta_prior_mean, theta_prior_Sigma_chol_inv, true);
     accept -= dlkj_corr_free2(corr_free, m, R_prior_eta, true);
-    for (int j = 0; j < m; ++j) {
+    for (int j = 0; j < ngp; ++j) {
      accept += R::dnorm(log(mgp_sd_aux(j)), log(sigmas_gp_mean(j)), sigmas_gp_sd(j), true);
      accept += R::dnorm(log(mgp_phi_aux(j)), log(phi_gp_mean(j)), phi_gp_sd(j), true);
      accept -= R::dnorm(log(mgp_sd(j)), log(sigmas_gp_mean(j)), sigmas_gp_sd(j), true);
@@ -290,6 +291,7 @@ void Ifa::update_cov_params(
       Corr_chol = Corr_chol_aux;
       // Gaussian processes parameters updates
       mgp_sd = mgp_sd_aux;
+      T = T_aux;
       mgp_phi = mgp_phi_aux;
       // Latent abilities prior update
       theta_prior_Sigma_chol_inv = theta_prior_Sigma_chol_inv_aux;
@@ -297,7 +299,6 @@ void Ifa::update_cov_params(
         theta_prior_Sigma_chol_inv.t() * theta_prior_Sigma_chol_inv;
     }
   }
-
 
   if (model_type != "eifa") {
     // Update scaling parameter
@@ -312,7 +313,7 @@ void Ifa::update_cov_params(
 }
 
 Rcpp::List Ifa::sample(
-    int niter, int thin,
+    int niter, int thin, bool standardize,
     arma::vec c_prior_mean, arma::vec c_prior_sd,
     arma::mat A_prior_mean, arma::mat A_prior_sd,
     double R_prior_eta,
@@ -333,8 +334,8 @@ Rcpp::List Ifa::sample(
   arma::mat theta_samples(n*m, nsave);
   arma::mat z_samples(q*n, nsave);
   arma::mat corr_samples(n_corr, nsave);
-  arma::mat mgp_sd_samples(m, nsave);
-  arma::mat mgp_phi_samples(m, nsave);
+  arma::mat mgp_sd_samples(mgp_sd.n_elem, nsave);
+  arma::mat mgp_phi_samples(ngp, nsave);
   arma::mat betas_samples(p*m, nsave);
 
   for (int i = 0; i < niter; ++i) {
@@ -360,6 +361,26 @@ Rcpp::List Ifa::sample(
     }
   }
 
+  if (standardize && model_type != "eifa" && model_type != "cifa") {
+    arma::vec theta_samples_sd(m, arma::fill::zeros);
+    arma::umat T_sub = arma::ind2sub(size(T), T_index); // indices to row-column index
+    for (int i = 0; i < m; ++i) {
+      // get variance of the latent abilities
+      arma::vec sds = arma::stddev(theta_samples.submat(i*n, 0, arma::size(n, nsave))).t();
+      theta_samples_sd(i) = arma::mean(sds);
+      //  standardize latent abilities
+      theta_samples.submat(i*n, 0, arma::size(n, nsave)) /= theta_samples_sd(i);
+      // standardize discrimation parameters
+      a_samples.submat(i*q, 0, arma::size(q, nsave)) *= theta_samples_sd(i);
+      // standardize betas
+      betas_samples.submat(i*p, 0, arma::size(p, nsave)) /= theta_samples_sd(i);
+      // standardize gaussian process variance parameter if diagonal
+      mgp_sd_samples.rows(find(T_sub.row(0) == i)) /= theta_samples_sd(i);
+    }
+    // new standard deviation for the multivariate residual term
+    V_sd = V_sd / theta_samples_sd;
+  }
+
   Rcpp::NumericMatrix theta_samples_rcpp = Rcpp::wrap(theta_samples.t());
   Rcpp::colnames(theta_samples_rcpp) = name_samples_mat(n, m, "Theta");
   Rcpp::NumericMatrix c_samples_rcpp = Rcpp::wrap(c_samples.t());
@@ -371,9 +392,10 @@ Rcpp::List Ifa::sample(
   Rcpp::NumericMatrix corr_samples_rcpp = Rcpp::wrap(corr_samples.t());
   Rcpp::colnames(corr_samples_rcpp) = name_samples_lower(m, m, "Corr", false);
   Rcpp::NumericMatrix mgp_sd_samples_rcpp = Rcpp::wrap(mgp_sd_samples.t());
-  Rcpp::colnames(mgp_sd_samples_rcpp) = name_samples_vec(m, "mgp_sd");
+  Rcpp::colnames(mgp_sd_samples_rcpp) =
+    name_samples_mat(m, ngp, "T")[Rcpp::as<Rcpp::IntegerVector>(Rcpp::wrap(T_index))];
   Rcpp::NumericMatrix mgp_phi_samples_rcpp = Rcpp::wrap(mgp_phi_samples.t());
-  Rcpp::colnames(mgp_phi_samples_rcpp) = name_samples_vec(m, "mgp_phi");
+  Rcpp::colnames(mgp_phi_samples_rcpp) = name_samples_vec(ngp, "mgp_phi");
   Rcpp::NumericMatrix betas_samples_rcpp = Rcpp::wrap(betas_samples.t());
   Rcpp::colnames(betas_samples_rcpp) = name_samples_mat(p, m, "B");
 

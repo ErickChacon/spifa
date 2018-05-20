@@ -204,13 +204,22 @@ Rcpp::sourceCpp("../src/ifa-driver.cpp")
 source("../R/spmirt.R")
 source("../R/ggplot-mcmc.R")
 
-# iter = 10^2
-# thin = 1
+A = matrix(rnorm(4), 2)
+A = A %*% t(A)
+B = matrix(rnorm(4), 2)
+D = diag(rnorm(2))
+D %*% B %*% A %*% t(B) %*% D
+B %*% D %*% A %*% t(D) %*% B
+
+iter = 10^3
+thin = 1
 system.time(
 samples <- spmirt(
   response = data_long$y, predictors = predictors, coordinates = NULL,
   nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
-  constrains = list(A = L_a, V_sd = sigmas) ,
+  standardize = TRUE,
+  # constrains = list(A = L_a, V_sd = sigmas) ,
+  constrains = list(A = L_a, V_sd = rep(0.3, 2)) ,
   # adaptive = list(Sigma_R = matrix(0.001, 1,1))
   A_opt = list(initial = L_a),
   R_opt = list(prior_eta = 1)

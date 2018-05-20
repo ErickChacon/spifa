@@ -48,4 +48,41 @@ int main(){
   std::cout << 100 % 3 << std::endl;
   std::cout << 0 % 10 << std::endl;
 
+  arma::mat X = arma::randn<arma::mat>(5,10);
+  std::cout << arma::mean(arma::mean(X)) << std::endl;
+  std::cout << arma::mean(arma::stddev(X)) << std::endl;
+  std::cout << arma::mean(arma::stddev(X).t()) << std::endl;
+  double ba = arma::as_scalar(arma::mean(arma::stddev(X).t()));
+
+  double y = 6;
+  y /= 2;
+  std::cout << y << std::endl;
+
+  std::cout << "Testing fill sparse" << std::endl;
+
+  arma::mat T = arma::eye(4, 3);
+  T(1,0) = 1;
+  // T(2,1) = 1;
+  std::cout << T << std::endl;
+  std::cout << find(T != 0) << std::endl;
+  arma::vec t = arma::regspace(1, 4);
+  T(find(T != 0)) = t;
+  std::cout << T << std::endl;
+
+  std::cout << "Testing fill sparse by row" << std::endl;
+  std::cout << T << std::endl;
+  std::cout << find(T != 0) << std::endl;
+  arma::uvec ix = find(T != 0);
+  // std::cout << ix % 4.0 << std::endl;
+  arma::umat im = arma::ind2sub(size(T), ix);
+  std::cout << im << std::endl;
+  std::cout << find(im.row(0) == 0) << std::endl;
+  std::cout << t << std::endl;
+  for (int i = 0; i < 4; ++i) {
+    t(find(im.row(0) == i)) /= (i+1);
+  }
+  std::cout << t << std::endl;
+  // arma::vec t = arma::regspace(1, 4);
+  // T(find(T != 0)) = t;
+  // std::cout << T << std::endl;
 }

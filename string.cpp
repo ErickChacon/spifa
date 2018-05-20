@@ -37,6 +37,23 @@ std::vector<std::string> string_in(std::vector<std::string> v)
   return v;
 }
 
+// [[Rcpp::export]]
+Rcpp::StringVector string_subset(Rcpp::StringVector v)
+{
+
+  Rcpp::StringVector out;
+  arma::mat T = arma::eye(4, 3);
+  T(1,0) = 1;
+  arma::uvec index = find(T == 1);
+  Rcpp::Rcout << index << std::endl;
+  // Rcpp::IntegerVector idx = Rcpp::IntegerVector::create(0, 1, 2);
+  // Rcpp::IntegerVector idx = Rcpp::wrap(index);
+  Rcpp::IntegerVector idx = Rcpp::as<Rcpp::IntegerVector>(Rcpp::wrap(index));
+  out = v[Rcpp::as<Rcpp::IntegerVector>(Rcpp::wrap(index))];
+
+  return out;
+}
+
 
 
 

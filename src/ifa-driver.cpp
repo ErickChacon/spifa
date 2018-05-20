@@ -6,7 +6,8 @@
 // [[Rcpp::export]]
 Rcpp::List spmirt_cpp(
     Rcpp::NumericVector response, arma::mat predictors, arma::mat distances,
-    int nobs, int nitems, int nfactors, int niter, int thin,
+    int nobs, int nitems, int nfactors, int ngp,
+    int niter, int thin, bool standardize,
     arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd,
     arma::mat adap_Sigma, double adap_scale, double adap_C,
     double adap_alpha, double adap_accep_prob,
@@ -20,14 +21,14 @@ Rcpp::List spmirt_cpp(
     ) {
 
   Ifa model(response, predictors, distances,
-      nobs, nitems, nfactors,
+      nobs, nitems, nfactors, ngp,
       constrain_L, constrain_T, constrain_V_sd,
       adap_Sigma, adap_scale,
       c_initial, A_initial, R_initial, B_initial, sigmas_gp_initial, phi_gp_initial,
       model_type);
 
   Rcpp::List output = model.sample(
-      niter, thin,
+      niter, thin, standardize,
       c_prior_mean, c_prior_sd,
       A_prior_mean, A_prior_sd,
       R_prior_eta,
