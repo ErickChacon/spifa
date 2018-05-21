@@ -85,4 +85,9 @@ int main(){
   // arma::vec t = arma::regspace(1, 4);
   // T(find(T != 0)) = t;
   // std::cout << T << std::endl;
+  std::cout << "Subset vector" << std::endl;
+  arma::vec plop(10, arma::fill::randn);
+  std::cout << plop << std::endl;
+  std::cout << plop.subvec(0, arma::size(3,1)) << std::endl;
+
 }

@@ -39,6 +39,10 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
   constrain_L <- check_param_mat(constrains, "A", c(nitems, nfactors), constrain_L_explo)
   constrain_T <- check_param_mat(constrains, "W", c(nfactors, ngp), diag(1, nfactors, ngp))
 
+  # Sizes
+  nsigmas <- sum(constrain_T)
+  n_corr <- nfactors * (nfactors - 1) / 2
+
   # Detect type of model to be fitted: EIFA, CIFA, CIFA_PRED, SPIFA, SPIFA_PRED
 
   if (!is.null(coordinates)) {
@@ -78,12 +82,11 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
 
   # Adaptive Metropolis-Hastings arguments for proposed covariance matrix
 
-  n_corr <- nfactors * (nfactors - 1) / 2
   adap_Sigma_R <- check_param_matdiag(adaptive, "Sigma_R", n_corr, diag(n_corr) * 0.001)
   adap_Sigma_gp_sd <-
-    check_param_matdiag(adaptive, "Sigma_gp_sd", nfactors, diag(nfactors) * 0.001)
+    check_param_matdiag(adaptive, "Sigma_gp_sd", nsigmas, diag(nsigmas) * 0.001)
   adap_Sigma_gp_phi <-
-    check_param_matdiag(adaptive, "Sigma_gp_phi", nfactors, diag(nfactors) * 0.001)
+    check_param_matdiag(adaptive, "Sigma_gp_phi", ngp, diag(ngp) * 0.001)
   adap_scale <- ifelse(is.null(adaptive$scale), 1, adaptive$scale)
   adap_C <- ifelse(is.null(adaptive$C), 0.7, adaptive$C)
   adap_alpha <- ifelse(is.null(adaptive$alpha), 0.8, adaptive$alpha)
@@ -99,11 +102,11 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
     }
   } else {
     if (is.null(adaptive$Sigma)) {
-      adap_Sigma <- matrix(0, 2 * nfactors + n_corr, 2 * nfactors + n_corr)
-      adap_Sigma[1:nfactors, 1:nfactors] <- adap_Sigma_gp_sd
-      adap_Sigma[nfactors + 1:nfactors, nfactors + 1:nfactors] <- adap_Sigma_gp_phi
-      adap_Sigma[2*nfactors + 1:n_corr, 2*nfactors + 1:n_corr] <- adap_Sigma_R
-    } else if (sum(dim(adaptive$Sigma) == rep(2*nfactors + n_corr, 2)) == 2) {
+      adap_Sigma <- matrix(0, nsigmas + ngp + n_corr, nsigmas + ngp + n_corr)
+      adap_Sigma[1:nsigmas, 1:nsigmas] <- adap_Sigma_gp_sd
+      adap_Sigma[nsigmas + 1:ngp, nsigmas + 1:ngp] <- adap_Sigma_gp_phi
+      adap_Sigma[nsigmas + ngp + 1:n_corr, nsigmas + ngp + 1:n_corr] <- adap_Sigma_R
+    } else if (sum(dim(adaptive$Sigma) == rep(nsigmas + ngp + n_corr, 2)) == 2) {
       adap_Sigma <- adaptive$Sigma
     }
   }
@@ -140,7 +143,6 @@ spmirt <- function (response, predictors = NULL, coordinates = NULL,
 
   # Optional arguments for GP standard deviations and  scale parameters
 
-  nsigmas <- sum(constrain_T)
   if (is.null(coordinates)) {
     sigmas_gp_mean <- rep(NA, nsigmas)
     sigmas_gp_sd <- rep(NA, nsigmas)

@@ -246,13 +246,14 @@ void Ifa::update_cov_params(
       theta_prior_Sigma_inv = theta_prior_Sigma_chol_inv.t() * theta_prior_Sigma_chol_inv;
     }
   } else if (model_type == "spifa" || model_type == "spifa_pred") {
+    const int nsig = mgp_sd.n_elem;
     // Define current Sigma_proposal and update covariance matrix
     arma::mat Sigma_proposal = exp(logscale) * params_cov;
     arma::mat Sigma_proposal_chol = arma::chol(Sigma_proposal, "lower");
     arma::vec params_aux = params + Sigma_proposal_chol * arma::randn(params.size());
     // Build proposed mgp covariance structure
-    arma::vec mgp_sd_aux = exp(params_aux.subvec(0, ngp-1));
-    arma::vec mgp_phi_aux = exp(params_aux.subvec(ngp, 2*ngp-1));
+    arma::vec mgp_sd_aux = exp(params_aux.subvec(0, arma::size(nsig,1)));
+    arma::vec mgp_phi_aux = exp(params_aux.subvec(nsig, arma::size(ngp,1)));
     arma::mat mgp_Sigma_aux(n*ngp, n*ngp, arma::fill::zeros);
     for (int j = 0; j < ngp; ++j) {
       mgp_Sigma_aux.submat(j*n, j*n, arma::size(n, n)) = exp(-dist / mgp_phi_aux(j));
@@ -261,7 +262,7 @@ void Ifa::update_cov_params(
     T_aux(T_index) = mgp_sd_aux;
     mgp_Sigma_aux = TST(mgp_Sigma_aux, T_aux);
     // Build proposed multivariate noise covariance structure
-    arma::vec corr_free_aux = params_aux.subvec(2*m, params.size()-1);
+    arma::vec corr_free_aux = params_aux.subvec(nsig + ngp, params.size()-1);
     arma::mat Corr_chol_aux = vec2chol_corr(corr_free_aux, m);
     arma::mat Cov_chol_aux = Corr_chol_aux;
     Cov_chol_aux.each_col() %= V_sd;
@@ -276,10 +277,12 @@ void Ifa::update_cov_params(
     accept += dlkj_corr_free2(corr_free_aux, m, R_prior_eta, true);
     accept -= dmvnorm_cholinv(theta, theta_prior_mean, theta_prior_Sigma_chol_inv, true);
     accept -= dlkj_corr_free2(corr_free, m, R_prior_eta, true);
+    for (int k = 0; k < nsig; ++k) {
+     accept += R::dnorm(log(mgp_sd_aux(k)), log(sigmas_gp_mean(k)), sigmas_gp_sd(k), true);
+     accept -= R::dnorm(log(mgp_sd(k)), log(sigmas_gp_mean(k)), sigmas_gp_sd(k), true);
+    }
     for (int j = 0; j < ngp; ++j) {
-     accept += R::dnorm(log(mgp_sd_aux(j)), log(sigmas_gp_mean(j)), sigmas_gp_sd(j), true);
      accept += R::dnorm(log(mgp_phi_aux(j)), log(phi_gp_mean(j)), phi_gp_sd(j), true);
-     accept -= R::dnorm(log(mgp_sd(j)), log(sigmas_gp_mean(j)), sigmas_gp_sd(j), true);
      accept -= R::dnorm(log(mgp_phi(j)), log(phi_gp_mean(j)), phi_gp_sd(j), true);
     }
     // Rcpp::Rcout << accept << std::endl;
@@ -364,9 +367,11 @@ Rcpp::List Ifa::sample(
   if (standardize && model_type != "eifa" && model_type != "cifa") {
     arma::vec theta_samples_sd(m, arma::fill::zeros);
     arma::umat T_sub = arma::ind2sub(size(T), T_index); // indices to row-column index
+    Rcpp::Rcout << "Standardixing" << std::endl;
     for (int i = 0; i < m; ++i) {
       // get variance of the latent abilities
-      arma::vec sds = arma::stddev(theta_samples.submat(i*n, 0, arma::size(n, nsave))).t();
+      arma::vec sds =
+        arma::stddev(theta_samples.submat(i*n, nsave/2, arma::size(n, nsave/2))).t();
       theta_samples_sd(i) = arma::mean(sds);
       //  standardize latent abilities
       theta_samples.submat(i*n, 0, arma::size(n, nsave)) /= theta_samples_sd(i);

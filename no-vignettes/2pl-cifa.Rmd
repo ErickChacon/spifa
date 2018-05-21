@@ -49,7 +49,7 @@ library(tidyverse)
 
 ### Simulation of the data
 
-Firtst, simulate correlated factors:
+First, simulate correlated factors:
 
 ```{r}
 

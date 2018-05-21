@@ -16,13 +16,13 @@ Cov <- D %*% Corr %*% D
 beta <- c(0, 0, 0)
 variance <- 0.6 * matrix(c(1, 0, 0, 0, 1, 0, 0, 0, 1), nrow = 3)
 cor.model <- "exp_cor"
-cor.params <- list(list(phi = 0.04), list(phi = 0.04), list(phi = 0.1))
+cor.params <- list(list(phi = 0.05), list(phi = 0.05), list(phi = 0.1))
 
 f <- list(
   mean ~ mfe(x1, beta = get("beta")) +
     mre(factor(id), sigma = get("Cov")) +
     mgp(list(s1), variance = get("variance"), cor.model = get("cor.model"),
-        cor.params = get("cor.params")),
+        cor.params = get("cor.params"), range = 2),
   sd ~ I(0)
   )
 
@@ -30,8 +30,6 @@ n <- 300
 m <- 3
 (data_geo <- sim_model(formula = f, n = n, responses = m))
 # knitr::kable(head(data_model, 10))
-
-X <- matrix(rnorm(20), 10, 2)
 
 # VISUALIZE MULTIVARIATE SPATIAL DATA ------------------------------------------
 
@@ -42,11 +40,61 @@ ggplot(data_geo, aes(x1, response)) +
 ggplot(data_geo, aes(s1, mgp.list.mean)) +
   geom_line(aes(col = factor(response_label)))
 
+vg <- data_geo %>%
+  mutate(s2 = s1) %>%
+  group_by(response_label) %>%
+  nest() %>%
+  mutate(variog = purrr::map(data, ~ gstat::variogram(mgp.list.mean ~ 1, ~ s1 + s2, . ,
+                                                      cutoff = 3, width = 0.005))) %>%
+  dplyr::select(-data) %>%
+  unnest()
+
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 3)) +
+  scale_y_continuous(limits = c(0, 1.3)) +
+  stat_function(fun = function(x) 0.6 * (1-exp(- x/0.05)), col = 2, size = 1) +
+  facet_wrap(~response_label, ncol = 1)
+
+vg <- data_geo %>%
+  mutate(s2 = s1) %>%
+  group_by(response_label) %>%
+  nest() %>%
+  mutate(variog = purrr::map(data, ~ gstat::variogram(response ~ 1, ~ s1 + s2, . ,
+                                                      cutoff = 3, width = 0.005))) %>%
+  dplyr::select(-data) %>%
+  unnest()
+
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 3)) +
+  scale_y_continuous(limits = c(0, 2)) +
+  stat_function(fun = function(x) 0.4 + 0.6 * (1-exp(- x/0.05)), col = 2, size = 1) +
+  stat_function(fun = function(x) 0.4 + 0.6 * (1-exp(- x/0.1)), col = 3, size = 1) +
+  facet_wrap(~response_label, ncol = 1)
+
+# vg <- data_geo %>%
+#   mutate(s2 = s1) %>%
+#   dplyr::filter(response_label == 3) %>%
+#   gstat::variogram(mgp.list.mean ~ 1, ~ s1 + s2, . , cutoff = 3, width = 0.005)
+# ggplot(vg, aes(dist, gamma)) +
+#   geom_point(aes(size = np)) +
+#   geom_smooth() +
+#   expand_limits(y = 0, x = 0) +
+#   scale_x_continuous(limits = c(0, 3)) +
+#   stat_function(fun = function(x) 0.6 * (1-exp(- x/0.05)), col = 2, size = 2)
+
+
 data_geo %>%
   dplyr::select(id, mre.factor.mean, response_label) %>%
   spread(response_label, mre.factor.mean) %>%
   dplyr::select(-id) %>%
   GGally::ggpairs(aes(fill = "any"))
+
 
 data_geo_wide <- data_geo %>%
   dplyr::rename(ability = response, id_person = id) %>%
@@ -54,7 +102,6 @@ data_geo_wide <- data_geo %>%
   mutate(var = paste0(var, response_label)) %>%
   select(-response_label) %>%
   spread(var, value)
-
 
 # SIMULATE ITEM FACTOR DATA ----------------------------------------------------
 
@@ -129,7 +176,11 @@ fix.sigma <- 0.4^0.5
 sigma_prop <- 0.001 * diag(5)
 disc_mat <- cbind(discrimination1, discrimination2)
 L_a <- lower.tri(disc_mat, diag = TRUE) * 1
+L_a[c(3,5,8), 1] <- 0
+L_a[c(4,5,10), 2] <- 0
 T_gp <- diag(m)
+# diag(T_gp) <- 0
+# T_gp[2,2] <- 0
 
 # RUN --------------------------------------------------------------------------
 
@@ -145,18 +196,19 @@ source("../R/spmirt.R")
 #                           iter)
 # )
 
-iter <- 10000
-thin <- 1
+iter <- 5000
+thin <- 5
 system.time(
   samples <- spmirt(
     response = response,  predictors = NULL, coordinates = coordinates,
+    standardize = TRUE,
     nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
-    constrains = list(A = L_a, W = T_gp, V_sd = sigmas[1:2]),
+    constrains = list(A = L_a, W = T_gp, V_sd = sigmas[1:2]/2),
     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
                     Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
                     accep_prob = 0.234),
-    sigmas_gp_opt = list(initial = 1, prior_mean = 0.5, prior_sd = 0.4),
-    phi_gp_opt = list(initial = 0.08, prior_mean = 0.2, prior_sd = 0.4))
+    sigmas_gp_opt = list(initial = 0.6, prior_mean = 0.6, prior_sd = 0.4),
+    phi_gp_opt = list(initial = 0.05, prior_mean = 0.05, prior_sd = 0.4))
   )
 
 iter = iter / thin
@@ -194,7 +246,7 @@ as_tibble.spmirt.list(samples, 0, thin2, "mgp_sd") %>%
 as_tibble.spmirt.list(samples, iter/2, thin2, "mgp_sd") %>%
   gg_density(alpha = 0.5, ridges = FALSE, aes(fill = Parameters), scale = 4) +
   stat_function(fun = dlnorm, colour = "red",
-                args = list(meanlog = log(0.5), sdlog = 0.4))
+                args = list(meanlog = log(0.6), sdlog = 0.4))
 
 
 as_tibble.spmirt.list(samples, 0, thin2, "mgp_phi") %>%
@@ -203,7 +255,7 @@ as_tibble.spmirt.list(samples, 0, thin2, "mgp_phi") %>%
 as_tibble.spmirt.list(samples, iter/2, thin2, "mgp_phi") %>%
   gg_density(alpha = 0.5, ridges = FALSE, aes(fill = Parameters), scale = 4) +
   stat_function(fun = dlnorm, colour = "red",
-                args = list(meanlog = log(0.2), sdlog = 0.4))
+                args = list(meanlog = log(0.05), sdlog = 0.4))
 
 
 
@@ -255,12 +307,33 @@ ability1_pred %>%
     geom_line() +
     geom_line(aes(s1, param, col = "real"))
 
-vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability1_pred, cutoff = 1, width = 0.01)
+vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability1_pred, cutoff = 3, width = 0.01)
 ggplot(vg, aes(dist, gamma)) +
   geom_point(aes(size = np)) +
   geom_smooth() +
   expand_limits(y = 0, x = 0) +
-  scale_x_continuous(limits = c(0, 0.7))
+  scale_x_continuous(limits = c(0, 3))
+
+ability1_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+  dplyr::select(1:300)
+ability1_pred <- ability1_pred[nrow(ability1_pred),]
+ability1_pred <- ability1_pred %>%
+  summary.spmirt() %>%
+  mutate(param = data_geo$response[1:300],
+         s1 = data_geo$s1[1:300],
+         s2 = s1,
+         estim = `50%`)
+ability1_pred %>%
+    ggplot(aes(s1, `50%`)) +
+    geom_line() +
+    geom_line(aes(s1, param, col = "real"))
+
+vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability1_pred, cutoff = 3, width = 0.01)
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 3))
 
 ability2_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
   dplyr::select(301:600) %>%
@@ -274,12 +347,33 @@ ability2_pred %>%
   geom_line() +
   geom_line(aes(s1, param, col = "real"))
 
-vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability2_pred, cutoff = 1, width = 0.005)
+vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability2_pred, cutoff = 3, width = 0.005)
 ggplot(vg, aes(dist, gamma)) +
   geom_point(aes(size = np)) +
   geom_smooth() +
   expand_limits(y = 0, x = 0) +
-  scale_x_continuous(limits = c(0, 0.7))
+  scale_x_continuous(limits = c(0, 2))
+
+ability2_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+  dplyr::select(301:600)
+ability2_pred <- ability2_pred[nrow(ability2_pred),]
+ability2_pred <- ability2_pred %>%
+  summary.spmirt() %>%
+  mutate(param = data_geo$response[301:600],
+         s1 = data_geo$s1[301:600],
+         s2 = s1,
+         estim = `50%`)
+ability2_pred %>%
+  ggplot(aes(s1, `50%`)) +
+  geom_line() +
+  geom_line(aes(s1, param, col = "real"))
+
+vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability2_pred, cutoff = 3, width = 0.005)
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 2))
 
 # # # PREPARE DATA FOR MODELLING ---------------------------------------------------
 # #

@@ -1,0 +1,435 @@
+---
+title: "Spatial Item Factor Analysis"
+author: "Erick A. Chacon-Montalvan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Spatial Item Factor Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(fig.width = 7, fig.height = 4)
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+```
+
+In this vignette, we show how to use the **spmirt** package to fit a
+multidimensional 2 parameter logistic model used in item response theory. Let
+$Y_{ij}$ be the response for item
+$j$ in the individual $i$. The model can be defined by using an auxiliary variable
+$Z_{ij}$ such as
+\begin{align}
+  {Y}_{ij}  & =
+  \left\lbrace
+  \begin{array}[2]{cc}
+    1 & \text{if} ~ {Z}_{ij} > 0\\
+    0 & \text{otherwise}
+  \end{array}
+  \right.\\
+  {Z}_{ij} & = c_j + a_j^\intercal\theta_i + \epsilon_{ij},
+  ~~ \epsilon_{ij} \sim {N}(0, 1)\\
+  {\theta}_i & \sim {N}({0}, {I}_m)\\
+  c_j & \sim {N}(0, \sigma_c^2)\\
+  {a}_j & \sim {N}(0, \sigma_a^2{I}_m)\\
+\end{align}
+
+### Required packages
+
+```{r}
+rm(list = ls())
+library(datasim)
+library(tidyverse)
+```
+
+### Simulation of the data
+
+First, simulate spatially correlated factors:
+
+```{r}
+Corr <- matrix(c(1, -0.3, 0, -0.3, 1, 0.3, 0, 0.3, 1), nrow = 3)
+sigmas <- rep(0.4^0.5, 3)
+D <- diag(sigmas)
+Cov <- D %*% Corr %*% D
+
+# beta <- c(-0.5, 0, 0.5)
+beta <- c(0, 0, 0)
+variance <- 0.6 * matrix(c(1, 0, 0, 0, 1, 0, 0, 0, 1), nrow = 3)
+cor.model <- "exp_cor"
+cor.params <- list(list(phi = 0.05), list(phi = 0.05), list(phi = 0.1))
+
+f <- list(
+  mean ~ mfe(x1, beta = get("beta")) +
+    mre(factor(id), sigma = get("Cov")) +
+    mgp(list(s1), variance = get("variance"), cor.model = get("cor.model"),
+        cor.params = get("cor.params"), range = 2),
+  sd ~ I(0)
+  )
+
+n <- 300
+m <- 3
+data_geo <- sim_model(formula = f, n = n, responses = m)
+# knitr::kable(head(data_model, 10))
+
+```
+
+First, we define the parameters for the item response model.
+
+#### VISUALIZE MULTIVARIATE SPATIAL DATA
+
+```{r}
+ggplot(data_geo, aes(x1, response)) +
+  geom_smooth(aes(col = factor(response_label))) +
+  geom_point(aes(col = factor(response_label)))
+
+ggplot(data_geo, aes(s1, mgp.list.mean)) +
+  geom_line(aes(col = factor(response_label)))
+
+vg <- data_geo %>%
+  mutate(s2 = s1) %>%
+  group_by(response_label) %>%
+  nest() %>%
+  mutate(variog = purrr::map(data, ~ gstat::variogram(mgp.list.mean ~ 1, ~ s1 + s2, . ,
+                                                      cutoff = 3, width = 0.005))) %>%
+  dplyr::select(-data) %>%
+  unnest()
+
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 3)) +
+  scale_y_continuous(limits = c(0, 1.3)) +
+  stat_function(fun = function(x) 0.6 * (1-exp(- x/0.05)), col = 2, size = 1) +
+  facet_wrap(~response_label, ncol = 1)
+
+vg <- data_geo %>%
+  mutate(s2 = s1) %>%
+  group_by(response_label) %>%
+  nest() %>%
+  mutate(variog = purrr::map(data, ~ gstat::variogram(response ~ 1, ~ s1 + s2, . ,
+                                                      cutoff = 3, width = 0.005))) %>%
+  dplyr::select(-data) %>%
+  unnest()
+
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 3)) +
+  scale_y_continuous(limits = c(0, 2)) +
+  stat_function(fun = function(x) 0.4 + 0.6 * (1-exp(- x/0.05)), col = 2, size = 1) +
+  stat_function(fun = function(x) 0.4 + 0.6 * (1-exp(- x/0.1)), col = 3, size = 1) +
+  facet_wrap(~response_label, ncol = 1)
+
+data_geo %>%
+  dplyr::select(id, mre.factor.mean, response_label) %>%
+  spread(response_label, mre.factor.mean) %>%
+  dplyr::select(-id) %>%
+  GGally::ggpairs(aes(fill = "any"))
+
+data_geo_wide <- data_geo %>%
+  dplyr::rename(ability = response, id_person = id) %>%
+  gather(var, value, mre.factor.mean:ability) %>%
+  mutate(var = paste0(var, response_label)) %>%
+  select(-response_label) %>%
+  spread(var, value)
+
+
+```
+
+### SIMULATE ITEM FACTOR DATA
+
+```{r}
+q <- 10
+init_data <- purrr::map(1:q, ~ data_geo_wide) %>%
+  purrr::reduce(rbind)
+
+# n <- 300
+difficulty <- matrix((1:q - 5)/10 * 2, nrow = 1)
+discrimination1 <- seq(0.4, 1.5, length.out = q)
+discrimination2 <- runif(q, 0, 2)
+discrimination3 <- runif(q, 0, 2)
+discrimination1[1] <- 1
+discrimination1[c(3, 5, 8)] <- 0
+discrimination2[1:2] <- c(0, 1)
+discrimination2[c(4, 5, 10)] <- 0
+# discrimination3[1:3] <- c(0, 0, 1)
+# discrimination1 <- discrimination1 * 0.3
+# discrimination2 <- discrimination2 * 0.3
+cbind(discrimination1, discrimination2, discrimination3)
+
+f <- list(
+  prob ~ mfa(ones, beta = get("difficulty")) +
+    mfe(ability1, beta = get("discrimination1")) +
+    mfe(ability2, beta = get("discrimination2")),
+  # + mfe(ability3, beta = get("discrimination3")),
+  size ~ I(1)
+  )
+
+data_long <- sim_model(formula = f,
+                        link_inv = list(pnorm, identity),
+                        generator = rbinom,
+                        responses = q,
+                        n = n,
+                        init_data = init_data
+                        )
+
+data_long <- dplyr::rename(data_long, subject = id,
+                           item = response_label, y = response)
+
+```
+
+
+#### VISUALIZE ITEM FACTOR DATA
+
+```{r}
+explor <- data_long %>%
+  group_by(subject) %>%
+  summarize(endorse = mean(y),
+            ability1 = unique(ability1),
+            ability2 = unique(ability2),
+            # ability3 = unique(ability3),
+            x1 = unique(x1))
+ggplot(explor, aes(ability1, endorse)) + geom_point(alpha = 0.5)
+ggplot(explor, aes(ability2, endorse)) + geom_point(alpha = 0.5)
+# ggplot(explor, aes(ability3, endorse)) + geom_point(alpha = 0.5)
+# ggplot(explor, aes(x1, endorse)) + geom_point(alpha = 0.5)
+
+
+```
+
+### PREPARE DATA
+
+```{r}
+
+response <- data_long$y
+coordinates <- dplyr::select(data_geo_wide, s1)
+dist <- as.matrix(dist(coordinates))
+# dist <- as.matrix(dist(dplyr::select(data_geo_wide, s1)[order(data_geo_wide$s1),]))
+# dist <- dist[order(data_geo_wide$s1),]
+n
+q
+m <- 2
+iter <- 5 * 10 ^ 4
+thin <- 5
+# iter <- 5 * 10 ^ 3
+cor.params <- c(0.04, 0.04)
+sig.params <- c(0.6 ^ 0.5, 0.6 ^ 0.5)
+fix.sigma <- 0.4^0.5
+# sigma_prop <- matrix(c(0.138, -0.023, -0.023, 0.1), 2) * 2.38 ^ 2 / 2
+sigma_prop <- 0.001 * diag(5)
+disc_mat <- cbind(discrimination1, discrimination2)
+L_a <- lower.tri(disc_mat, diag = TRUE) * 1
+L_a[c(3,5,8), 1] <- 0
+L_a[c(4,5,10), 2] <- 0
+T_gp <- diag(m)
+# diag(T_gp) <- 0
+# T_gp[2,2] <- 0
+
+```
+
+### RUN
+
+```{r}
+Rcpp::sourceCpp("../src/mirt-gibss-sp.cpp")
+source("../R/ggplot-mcmc.R")
+Rcpp::sourceCpp("../src/ifa-driver.cpp")
+source("../R/spmirt.R")
+
+# # set.seed(5)
+# system.time(
+#   samples <- ifa_gibbs_sp(response, dist, n, q, m, cor.params, sig.params,
+#                           Corr[1:2, 1:2], fix.sigma, sigma_prop, L_a, T_gp, 0.234,
+#                           iter)
+# )
+
+iter <- 5000
+thin <- 5
+system.time(
+  samples <- spmirt(
+    response = response,  predictors = NULL, coordinates = coordinates,
+    standardize = TRUE,
+    nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
+    constrains = list(A = L_a, W = T_gp, V_sd = sigmas[1:2]/2),
+    adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
+                    Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
+                    accep_prob = 0.234),
+    sigmas_gp_opt = list(initial = 0.6, prior_mean = 0.6, prior_sd = 0.4),
+    phi_gp_opt = list(initial = 0.05, prior_mean = 0.05, prior_sd = 0.4))
+  )
+
+```
+
+
+```{r}
+
+iter = iter / thin
+thin2 <- 1
+
+attr(samples, "model_info")[-c(1, 2, 3)]
+
+samples_tib <- as_tibble(samples, iter/2)
+#summary(samples_tib)
+samples_long <- gather(samples_tib)
+
+as_tibble.spmirt.list(samples, 0, thin2, "c") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble.spmirt.list(samples, 0, thin2, "a") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble.spmirt.list(samples, iter/2, thin2, "a") %>%
+  gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 4)
+
+as_tibble.spmirt.list(samples, iter/2, thin2, "theta") %>%
+  dplyr::select(1:100) %>%
+  gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 4)
+
+as_tibble.spmirt.list(samples, 0, thin2, "theta") %>%
+  select(1:10) %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble.spmirt.list(samples, 0, thin2, "corr") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble.spmirt.list(samples, 0, thin2, "mgp_sd") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble.spmirt.list(samples, iter/2, thin2, "mgp_sd") %>%
+  gg_density(alpha = 0.5, ridges = FALSE, aes(fill = Parameters), scale = 4) +
+  stat_function(fun = dlnorm, colour = "red",
+                args = list(meanlog = log(0.6), sdlog = 0.4))
+
+
+as_tibble.spmirt.list(samples, 0, thin2, "mgp_phi") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble.spmirt.list(samples, iter/2, thin2, "mgp_phi") %>%
+  gg_density(alpha = 0.5, ridges = FALSE, aes(fill = Parameters), scale = 4) +
+  stat_function(fun = dlnorm, colour = "red",
+                args = list(meanlog = log(0.05), sdlog = 0.4))
+
+as_tibble.spmirt.list(samples, 0, thin2, "a") %>%
+  gg_density2d(`Discrimination 1`, `Discrimination 2`, each = 10,
+               keys = c("Item ", "Discrimination "),
+               highlight = c(discrimination1, discrimination2))
+
+as_tibble.spmirt.list(samples, 0, thin2, "a") %>%
+  gg_scatter(`Discrimination 1`, `Discrimination 2`, each = 10,
+               keys = c("Item ", "Discrimination "),
+               highlight = c(discrimination1, discrimination2))
+
+as_tibble.spmirt.list(samples, iter/ 2, select = "a") %>%
+  summary() %>%
+  mutate(param = c(discrimination1, discrimination2)) %>%
+  gg_errorbarh() +
+  geom_point(aes(param, Parameters), col = 3)
+
+as_tibble.spmirt.list(samples, iter/2, select = "c") %>%
+  summary() %>%
+  mutate(param = as.numeric(difficulty)) %>%
+  gg_errorbarh() +
+  geom_point(aes(param, Parameters), col = 3)
+
+as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+  dplyr::select(1:300) %>%
+  summary() %>%
+  mutate(param = data_geo$response[1:300]) %>%
+  gg_errorbarh(sorted = TRUE) +
+  geom_point(aes(x = param), col = 3)
+
+as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+  dplyr::select(301:600) %>%
+  summary() %>%
+  mutate(param = data_geo$response[301:600]) %>%
+  gg_errorbarh(sorted = TRUE) +
+  geom_point(aes(x = param), col = 3)
+
+ability1_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+  dplyr::select(1:300) %>%
+  summary() %>%
+  mutate(param = data_geo$response[1:300],
+         s1 = data_geo$s1[1:300],
+         s2 = s1,
+         estim = `50%`)
+ability1_pred %>%
+    ggplot(aes(s1, `50%`)) +
+    geom_line() +
+    geom_line(aes(s1, param, col = "real"))
+
+vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability1_pred, cutoff = 3, width = 0.01)
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 3))
+
+ability1_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+  dplyr::select(1:300)
+ability1_pred <- ability1_pred[nrow(ability1_pred),]
+ability1_pred <- ability1_pred %>%
+  summary.spmirt() %>%
+  mutate(param = data_geo$response[1:300],
+         s1 = data_geo$s1[1:300],
+         s2 = s1,
+         estim = `50%`)
+ability1_pred %>%
+    ggplot(aes(s1, `50%`)) +
+    geom_line() +
+    geom_line(aes(s1, param, col = "real"))
+
+vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability1_pred, cutoff = 3, width = 0.01)
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 3))
+
+ability2_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+  dplyr::select(301:600) %>%
+  summary() %>%
+  mutate(param = data_geo$response[301:600],
+         s1 = data_geo$s1[301:600],
+         s2 = s1,
+         estim = `50%`)
+ability2_pred %>%
+  ggplot(aes(s1, `50%`)) +
+  geom_line() +
+  geom_line(aes(s1, param, col = "real"))
+
+vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability2_pred, cutoff = 3, width = 0.005)
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 2))
+
+ability2_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+  dplyr::select(301:600)
+ability2_pred <- ability2_pred[nrow(ability2_pred),]
+ability2_pred <- ability2_pred %>%
+  summary.spmirt() %>%
+  mutate(param = data_geo$response[301:600],
+         s1 = data_geo$s1[301:600],
+         s2 = s1,
+         estim = `50%`)
+ability2_pred %>%
+  ggplot(aes(s1, `50%`)) +
+  geom_line() +
+  geom_line(aes(s1, param, col = "real"))
+
+vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability2_pred, cutoff = 3, width = 0.005)
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 2))
+
+```
+
+
+
+

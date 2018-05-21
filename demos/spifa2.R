@@ -154,13 +154,14 @@ system.time(
   samples <- spmirt(
     response = response,  predictors = NULL, coordinates = coordinates,
     nobs = n, nitems = q, nfactors = 2, ngp = 2, niter = iter, thin = thin,
-    standardize = FALSE,
+    standardize = TRUE,
     constrains = list(A = L_a, W = T_gp, V_sd = sigmas[1:2]),
     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
                     Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
                     accep_prob = 0.234),
     # sigmas_gp_opt = list(initial = 1, prior_mean = 0.9, prior_sd = NULL),
-    phi_gp_opt = list(initial = 0.08, prior_mean = 0.1, prior_sd = NULL))
+    # phi_gp_opt = list(initial = 0.08, prior_mean = 0.1, prior_sd = NULL)
+    )
   )
 
 iter = iter / thin

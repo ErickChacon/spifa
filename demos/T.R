@@ -9,5 +9,5 @@ S[7:9,7:9] = 7
 
 Rcpp::sourceCpp("../src/arma-mat.cpp")
 TST(S, T) - TK %*% S %*% t(TK)
-sum(TST(S, T) - TK %*% S %*% t(TK))
+mean(TST(S, T) - TK %*% S %*% t(TK))
 
