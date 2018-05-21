@@ -43,7 +43,11 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
   z = arma::zeros(y.size());
   Rcpp::NumericVector::iterator ity = y.begin();
   for (arma::vec::iterator it = z.begin(); it != z.end() ; ++it) {
-    *it = RcppTN::rtn1(0.0, 1.0, low_thresh[*ity], high_thresh[*ity]);
+    if (Rcpp::NumericVector::is_na(*ity)) {
+      *it = arma::randn();
+    } else {
+      *it = RcppTN::rtn1(0.0, 1.0, low_thresh[*ity], high_thresh[*ity]);
+    }
     ity++;
   }
   // Initializing B: multivariate fixed effects
@@ -176,7 +180,11 @@ void Ifa::update_z()
   Rcpp::NumericVector::iterator ity = y.begin();
   Rcpp::NumericVector::iterator itz_mu = z_mu.begin();
   for (arma::vec::iterator it = z.begin(); it != z.end() ; ++it) {
-    *it = RcppTN::rtn1(*itz_mu, 1.0, low_thresh[*ity], high_thresh[*ity]);
+    if (Rcpp::NumericVector::is_na(*ity)) {
+      *it = *itz_mu + arma::randn();
+    } else {
+      *it = RcppTN::rtn1(*itz_mu, 1.0, low_thresh[*ity], high_thresh[*ity]);
+    }
     ity++;
     itz_mu++;
   }
