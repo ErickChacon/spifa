@@ -65,8 +65,12 @@ public:
       arma::mat adap_Sigma, double adap_scale,
       arma::vec c_ini, arma::mat A_ini, arma::mat R_ini,
       arma::mat B_ini, arma::vec sigmas_gp_ini, arma::vec phi_gp_ini,
-      std::string mod_type
-      );
+      std::string mod_type);
+
+  Ifa(Rcpp::NumericVector response, arma::mat predictors, arma::mat distances,
+      int nobs, int nitems, int nfactors, int ngps,
+      arma::mat constrain_L, arma::mat constrain_T, arma::mat constrain_V_sd,
+      std::string mod_type);
 
   void update_theta();
   void update_c(const arma::vec& c_prior_mean, const arma::vec& c_prior_sd);
@@ -88,6 +92,10 @@ public:
       arma::vec phi_gp_mean, arma::vec phi_gp_sd,
       double C, double alpha, double target
       );
+  Rcpp::List predict(
+      arma::mat newpredictors, arma::mat cross_distances,
+      int npred, int burnin, int thin);
+
 };
 
 

@@ -4,7 +4,7 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 
 // [[Rcpp::export]]
-Rcpp::List spmirt_cpp(
+Rcpp::List spifa_cpp(
     Rcpp::NumericVector response, arma::mat predictors, arma::mat distances,
     int nobs, int nitems, int nfactors, int ngp,
     int niter, int thin, bool standardize,
@@ -47,4 +47,31 @@ Rcpp::List spmirt_cpp(
   return output;
 }
 
+// [[Rcpp::export]]
+Rcpp::List predict_spifa_cpp(
+    Rcpp::NumericVector response, arma::mat predictors, arma::mat newpredictors,
+    arma::mat distances, arma::mat cross_distances,
+    int nobs, int nitems, int nfactors, int ngp, int npred,
+    int burnin, int thin,
+    arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd,
+    std::string model_type
+    ) {
+
+  Ifa model(response, predictors, distances,
+      nobs, nitems, nfactors, ngp,
+      constrain_L, constrain_T, constrain_V_sd,
+      model_type);
+
+  Rcpp::List output = model.predict(
+      newpredictors, cross_distances,
+      npred, burnin, thin);
+
+  // Rcpp::List output = Rcpp::List::create(
+  //     Rcpp::Named("beta") = 1,
+  //     Rcpp::Named("corr_chol") = 2,
+  //     Rcpp::Named("corr") = 3,
+  //     Rcpp::Named("sigmas") = 5
+  //     );
+  return output;
+}
 

@@ -14,8 +14,7 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
     arma::mat adap_Sigma, double adap_scale,
     arma::vec c_ini, arma::mat A_ini, arma::mat R_ini,
     arma::mat B_ini, arma::vec sigmas_gp_ini, arma::vec phi_gp_ini,
-    std::string mod_type
-    ):
+    std::string mod_type):
   model_type(mod_type),
   y(response), dist(distances), X(predictors),
   n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols), n_corr((m-1)*m / 2),
@@ -106,8 +105,30 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
   // Variables for adaptive MH
   params_mean = params;
   // Rcpp::Rcout << "corr_free: "<< params << std::endl;
-
 }
+
+Ifa::Ifa(Rcpp::NumericVector response, arma::mat predictors, arma::mat distances,
+      int nobs, int nitems, int nfactors, int ngps,
+      arma::mat constrain_L, arma::mat constrain_T, arma::mat constrain_V_sd,
+      std::string mod_type):
+  model_type(mod_type),
+  y(response), dist(distances), X(predictors),
+  n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols), n_corr((m-1)*m / 2),
+  ones_n(arma::ones(n)),
+  zeros_nm(arma::zeros(n*m)),
+  eye_q(arma::eye(q,q)),
+  eye_n(arma::eye(n,n)),
+  eye_m(arma::eye(m,m)),
+  low_thresh(Rcpp::NumericVector::create(R_NegInf, 0)),
+  high_thresh(Rcpp::NumericVector::create(0, R_PosInf)),
+  L(constrain_L),
+  T(constrain_T),
+  T_index(find(T != 0)),
+  V_sd(constrain_V_sd)
+{
+};
+
+
 
 void Ifa::update_theta()
 {
@@ -424,10 +445,23 @@ Rcpp::List Ifa::sample(
       );
 
   Rcpp::StringVector myclass(2);
-  myclass(0) = "spmirt.list";
+  myclass(0) = "spifa.list";
   myclass(1) = "list";
   output.attr("class") = myclass;
+  output.attr("V_sd") = V_sd;
 
   return output;
 }
+
+Rcpp::List Ifa::predict(
+    arma::mat newpredictors, arma::mat cross_distances, int npred, int burnin, int thin)
+{
+  Rcpp::List output = Rcpp::List::create(
+      Rcpp::Named("beta") = 1,
+      Rcpp::Named("corr_chol") = 2,
+      Rcpp::Named("corr") = 3,
+      Rcpp::Named("sigmas") = 5
+      );
+  return output;
+};
 
