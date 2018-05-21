@@ -1,122 +1,3 @@
-
-#' @title Convert Samples to Tibble
-#'
-#' @description
-#' \code{function} description.
-#'
-#' @details
-#' details.
-#'
-#' @param par.
-#'
-#' @return return.
-#'
-#' @author Erick A. Chacon-Montalvan
-#'
-#' @examples
-#'
-#' as_tibble(samples)
-#' as_tibble(samples, "beta")
-#'
-#' @importFrom tibble as_tibble
-#'
-#' @export
-as_tibble.spmirt.list <- function (samples, burnin = 0, thin = 1,
-                              select = names(samples)) {
-  samples <- samples[select]
-  params <- names(samples)
-  samples <- samples %>%
-    purrr::map(tibble::as_tibble) %>%
-    dplyr::bind_cols()
-  niter <- nrow(samples)
-  samples <- samples[seq(burnin + 1, niter, thin),]
-  class(samples) <- c("spmirt", class(samples))
-  return(samples)
-}
-
-#' @title Gather Parameters into a Long Format Tibble
-#'
-#' @description
-#' \code{function} description.
-#'
-#' @details
-#' details.
-#'
-#' @param par.
-#'
-#' @return return.
-#'
-#' @author Erick A. Chacon-Montalvan
-#'
-#' @examples
-#'
-#' wide <- as_tibble(samples, "beta")
-#' (long <- gather(wide))
-#' class(long)
-#'
-#' @export
-gather.spmirt <- function (samples_wide, each = NULL,
-                           keys = c("group", "Parameter")) {
-
-  # Convert to long format
-  samples_long <- samples_wide %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate(iteration = 1:n()) %>%
-    tidyr::gather(Parameters, Value, -iteration, factor_key = TRUE)
-
-  if (!is.null(each)) {
-
-    # Auxiliary variables to group
-    groups <- paste0(keys[1], rep(1:each, ncol(samples_wide)/each))
-    groups <- factor(groups, unique(groups))
-    var <- paste0(keys[2], rep(1:(ncol(samples_wide)/each), each = each))
-    names(groups) <- levels(samples_long$Parameters)
-    names(var) <- levels(samples_long$Parameters)
-
-    # Group parameters
-    samples_long <- samples_long %>%
-      dplyr::mutate(groups = groups[Parameters], var = var[Parameters]) %>%
-    dplyr::select(-Parameters) %>%
-    tidyr::spread(var, Value)
-
-  }
-
-  return(samples_long)
-}
-
-#' @title Summary of Samples
-#'
-#' @description
-#' \code{function} description.
-#'
-#' @details
-#' details.
-#'
-#' @param par.
-#'
-#' @return return.
-#'
-#' @author Erick A. Chacon-Montalvan
-#'
-#' @examples
-#'
-#' summary(samples)
-#'
-#' @export
-summary.spmirt <- function (samples, select = names(samples)) {
-
-  # df <- as_tibble.spmirt(samples, select = select)
-  df <- samples
-  df_names <- names(df)
-  df <- df %>%
-    map(function (x) quantile(x, c(0.025, 0.1, 0.5, 0.9, 0.975))) %>%
-    reduce(rbind) %>%
-    as_tibble() %>%
-    mutate(Parameters = factor(df_names, df_names))
-  df <- df[c(ncol(df), 1:(ncol(df)-1))]
-  return(df)
-}
-
 #' @title Traceplot of Samples
 #'
 #' @description
@@ -139,7 +20,7 @@ summary.spmirt <- function (samples, select = names(samples)) {
 #'
 #' @export
 gg_trace <- function (df, wrap = FALSE, legend = "bottom", ...) {
-  df <- gather.spmirt(df)
+  df <- gather.spifa(df)
   gg <- df %>%
     ggplot(aes(iteration, Value, group = Parameters, col = Parameters)) +
       geom_path(...)
@@ -173,7 +54,7 @@ gg_trace <- function (df, wrap = FALSE, legend = "bottom", ...) {
 #'
 #' @export
 gg_density <- function (df, ..., ridges = FALSE) {
-  df <- gather.spmirt(df)
+  df <- gather.spifa(df)
   df <- df %>%
     group_by(Parameters) %>%
     mutate(median = quantile(Value, 0.5))
@@ -222,8 +103,8 @@ gg_density2d <- function (samples, var1, var2, each = NULL,
   }
 
   if (!is.null(each)) {
-    samples <- gather.spmirt(samples, each, keys)
-    aux_samples <- gather.spmirt(aux_samples, each, keys)
+    samples <- gather.spifa(samples, each, keys)
+    aux_samples <- gather.spifa(aux_samples, each, keys)
   }
 
   gg <- ggplot(samples, aes_(substitute(var1), substitute(var2))) +
@@ -280,8 +161,8 @@ gg_scatter <- function (samples, var1, var2, each = NULL,
   }
 
   if (!is.null(each)) {
-    samples <- gather.spmirt(samples, each, keys)
-    aux_samples <- gather.spmirt(aux_samples, each, keys)
+    samples <- gather.spifa(samples, each, keys)
+    aux_samples <- gather.spifa(aux_samples, each, keys)
   }
 
   gg <- ggplot(samples, aes_(substitute(var1), substitute(var2))) +
