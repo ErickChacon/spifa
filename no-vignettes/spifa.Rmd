@@ -16,7 +16,7 @@ knitr::opts_chunk$set(comment = "#>")
 options(width = 100)
 ```
 
-In this vignette, we show how to use the **spmirt** package to fit a
+In this vignette, we show how to use the **spifa** package to fit a
 multidimensional 2 parameter logistic model used in item response theory. Let
 $Y_{ij}$ be the response for item
 $j$ in the individual $i$. The model can be defined by using an auxiliary variable
@@ -234,10 +234,12 @@ T_gp <- diag(m)
 ### RUN
 
 ```{r}
-Rcpp::sourceCpp("../src/mirt-gibss-sp.cpp")
-source("../R/ggplot-mcmc.R")
 Rcpp::sourceCpp("../src/ifa-driver.cpp")
-source("../R/spmirt.R")
+source("../R/check-arguments.R")
+source("../R/spifa-ggplot.R")
+source("../R/spifa-methods.R")
+source("../R/spifa.R")
+
 
 # # set.seed(5)
 # system.time(
@@ -246,10 +248,10 @@ source("../R/spmirt.R")
 #                           iter)
 # )
 
-iter <- 5000
-thin <- 5
+iter <- 2000
+thin <- 1
 system.time(
-  samples <- spmirt(
+  samples <- spifa(
     response = response,  predictors = NULL, coordinates = coordinates,
     standardize = TRUE,
     nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
@@ -269,86 +271,86 @@ system.time(
 iter = iter / thin
 thin2 <- 1
 
-attr(samples, "model_info")[-c(1, 2, 3)]
+attr(samples, "model_info")[-c(1, 2, 3, 4)]
 
 samples_tib <- as_tibble(samples, iter/2)
 #summary(samples_tib)
 samples_long <- gather(samples_tib)
 
-as_tibble.spmirt.list(samples, 0, thin2, "c") %>%
+as_tibble.spifa.list(samples, 0, thin2, "c") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, 0, thin2, "a") %>%
+as_tibble.spifa.list(samples, 0, thin2, "a") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, iter/2, thin2, "a") %>%
+as_tibble.spifa.list(samples, iter/2, thin2, "a") %>%
   gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 4)
 
-as_tibble.spmirt.list(samples, iter/2, thin2, "theta") %>%
+as_tibble.spifa.list(samples, iter/2, thin2, "theta") %>%
   dplyr::select(1:100) %>%
   gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 4)
 
-as_tibble.spmirt.list(samples, 0, thin2, "theta") %>%
+as_tibble.spifa.list(samples, 0, thin2, "theta") %>%
   select(1:10) %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, 0, thin2, "corr") %>%
+as_tibble.spifa.list(samples, 0, thin2, "corr") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, 0, thin2, "mgp_sd") %>%
+as_tibble.spifa.list(samples, 0, thin2, "mgp_sd") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, iter/2, thin2, "mgp_sd") %>%
+as_tibble.spifa.list(samples, iter/2, thin2, "mgp_sd") %>%
   gg_density(alpha = 0.5, ridges = FALSE, aes(fill = Parameters), scale = 4) +
   stat_function(fun = dlnorm, colour = "red",
                 args = list(meanlog = log(0.6), sdlog = 0.4))
 
 
-as_tibble.spmirt.list(samples, 0, thin2, "mgp_phi") %>%
+as_tibble.spifa.list(samples, 0, thin2, "mgp_phi") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, iter/2, thin2, "mgp_phi") %>%
+as_tibble.spifa.list(samples, iter/2, thin2, "mgp_phi") %>%
   gg_density(alpha = 0.5, ridges = FALSE, aes(fill = Parameters), scale = 4) +
   stat_function(fun = dlnorm, colour = "red",
                 args = list(meanlog = log(0.05), sdlog = 0.4))
 
-as_tibble.spmirt.list(samples, 0, thin2, "a") %>%
+as_tibble.spifa.list(samples, 0, thin2, "a") %>%
   gg_density2d(`Discrimination 1`, `Discrimination 2`, each = 10,
                keys = c("Item ", "Discrimination "),
                highlight = c(discrimination1, discrimination2))
 
-as_tibble.spmirt.list(samples, 0, thin2, "a") %>%
+as_tibble.spifa.list(samples, 0, thin2, "a") %>%
   gg_scatter(`Discrimination 1`, `Discrimination 2`, each = 10,
                keys = c("Item ", "Discrimination "),
                highlight = c(discrimination1, discrimination2))
 
-as_tibble.spmirt.list(samples, iter/ 2, select = "a") %>%
+as_tibble.spifa.list(samples, iter/ 2, select = "a") %>%
   summary() %>%
   mutate(param = c(discrimination1, discrimination2)) %>%
   gg_errorbarh() +
   geom_point(aes(param, Parameters), col = 3)
 
-as_tibble.spmirt.list(samples, iter/2, select = "c") %>%
+as_tibble.spifa.list(samples, iter/2, select = "c") %>%
   summary() %>%
   mutate(param = as.numeric(difficulty)) %>%
   gg_errorbarh() +
   geom_point(aes(param, Parameters), col = 3)
 
-as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+as_tibble.spifa.list(samples, iter/2, select = "theta") %>%
   dplyr::select(1:300) %>%
   summary() %>%
   mutate(param = data_geo$response[1:300]) %>%
   gg_errorbarh(sorted = TRUE) +
   geom_point(aes(x = param), col = 3)
 
-as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+as_tibble.spifa.list(samples, iter/2, select = "theta") %>%
   dplyr::select(301:600) %>%
   summary() %>%
   mutate(param = data_geo$response[301:600]) %>%
   gg_errorbarh(sorted = TRUE) +
   geom_point(aes(x = param), col = 3)
 
-ability1_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+ability1_pred <- as_tibble.spifa.list(samples, iter/2, select = "theta") %>%
   dplyr::select(1:300) %>%
   summary() %>%
   mutate(param = data_geo$response[1:300],
@@ -367,11 +369,11 @@ ggplot(vg, aes(dist, gamma)) +
   expand_limits(y = 0, x = 0) +
   scale_x_continuous(limits = c(0, 3))
 
-ability1_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+ability1_pred <- as_tibble.spifa.list(samples, iter/2, select = "theta") %>%
   dplyr::select(1:300)
 ability1_pred <- ability1_pred[nrow(ability1_pred),]
 ability1_pred <- ability1_pred %>%
-  summary.spmirt() %>%
+  summary.spifa() %>%
   mutate(param = data_geo$response[1:300],
          s1 = data_geo$s1[1:300],
          s2 = s1,
@@ -388,7 +390,7 @@ ggplot(vg, aes(dist, gamma)) +
   expand_limits(y = 0, x = 0) +
   scale_x_continuous(limits = c(0, 3))
 
-ability2_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+ability2_pred <- as_tibble.spifa.list(samples, iter/2, select = "theta") %>%
   dplyr::select(301:600) %>%
   summary() %>%
   mutate(param = data_geo$response[301:600],
@@ -407,11 +409,11 @@ ggplot(vg, aes(dist, gamma)) +
   expand_limits(y = 0, x = 0) +
   scale_x_continuous(limits = c(0, 2))
 
-ability2_pred <- as_tibble.spmirt.list(samples, iter/2, select = "theta") %>%
+ability2_pred <- as_tibble.spifa.list(samples, iter/2, select = "theta") %>%
   dplyr::select(301:600)
 ability2_pred <- ability2_pred[nrow(ability2_pred),]
 ability2_pred <- ability2_pred %>%
-  summary.spmirt() %>%
+  summary.spifa() %>%
   mutate(param = data_geo$response[301:600],
          s1 = data_geo$s1[301:600],
          s2 = s1,
@@ -430,6 +432,36 @@ ggplot(vg, aes(dist, gamma)) +
 
 ```
 
+```{r}
+
+newcoords <- matrix(seq(0, 2, 0.02))
+
+system.time(
+bla <- predict(samples, newcoords = newcoords, burnin = iter/2, thin = 10)
+)
+
+as_tibble.spifa.list(bla) %>%
+  dplyr::select(1:30) %>%
+  gg_trace()
+
+as_tibble.spifa.list(bla) %>%
+  dplyr::select(1:80) %>%
+  gg_density(ridges = TRUE)
+
+
+as_tibble.spifa.list(bla) %>%
+  summary() %>%
+  mutate(
+  s1 = rep(as.numeric(newcoords), 2),
+  response_label = rep(1:m, each = nrow(newcoords))
+  ) %>%
+  ggplot() +
+  geom_line(aes(s1, `50%`, col = "x1")) +
+  geom_ribbon(aes(x = s1, ymin = `2.5%`, ymax = `97.5%`), alpha = 1/4) +
+  geom_line(aes(s1, mgp.list.mean), subset(data_geo, response_label < 3)) +
+  facet_wrap(~response_label)
+
+```
 
 
 

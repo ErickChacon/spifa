@@ -18,7 +18,7 @@ options(width = 100)
 # set.seed(1)
 ```
 
-In this vignette, we show how to use the **spmirt** package to fit a
+In this vignette, we show how to use the **spifa** package to fit a
 multidimensional 2 parameter logistic model used in item response theory. Let
 $Y_{ij}$ be the response for item
 $j$ in the individual $i$. The model can be defined by using an auxiliary variable
@@ -189,13 +189,15 @@ diag(A_prior_sd) <- 0.01
 # Rcpp::sourceCpp("../src/correlation.cpp")
 # Rcpp::sourceCpp("../src/ifa-main.cpp")
 Rcpp::sourceCpp("../src/ifa-driver.cpp")
-source("../R/spmirt.R")
-source("../R/ggplot-mcmc.R")
+source("../R/check-arguments.R")
+source("../R/spifa-ggplot.R")
+source("../R/spifa-methods.R")
+source("../R/spifa.R")
 
-iter = 10^4
+iter = 10
 thin = 1
 system.time(
-samples <- spmirt(
+samples <- spifa(
   response = data_long$y, predictors = NULL, coordinates = NULL,
   nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
   constrains = list(A = L_a) ,
@@ -207,6 +209,7 @@ samples <- spmirt(
 )
 # attr(samples, "model")
 iter <- iter / thin
+attr(samples, "V_sd")
 
 
 attr(samples, "model_info")[-c(2,3)]
@@ -241,13 +244,13 @@ attr(samples, "model_info")[-c(2,3)]
   # A_opt = list(prior_mean = a_mean, prior_sd = 1)
   # )
 
-# (samples <- spmirt(response = data_long$y,
+# (samples <- spifa(response = data_long$y,
 # nobs = n, nitems = 2, nfactors = 2, niter = iter,
 # A_opt = list(initial = 1, prior_mean = 2, prior_sd = 0.5),
 # ))
 
 
-# (samples <- spmirt(
+# (samples <- spifa(
 # response = data_long$y,
 # nobs = n, nitems = 4, nfactors = 3, niter = iter,
 # constrains = list(A = NULL, W = NULL),

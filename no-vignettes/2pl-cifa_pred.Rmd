@@ -18,7 +18,7 @@ options(width = 100)
 # set.seed(1)
 ```
 
-In this vignette, we show how to use the **spmirt** package to fit a
+In this vignette, we show how to use the **spifa** package to fit a
 multidimensional 2 parameter logistic model used in item response theory. Let
 $Y_{ij}$ be the response for item
 $j$ in the individual $i$. The model can be defined by using an auxiliary variable
@@ -42,7 +42,7 @@ $Z_{ij}$ such as
 
 ```{r}
 rm(list = ls())
-library(spmirt)
+# library(spifa)
 library(datasim)
 library(tidyverse)
 ```
@@ -56,11 +56,11 @@ Firtst, simulate correlated factors:
 m <- 2
 # set.seed(4)
 Corr <- matrix(c(1, -0.3, -0.3, 1), nrow = m)
-sigmas <- rep(0.5^0.5, m)
+sigmas <- rep(0.3^0.5, m)
 D <- diag(sigmas)
 Cov <- D %*% Corr %*% D
-beta1 <- c(0.7, -0.3)
-beta2 <- c(0.3, 0.5)
+beta1 <- c(sqrt(0.5), -sqrt(0.4))
+beta2 <- c(sqrt(0.2), sqrt(0.3))
 
 # mean ~ mre(factor(id), sigma = get("Cov")),
 f <- list(
@@ -71,29 +71,33 @@ f <- list(
   )
 
 n <- 300
-(data_geo <- sim_model(formula = f, n = n, responses = m))
+(data_factor <- sim_model(formula = f, n = n, responses = m))
 # knitr::kable(head(data_model, 10))
 
-ggplot(data_geo, aes(x1, response)) +
+ggplot(data_factor, aes(x1, response)) +
   geom_smooth(aes(col = factor(response_label))) +
   geom_point(aes(col = factor(response_label)))
 
-ggplot(data_geo, aes(x2, response)) +
+ggplot(data_factor, aes(x2, response)) +
   geom_smooth(aes(col = factor(response_label))) +
   geom_point(aes(col = factor(response_label)))
 
-data_geo %>%
+data_factor %>%
   dplyr::select(id, mre.factor.mean, response_label) %>%
   spread(response_label, mre.factor.mean) %>%
   dplyr::select(-id) %>%
   GGally::ggpairs(aes(fill = "any"))
 
-data_geo_wide <- data_geo %>%
+data_factor_wide <- data_factor %>%
   dplyr::rename(ability = response, id_person = id) %>%
   gather(var, value, mre.factor.mean:ability) %>%
   mutate(var = paste0(var, response_label)) %>%
   select(-response_label) %>%
   spread(var, value)
+
+data_factor_wide %>%
+  dplyr::select(ability1, ability2) %>%
+  var()
 
 
 ```
@@ -104,18 +108,18 @@ First, we define the parameters for the item response model.
 ```{r}
 
 q <- q1 <- q2 <- 10
-init_data <- purrr::map(1:q, ~ data_geo_wide) %>%
+init_data <- purrr::map(1:q, ~ data_factor_wide) %>%
   purrr::reduce(rbind)
 
 n <- 300
 difficulty <- matrix((1:q - 5)/10 * 2, nrow = 1)
 discrimination1 <- seq(0.4, 1.5, length.out = q)
 discrimination2 <- runif(q, 0, 2)
+
 discrimination1[1] = 1
 discrimination2[2] = 1
-discrimination2[1] <- 0
-discrimination1[4] <- 0
-discrimination2[5] <- 0
+discrimination1[c(4, 8)] <- 0
+discrimination2[c(1, 5, 9)] <- 0
 
 ```
 
@@ -185,8 +189,9 @@ iter <- 5 * 10 ^ 4
 thin <- 10
 disc_mat <- cbind(cbind(discrimination1), cbind(discrimination2))
 L_a <- lower.tri(disc_mat, diag = TRUE) * 1
-L_a[4,1] <- 0
-L_a[5,2] <- 0
+
+L_a[c(4, 8), 1] <- 0
+L_a[c(5, 9),2] <- 0
 
 # L_a <- matrix(1, q, 2)
 # L_a[c(1, 5, 8, 16)] <- 0
@@ -196,28 +201,22 @@ a_mean <- matrix(0, q, 2)
 diag(a_mean) <- 1
 # a_mean[1,] <- 1
 
-predictors <- as.matrix(dplyr::select(data_geo_wide, x1:x2))
+predictors <- as.matrix(dplyr::select(data_factor_wide, x1:x2))
 
-# Rcpp::sourceCpp("../src/correlation.cpp")
-# Rcpp::sourceCpp("../src/ifa-main.cpp")
 Rcpp::sourceCpp("../src/ifa-driver.cpp")
-source("../R/spmirt.R")
-source("../R/ggplot-mcmc.R")
+source("../R/check-arguments.R")
+source("../R/spifa-ggplot.R")
+source("../R/spifa-methods.R")
+source("../R/spifa.R")
 
-A = matrix(rnorm(4), 2)
-A = A %*% t(A)
-B = matrix(rnorm(4), 2)
-D = diag(rnorm(2))
-D %*% B %*% A %*% t(B) %*% D
-B %*% D %*% A %*% t(D) %*% B
 
 iter = 10^3
 thin = 1
 system.time(
-samples <- spmirt(
+samples <- spifa(
   response = data_long$y, predictors = predictors, coordinates = NULL,
   nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
-  standardize = TRUE,
+  # standardize = FALSE,
   # constrains = list(A = L_a, V_sd = sigmas) ,
   constrains = list(A = L_a, V_sd = rep(0.3, 2)) ,
   # adaptive = list(Sigma_R = matrix(0.001, 1,1))
@@ -225,11 +224,11 @@ samples <- spmirt(
   R_opt = list(prior_eta = 1)
 )
 )
-attr(samples, "model")
+# attr(samples, "model")
 iter <- iter / thin
 
 
-attr(samples, "model_info")[-c(1,2,3)]
+attr(samples, "model_info")[-c(1,2,3,4)]
 
 #
 # Rcpp::sourceCpp("../src/pdf.cpp")
@@ -261,13 +260,13 @@ attr(samples, "model_info")[-c(1,2,3)]
   # A_opt = list(prior_mean = a_mean, prior_sd = 1)
   # )
 
-# (samples <- spmirt(response = data_long$y,
+# (samples <- spifa(response = data_long$y,
 # nobs = n, nitems = 2, nfactors = 2, niter = iter,
 # A_opt = list(initial = 1, prior_mean = 2, prior_sd = 0.5),
 # ))
 
 
-# (samples <- spmirt(
+# (samples <- spifa(
 # response = data_long$y,
 # nobs = n, nitems = 4, nfactors = 3, niter = iter,
 # constrains = list(A = NULL, W = NULL),
@@ -433,5 +432,36 @@ as_tibble(samples, iter/2, select = "theta") %>%
   mutate(param = unique(data_long$ability2)) %>%
   gg_errorbar(sorted = TRUE) +
   geom_point(aes(y = param), col = 3)
+
+```
+
+### Prediction
+
+```{r}
+
+newdata = matrix(rnorm(100), ncol = 2)
+
+bla <- predict(samples, newdata = newdata, burnin = iter / 2, thin = 1)
+
+as_tibble.spifa.list(bla) %>%
+  dplyr::select(1:10) %>%
+  gg_trace()
+
+as_tibble.spifa.list(bla) %>%
+  dplyr::select(1:10) %>%
+  gg_density(ridges = TRUE)
+
+
+as_tibble.spifa.list(bla) %>%
+  summary() %>%
+  mutate(
+  x1 = rep(newdata[,1], m),
+  x2 = rep(newdata[,2], m),
+  ability = rep(1:m, each = nrow(newdata))) %>%
+  ggplot() +
+  geom_point(aes(x1, `50%`, col = "x1")) +
+  geom_point(aes(x2, `50%`, col = "x2")) +
+  facet_wrap(~ability) +
+  coord_fixed()
 
 ```
