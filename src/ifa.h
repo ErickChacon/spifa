@@ -73,15 +73,21 @@ public:
       std::string mod_type);
 
   void update_theta();
+
   void update_c(const arma::vec& c_prior_mean, const arma::vec& c_prior_sd);
+
   void update_a(const arma::vec& a_prior_mean, const arma::mat& A_prior_sd);
+
   void update_z();
+
   void update_B(const arma::mat& B_prior_sd);
+
   void update_cov_params(
       const arma::vec sigmas_gp_mean, const arma::vec sigmas_gp_sd,
       const arma::vec phi_gp_mean, const arma::vec phi_gp_sd,
       const double R_prior_eta,
       const double C, const double alpha, const double target, int index);
+
   Rcpp::List sample(
       int niter, int thin, bool standardize,
       arma::vec c_prior_mean, arma::vec c_prior_sd,
@@ -90,11 +96,13 @@ public:
       arma::mat B_prior_mean, arma::mat B_prior_sd,
       arma::vec sigmas_gp_mean, arma::vec sigmas_gp_sd,
       arma::vec phi_gp_mean, arma::vec phi_gp_sd,
-      double C, double alpha, double target
-      );
-  Rcpp::List predict(
-      arma::mat newpredictors, arma::mat cross_distances,
-      int npred, int burnin, int thin);
+      double C, double alpha, double target);
+
+  Rcpp::List predict(arma::mat samples_theta, arma::mat samples_corr_chol,
+      arma::mat samples_corr,
+      arma::mat samples_mgp_sd, arma::mat samples_mgp_phi, arma::mat samples_betas,
+      arma::mat newpredictors, arma::mat newdist, arma::mat cross_distances,
+      int npred, int niter, int burnin, int thin);
 
 };
 

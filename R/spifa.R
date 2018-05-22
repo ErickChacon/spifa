@@ -167,8 +167,8 @@ spifa <- function (response, predictors = NULL, coordinates = NULL,
     distances <- as.matrix(dist(coordinates))
   }
 
-  # Execute model calling c++ spifa function
-  samples <- spifa_cpp(
+  # List of options to call c++ spifa function
+  model_info <- list(
     response = response, predictors = predictors, distances = distances,
     nobs = nobs, nitems = nitems, nfactors = nfactors, ngp = ngp,
     niter = niter, thin = thin, standardize = standardize,
@@ -184,30 +184,18 @@ spifa <- function (response, predictors = NULL, coordinates = NULL,
     phi_gp_initial = phi_gp_initial, phi_gp_mean = phi_gp_mean, phi_gp_sd = phi_gp_sd,
     model_type = model_type
     )
-  # samples <- 1:10
 
-  # attr(samples, "model") <- model_type
-  constrain_V_sd = attr(samples, "V_sd")
-  attr(samples, "V_sd") = NULL
 
-  model_info <- list(
-    response = response, predictors = predictors, coordinates = coordinates,
-    distances = distances,
-    nobs = nobs, nitems = nitems, nfactors = nfactors, ngp = ngp,
-    niter = niter, thin = thin, standardize = standardize,
-    constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
-    adap_Sigma = adap_Sigma, adap_scale = adap_scale, adap_C = adap_C,
-    adap_alpha = adap_alpha, adap_accep_prob = adap_accep_prob,
-    c_initial = c_initial, c_prior_mean = c_prior_mean, c_prior_sd = c_prior_sd,
-    A_initial = A_initial, A_prior_mean = A_prior_mean, A_prior_sd = A_prior_sd,
-    R_initial = R_initial, R_prior_eta = R_prior_eta,
-    B_initial = B_initial, B_prior_mean = B_prior_mean, B_prior_sd = B_prior_sd,
-    sigmas_gp_initial = sigmas_gp_initial, sigmas_gp_mean = sigmas_gp_mean,
-    sigmas_gp_sd = sigmas_gp_sd,
-    phi_gp_initial = phi_gp_initial, phi_gp_mean = phi_gp_mean, phi_gp_sd = phi_gp_sd,
-    model_type = model_type
-    )
+  # Execute model calling c++ spifa function
+  samples <- do.call(spifa_cpp, model_info)
 
+  # Update model_info list
+  constrain_V_sd <- attr(samples, "V_sd")
+  attr(samples, "V_sd") <- NULL
+  model_info$constrain_V_sd <- constrain_V_sd
+  model_info <- append(model_info, list(coordinates = coordinates), 2)
+
+  # Add model_info to MCMC samples
   attr(samples, "model_info") <- model_info
 
   return(samples)

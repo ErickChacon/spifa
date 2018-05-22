@@ -140,40 +140,73 @@ summary.spifa <- function (samples, select = names(samples)) {
 predict.spifa.list <- function (object, newdata = NULL, newcoords = NULL, burnin = NULL,
                                 thin = NULL, se.fit = FALSE, ...) {
 
-  # Information of inference
+  # Information of model inference
   info <- attr(object, "model_info")
 
-  # Distances between predictive and observed locations
-  npred <- nrow(newcoords)
+  # Prediction I: for the observed subjects
+  if (info$model_type %in% c("eifa", "cifa") |
+      (info$model_type == "cifa_pred" & is.null(newdata)) |
+      (info$model_type == "spifa" & is.null(newcoords)) |
+      (info$model_type == "spifa_pred" & is.null(newcoords) & is.null(newdata))) {
+    return("here is only the means of the latent abilities")
+  }
+
+  # Prediction II: for the new subjects or new locations
+
+  # Distances between predictive locations
   if (is.null(newcoords)) {
+    newdist <- matrix(NA)
     cross_distances <- matrix(NA)
   } else {
-    cross_distances <- as.matrix(pdist::pdist(newcoords, info$coordinates))
+    npred1 <- nrow(newcoords)
+    newdist <- as.matrix(dist(newcoords))
+    cross_distances <- as.matrix(pdist::pdist(newcoords, as.matrix(info$coordinates)))
   }
 
   # New data about predictors
   if (is.null(newdata)) {
     newpredictors <- matrix(NA)
   } else {
+    npred2 <- nrow(newdata)
     newpredictors <- newdata
   }
 
+  # Obtain number of subjects or locations to predict
+  if (exists("npred1") & exists("npred2")) {
+    if (npred1 == npred2) {
+      npred = npred1
+    } else {
+      stop(sprintf("number of rows of '%s' of '%s' must be the same",
+                   "newcoords", "newdata"))
+    }
+  } else if (exists("npred1")) {
+    npred = npred1
+  } else if (exists("npred2")) {
+    npred = npred2
+  }
+
   # Information about number of posterior samples to use
-  nsamples <- ncol(object$z)
+  nsamples <- nrow(object$z)
   if (is.null(burnin)) burnin <- as.integer(nsamples / 2)
   if (is.null(thin)) thin <- as.integer( (nsamples - burnin) / 1000)
 
-
-  # Predict calling c++ predict
-  prediction <- predict_spifa_cpp(
-    response = response, predictors = info$predictors, newpredictors = newpredictors,
-    distances = info$distances, cross_distances = cross_distances,
-    nobs = nobs, nitems = nitems, nfactors = nfactors, ngp = ngp, npred = npred,
-    burnin = burnin, thin = thin,
-    constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
-    model_type = model_type
+  # List of options to call c++ function to predict
+  pred_list <- list(samples_theta = t(object$theta),
+    samples_corr_chol = t(object$corr_chol), samples_corr = t(object$corr),
+    samples_mgp_sd = t(object$mgp_sd), samples_mgp_phi = t(object$mgp_phi),
+    samples_betas = t(object$betas),
+    response = info$response, predictors = info$predictors, newpredictors = newpredictors,
+    distances = info$distances, newdist = newdist, cross_distances = cross_distances,
+    nobs = info$nobs, nitems = info$nitems, nfactors = info$nfactors, ngp = info$ngp,
+    npred = npred, niter = nsamples, burnin = burnin, thin = thin,
+    constrain_L = info$constrain_L, constrain_T = info$constrain_T,
+    constrain_V_sd = info$constrain_V_sd,
+    model_type = info$model_type
     )
 
-  return(prediction)
+  # Predict calling c++ predict_spifa_cpp
+  prediction <- do.call(predict_spifa_cpp, pred_list)
 
+  return(prediction)
+  # return(pred_list)
 }
