@@ -69,3 +69,31 @@ double nullR(double plop)
 {
   return plop;
 }
+
+
+
+// [[Rcpp::export]]
+float na_fill(Rcpp::NumericVector plop)
+{
+
+  Rcpp::NumericVector low_thresh = Rcpp::NumericVector::create(R_NegInf, 0);
+  for (int i = 0; i < plop.size(); ++i) {
+    Rcpp::Rcout << low_thresh[plop[i]] << std::endl;
+  }
+
+  // for (int i = 0; i < plop.size(); ++i) {
+  //   if (Rcpp::NumericVector::is_na(plop[i])) {
+  //     plop[i] = arma::randn();
+  //   }
+  // }
+  return 1;
+  // return plop;
+}
+
+// [[Rcpp::export]]
+arma::mat DRD(arma::mat R, arma::vec D)
+{
+  R.each_col() %= D;
+  R.each_row() %= D.t();
+  return R;
+}

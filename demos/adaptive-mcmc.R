@@ -7,7 +7,7 @@ source("../R/ggplot-mcmc.R")
 
 k <- 35
 mean <- matrix(1:k, k, 1);
-N <- k * (k-1)/2
+N <- k * (k - 1) / 2
 x <- rnorm(N, 0,  0.3)
 chol_corr <- vec2chol_corr(x, k)
 (Corr <- tcrossprod(chol_corr))
@@ -16,19 +16,19 @@ D <- diag(d)
 D_inv <- diag(d ^ (-1))
 Sigma <- D %*% Corr %*% D
 
-iter <- 1.5 * 10^6
+iter <- 1.5 * 10 ^ 6
 system.time(
   samples <- adaptive_haario(mean, Sigma, iter)
 )
 
-samples_tib <- as_tibble.spmirt.list(samples, iter/2)
+samples_tib <- as_tibble.spmirt.list(samples, iter / 2)
 summary(samples_tib)
 samples_long <- gather(samples_tib)
 
 as_tibble.spmirt.list(samples, 0, 500) %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spmirt.list(samples, iter/2, 50) %>%
+as_tibble.spmirt.list(samples, iter / 2, 50) %>%
   gg_density(aes(fill = Parameters), scale = 6, alpha = 0.5, bandwidth = 0.25,
              ridges = TRUE)
 

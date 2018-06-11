@@ -90,4 +90,16 @@ int main(){
   std::cout << plop << std::endl;
   std::cout << plop.subvec(0, arma::size(3,1)) << std::endl;
 
+  std::cout << "for loop" << std::endl;
+
+  for (int i = 0; i < 40; i += 4) {
+    std::cout << i << std::endl;
+  }
+  std::cout << "vary dimension" << std::endl;
+
+  arma::mat AA(5,5, arma::fill::zeros);
+  std::cout << AA << std::endl;
+  AA = arma::ones(9,6);
+  std::cout << AA << std::endl;
+
 }

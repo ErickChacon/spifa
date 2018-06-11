@@ -8,7 +8,7 @@ library(tidyverse)
 # SIMULATE DATA ----------------------------------------------------------------
 
 Corr <- matrix(c(1, -0.9, 0, -0.9, 1, 0.3, 0, 0.3, 1), nrow = 3)
-sigmas <- c(1,1.5,3)
+sigmas <- c(1, 1.5, 3)
 D <- diag(sigmas)
 Cov <- D %*% Corr %*% D
 beta <- c(-10, 0, 10)
@@ -24,7 +24,7 @@ knitr::kable(head(data_model, 10))
 # VISUALIZE DATA ---------------------------------------------------------------
 
 ggplot(data_model, aes(x1, response)) +
-  geom_point(aes(col = factor(response_label)), alpha = 1/5)
+  geom_point(aes(col = factor(response_label)), alpha = 1 / 5)
 
 cor(matrix(data_model$mre.factor.mean, ncol = 3))
 
