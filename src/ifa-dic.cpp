@@ -6,6 +6,24 @@
 // [[Rcpp::depends(RcppTN)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 
+double deviance(arma::vec y, arma::vec c, arma::vec a, arma::vec theta, arma::mat L,
+    int n, int q, int m)
+{
+
+  // constans
+  arma::vec ones_n = arma::ones(n);
+
+  // Compute deviance
+  arma::mat Theta = vec2mat(theta, n, m);
+  arma::mat LA = L % vec2mat(a, q, m);
+  arma::vec linear_pred = arma::kron(c, ones_n) + arma::vectorise(Theta * LA.t());
+  arma::vec aux = log(arma::normcdf(linear_pred));
+  aux = y % aux + (1 - y) % aux;
+  double deviance = -2 * accu(aux.elem(find_finite(aux)));
+
+  return deviance;
+}
+
 //' @export
 // [[Rcpp::export]]
 double dic_cpp(arma::vec y, arma::mat c, arma::mat a, arma::mat theta,
@@ -18,7 +36,6 @@ double dic_cpp(arma::vec y, arma::mat c, arma::mat a, arma::mat theta,
   c = c.t();
   a = a.t();
   theta = theta.t();
-  arma::vec ones_n = arma::ones(n);
 
   // average of the parameters by row
   arma::vec c_mean = arma::mean(c, 1);
@@ -26,27 +43,18 @@ double dic_cpp(arma::vec y, arma::mat c, arma::mat a, arma::mat theta,
   arma::vec theta_mean = arma::mean(theta, 1);
 
   // deviance of the posterior average
-  arma::mat Theta_mean = vec2mat(theta_mean, n, m);
-  arma::mat LA_mean = L % vec2matt(a_mean, m, q);
-  arma::vec eta_mean = arma::kron(c_mean, ones_n) +
-    arma::vectorise(Theta_mean * LA_mean.t());
-  arma::vec log_prob = log(arma::normcdf(eta_mean));
-  log_prob = y % log_prob + (1-y) % log_prob;
-  double deviance_of_average = accu(log_prob.elem(find_finite(log_prob)));
-  double dic = - deviance_of_average;
+  double deviance_of_average = deviance(y, c_mean, a_mean, theta_mean, L, n, q, m);
 
   // posterior average of the deviance
   double average_of_deviance = 0;
   for (int i = 0; i < nsamples; ++i) {
-    arma::mat Theta = vec2mat(theta.col(i), n, m);
-    arma::mat LA = L % vec2matt(a.col(i), m, q);
-    arma::vec eta = arma::kron(c.col(i), ones_n) + arma::vectorise(Theta * LA.t());
-    arma::vec aux = log(arma::normcdf(eta));
-    aux = y % aux + (1-y) % aux;
-    average_of_deviance += accu(aux.elem(find_finite(aux)));
+    average_of_deviance += deviance(y, c.col(i), a.col(i), theta.col(i), L, n, q, m);
   }
   average_of_deviance /= nsamples;
-  dic += 2 * average_of_deviance;
+
+  // effective number of parameters and dic
+  double n_effec_params = average_of_deviance - deviance_of_average;
+  double dic = average_of_deviance + n_effec_params;
 
   return dic;
 }

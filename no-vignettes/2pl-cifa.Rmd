@@ -166,6 +166,8 @@ ggplot(explor, aes(ability2, endorse)) + geom_point(alpha = 0.5)
 
 ```{r}
 
+data_long$y[sample(1:(n*q), (5*n*q/100))] <- NA
+
 iter <- 1 * 10 ^ 5
 thin <- 10
 disc_mat <- cbind(cbind(discrimination1), cbind(discrimination2))
@@ -184,16 +186,24 @@ diag(A_prior_sd) <- 0.01
 
 # a_mean[1,] <- 1
 
-# Rcpp::sourceCpp("../src/correlation.cpp")
-# Rcpp::sourceCpp("../src/ifa-main.cpp")
-Rcpp::sourceCpp("../src/ifa-driver.cpp")
-source("../R/spmirt.R")
-source("../R/ggplot-mcmc.R")
+# # Rcpp::sourceCpp("../src/correlation.cpp")
+# # Rcpp::sourceCpp("../src/ifa-main.cpp")
+# Rcpp::sourceCpp("../src/ifa-driver.cpp")
+# source("../R/spmirt.R")
+# source("../R/ggplot-mcmc.R")
 
-iter = 10^4
+Rcpp::sourceCpp("../src/ifa-driver.cpp")
+source("../R/check-arguments.R")
+source("../R/spifa-ggplot.R")
+source("../R/spifa-methods.R")
+source("../R/spifa.R")
+
+
+
+iter = 10^3
 thin = 1
 system.time(
-samples <- spmirt(
+samples <- spifa(
   response = data_long$y, predictors = NULL, coordinates = NULL,
   nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
   constrains = list(A = L_a) ,
@@ -206,56 +216,10 @@ samples <- spmirt(
 attr(samples, "model")
 iter <- iter / thin
 
+names(attr(samples, "model_info"))
+
 
 attr(samples, "model_info")[-c(1,2,3)]
-
-#
-# Rcpp::sourceCpp("../src/pdf.cpp")
-# (bla <- rnorm(6))
-# bla <- 0
-# vec2chol_corr(bla, 4)
-# vec2chol_corr2(bla, 4)
-#
-# (bla <- 0)
-# dlkj_corr_free(bla, 2, 1)
-# dlkj_corr_free2(bla, 2, 1)
-#
-#
-# dlkj_corr(diag(2), 1.5)
-# dlkj_corr(matrix(c(1, 0.5, 0.5, 1), 2), 1.5)
-
-# dlkj_corr_free(0.000001, 2, 1)
-
-# samples[["A_prior_mean"]]
-# samples[["A_prior_sd"]]
-# samples[["constrain_L"]]
-# samples[["constrain_T"]]
-
-
-  # constrains = list(A = L_a),
-  # adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = 1:3,
-  # Sigma_gp_phi = NULL),
-  # c_opt = list(prior_mean = 0, prior_sd = 1),
-  # A_opt = list(prior_mean = a_mean, prior_sd = 1)
-  # )
-
-# (samples <- spmirt(response = data_long$y,
-# nobs = n, nitems = 2, nfactors = 2, niter = iter,
-# A_opt = list(initial = 1, prior_mean = 2, prior_sd = 0.5),
-# ))
-
-
-# (samples <- spmirt(
-# response = data_long$y,
-# nobs = n, nitems = 4, nfactors = 3, niter = iter,
-# constrains = list(A = NULL, W = NULL),
-# adaptive = list(Sigma_R = 1, Sigma_gp_sd = 1, Sigma_gp_phi = 1,
-# scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
-# c_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-# A_opt = list(prior_mean = 1, prior_sd = 1)
-# )
-# )
-
 
 ```
 
@@ -264,13 +228,20 @@ attr(samples, "model_info")[-c(1,2,3)]
 ```{r, results = 'asis'}
 
 # Tibble as wide format: default
-samples_tib <- as_tibble(samples, burnin = iter / 2, thin = 1)
+samples_tib <- as_tibble.spifa.list(samples, burnin = iter / 2, thin = 1)
+
+source("../R/spifa-methods.R")
+Rcpp::sourceCpp("../src/ifa-dic.cpp")
+(bla <- dic(samples_tib))
+# deviance of average 6075
+# average of deviance 6804
 
 knitr::kable(samples_tib[1:10, 1:15], digits = 2)
 
 # Tibble as long format: default
 samples_long <- gather(samples_tib)
 knitr::kable(head(samples_long, 10), digits = 2)
+
 ```
 
 ### Visualize trace-plots
@@ -318,8 +289,8 @@ as_tibble(samples, 0, 10, "a") %>%
                highlight = c(discrimination1, discrimination2), ncol = 4,
                points_alpha = 0.2)
 
-
 ```
+
 
 ### Density Plots
 
