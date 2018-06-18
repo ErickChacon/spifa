@@ -23,6 +23,10 @@
 #' @export
 as_tibble.spifa.list <- function (samples, burnin = 0, thin = 1,
                               select = names(samples)) {
+
+  # save model information
+  model_info <- attr(samples, "model_info")
+  # select, convert to tibble and subset
   samples <- samples[select]
   params <- names(samples)
   samples <- samples %>%
@@ -30,7 +34,58 @@ as_tibble.spifa.list <- function (samples, burnin = 0, thin = 1,
     dplyr::bind_cols()
   niter <- nrow(samples)
   samples <- samples[seq(burnin + 1, niter, thin),]
+  # assign model information and class
+  attr(samples, "model_info") <- model_info
   class(samples) <- c("spifa", class(samples))
+  return(samples)
+}
+
+as_list <- function (x, ...) {
+  UseMethod("as_list", x)
+}
+
+#' @title Convert Tibble to spifa.list
+#'
+#' @description
+#' \code{function} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#'
+#' as_tibble(samples)
+#' as_tibble(samples, "beta")
+#'
+#' @importFrom tibble as_tibble
+#'
+#' @export
+as_list.spifa <- function (samples_tib) {
+
+  model_info <- attr(samples_tib, "model_info")
+  pars <- c("c", "a", "theta", "z", "corr_chol", "corr", "mgp_sd", "mgp_phi", "betas")
+  names(pars) <- c("c", "A", "Theta", "Z", "Corr_chol", "Corr", "T", "mgp_phi", "B")
+
+  param_label <- gsub("\\[.+\\]", "", names(samples_tib))
+  param_label_unique <- unique(param_label)
+  param_name_unique <- pars[param_label_unique]
+
+  subset_tib <- function (param) {
+    sub_tib <- samples_tib[param_label == param]
+    sub_tib <- as.matrix(sub_tib)
+    return(sub_tib)
+  }
+
+  samples <- lapply(param_label_unique, subset_tib)
+  names(samples) <- param_name_unique
+  class(samples) <- c("spifa.list", class(samples))
+  attr(samples, "model_info") <- model_info
   return(samples)
 }
 
@@ -84,6 +139,7 @@ gather.spifa <- function (samples_wide, each = NULL,
   return(samples_long)
 }
 
+
 #' @title Summary of Samples
 #'
 #' @description
@@ -117,6 +173,45 @@ summary.spifa <- function (samples, select = names(samples)) {
   return(df)
 }
 
+dic <- function (x, ...) {
+  UseMethod("dic", x)
+}
+
+
+#' @title Deviance Information Criterio for the Spifa Model
+#'
+#' @description
+#' \code{function} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#'
+#' summary(samples)
+#'
+#' @export
+dic.spifa <- function (object) {
+
+  # convert to spifa.list
+  samples <- as_list(object)
+
+  # DIC calling c++ dic_cpp
+  dic <- dic_cpp(y = attr(object, "model_info")$response, c = samples$c,
+                 a = samples$a, theta = samples$theta,
+                 n = attr(object, "model_info")$nobs,
+                 q = attr(object, "model_info")$nitems,
+                 m = attr(object, "model_info")$nfactors,
+                 L = attr(object, "model_info")$constrain_L)
+
+  return(dic)
+}
 
 #' @title Prediction Spatial Multidimensional Item Response Model with Predictors
 #'
@@ -137,8 +232,14 @@ summary.spifa <- function (samples, select = names(samples)) {
 #' 
 #'
 #' @export
-predict.spifa.list <- function (object, newdata = NULL, newcoords = NULL, burnin = NULL,
+predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = NULL,
                                 thin = NULL, se.fit = FALSE, ...) {
+
+  if (inherits(object, "spifa")) {
+    object <- as.list(object)
+  } else { #} if (!inherits(object, "spifa.list")) {
+    stop("class of object must be spifa")
+  }
 
   # Information of model inference
   info <- attr(object, "model_info")
