@@ -1,0 +1,297 @@
+---
+title: "Multidimensional Two Parameter Logistic Model"
+author: "Erick A. Chacon-Montalvan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Two Parameter Logistic Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(fig.width = 7, fig.height = 4)
+# knitr::opts_chunk$set(fig.width = 6, fig.height = 4)
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+# set.seed(1)
+```
+
+In this vignette, we show how to use the **spmirt** package to fit a
+multidimensional 2 parameter logistic model used in item response theory. Let
+$Y_{ij}$ be the response for item
+$j$ in the individual $i$. The model can be defined by using an auxiliary variable
+$Z_{ij}$ such as
+\begin{align}
+  {Y}_{ij}  & =
+  \left\lbrace
+  \begin{array}[2]{cc}
+    1 & \text{if} ~ {Z}_{ij} > 0\\
+    0 & \text{otherwise}
+  \end{array}
+  \right.\\
+  {Z}_{ij} & = c_j + a_j^\intercal\theta_i + \epsilon_{ij},
+  ~~ \epsilon_{ij} \sim {N}(0, 1)\\
+  {\theta}_i & \sim {N}({0}, {I}_m)\\
+  c_j & \sim {N}(0, \sigma_c^2)\\
+  {a}_j & \sim {N}(0, \sigma_a^2{I}_m)\\
+\end{align}
+
+### Required packages
+
+```{r}
+rm(list = ls())
+library(spmirt)
+library(datasim)
+library(tidyverse)
+```
+
+### Simulation of the data
+
+First, simulate correlated factors:
+
+```{r}
+
+m <- 2
+# set.seed(5)
+Corr <- matrix(c(1, +0.0, +0.0, 1), nrow = m)
+sigmas <- rep(1, m)
+D <- diag(sigmas)
+Cov <- D %*% Corr %*% D
+beta <- c(0, 0, 0)
+
+f <- list(
+          # mean ~ mfe(x1, beta = get("beta")) +
+  mean ~ mre(factor(id), sigma = get("Cov")),
+  sd ~ I(0)
+  )
+
+n <- 300
+(data_geo <- sim_model(formula = f, n = n, responses = m))
+# knitr::kable(head(data_model, 10))
+
+data_geo %>%
+  dplyr::select(id, mre.factor.mean, response_label) %>%
+  spread(response_label, mre.factor.mean) %>%
+  dplyr::select(-id) %>%
+  GGally::ggpairs(aes(fill = "any"))
+
+data_geo_wide <- data_geo %>%
+  dplyr::rename(ability = response, id_person = id) %>%
+  gather(var, value, mre.factor.mean:ability) %>%
+  mutate(var = paste0(var, response_label)) %>%
+  select(-response_label) %>%
+  spread(var, value)
+
+
+```
+
+
+First, we define the parameters for the item response model.
+
+```{r}
+
+q <- q1 <- q2 <- 10
+init_data <- purrr::map(1:q, ~ data_geo_wide) %>%
+  purrr::reduce(rbind)
+
+# n <- 300
+difficulty <- matrix((1:q - 5)/10 * 2, nrow = 1)
+discrimination1 <- seq(0.4, 1.5, length.out = q)
+discrimination2 <- runif(q, 0, 2)
+# discrimination2 <- c(0, 1, 1.6777, 0.5975, 0, 0.5199, 0.034, 1.26876, 1.1125, 1.3469)
+discrimination1[1] = 1
+discrimination2[2] = 1
+discrimination1[4] <- 0
+discrimination2[1] <- 0
+discrimination2[5] <- 0
+# discrimination2[8] <- 0
+
+```
+
+```{r, echo = FALSE, results = 'asis'}
+
+cbind(t(difficulty), cbind(discrimination1), cbind(discrimination2)) %>%
+  magrittr::set_colnames(c("difficulty", "discrimination1", "discrimination2")) %>%
+  knitr::kable()
+
+```
+
+Now we simulate the data using the `datasim` package.
+
+```{r}
+
+f <- list(
+  prob ~ mfa(ones, beta = get("difficulty")) +
+    mfe(ability1, beta = get("discrimination1")) +
+    mfe(ability2, beta = get("discrimination2")),
+  size ~ I(1)
+  )
+
+data_long <- sim_model(formula = f,
+                        link_inv = list(pnorm, identity),
+                        generator = rbinom,
+                        responses = q,
+                        n = n,
+                        init_data = init_data
+                        )
+
+data_long <- dplyr::rename(data_long, subject = id,
+                           item = response_label, y = response)
+
+
+```
+
+```{r, echo = FALSE, results = 'asis'}
+knitr::kable(head(data_long, 20))
+```
+
+### Exploratory analysis
+
+We can see the relationship between the latent abilities and the proportion of
+endorsed items.
+
+```{r}
+explor <- data_long %>%
+  group_by(subject) %>%
+  summarize(endorse = mean(y),
+            ability1 = unique(ability1),
+            ability2 = unique(ability2))
+ggplot(explor, aes(ability1, endorse)) + geom_point(alpha = 0.5)
+ggplot(explor, aes(ability2, endorse)) + geom_point(alpha = 0.5)
+```
+
+## Fitting the model
+
+```{r}
+
+data_long$y[sample(1:(n*q), (5*n*q/100))] <- NA
+
+iter <- 1 * 10 ^ 5
+thin <- 10
+disc_mat <- cbind(cbind(discrimination1), cbind(discrimination2))
+L_a <- lower.tri(disc_mat, diag = TRUE) * 1
+L_a[4,1] <- 0
+L_a[5,2] <- 0
+L_a2 <- L_a
+L_a2[8,2] <- 0
+
+# L_a <- matrix(1, q, 2)
+# L_a[c(1, 5, 8, 16)] <- 0
+theta_init <- c(data_long$ability1[1:n], data_long$ability2[1:n])
+a_init <- as.numeric(t(disc_mat))
+a_mean <- matrix(0, q, 2)
+diag(a_mean) <- 1
+A_prior_sd <-  matrix(2, q, m)
+diag(A_prior_sd) <- 0.01
+
+# a_mean[1,] <- 1
+
+# # Rcpp::sourceCpp("../src/correlation.cpp")
+# # Rcpp::sourceCpp("../src/ifa-main.cpp")
+# Rcpp::sourceCpp("../src/ifa-driver.cpp")
+# source("../R/spmirt.R")
+# source("../R/ggplot-mcmc.R")
+
+Rcpp::sourceCpp("../src/ifa-driver.cpp")
+source("../R/check-arguments.R")
+source("../R/spifa-ggplot.R")
+source("../R/spifa-methods.R")
+source("../R/spifa.R")
+
+
+
+iter = 2 * 10^4
+thin = 1
+system.time(
+samples <- spifa(
+  response = data_long$y, predictors = NULL, coordinates = NULL,
+  nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
+  constrains = list(A = L_a) ,
+  # adaptive = list(Sigma_R = matrix(0.001, 1,1))
+  # A_opt = list(initial = disc_mat, prior_mean = disc_mat, prior_sd = 1),
+  R_opt = list(initial = Corr, prior_eta = 1)
+  # R_opt = list(initial = Corr, prior_eta = 1)
+)
+)
+
+system.time(
+samples2 <- spifa(
+  response = data_long$y, predictors = NULL, coordinates = NULL,
+  nobs = n, nitems = q, nfactors = 1, niter = iter, thin = thin,
+  constrains = list(A = matrix(1, q, 1)) ,
+  # adaptive = list(Sigma_R = matrix(0.001, 1,1))
+  # A_opt = list(initial = disc_mat, prior_mean = disc_mat, prior_sd = 1),
+  # R_opt = list(initial = Corr, prior_eta = 1)
+  # R_opt = list(initial = Corr, prior_eta = 1)
+)
+)
+
+iter <- iter / thin
+
+attr(samples, "model_info")[-c(1,2,3)]
+
+```
+
+### Convert to tibble, burn-in, thinning, select
+
+```{r, results = 'asis'}
+
+# Tibble as wide format: default
+samples_tib <- as_tibble.spifa.list(samples, burnin = iter / 2, thin = 1)
+samples_tib2 <- as_tibble.spifa.list(samples2, burnin = iter / 2, thin = 1)
+
+source("../R/spifa-methods.R")
+Rcpp::sourceCpp("../src/ifa-dic.cpp")
+(bla <- dic(samples_tib))
+(bla2 <- dic(samples_tib2))
+# deviance of average 6075
+# average of deviance 6804
+
+knitr::kable(samples_tib[1:10, 1:15], digits = 2)
+
+# Tibble as long format: default
+samples_long <- gather(samples_tib)
+knitr::kable(head(samples_long, 10), digits = 2)
+
+```
+
+### Visualize trace-plots
+
+```{r, fig.height = 6}
+
+as_tibble(samples, 0, 10, select = "c") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble(samples, 0, 10, select = "a") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble(samples, 0, 10, select = "theta") %>%
+  select(1:10, 301:310) %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble(samples, 0, 1, select = "corr") %>%
+  gg_trace(alpha = 0.6)
+
+```
+
+### Density Plots
+
+```{r}
+
+as_tibble(samples, iter/2, 10, "c") %>%
+  gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 3)
+
+as_tibble(samples, iter/2, 10, "a") %>%
+  gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 6)
+
+as_tibble(samples2, iter/2, 10, "c") %>%
+  gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 3)
+
+as_tibble(samples2, iter/2, 10, "a") %>%
+  gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 6)
+
+
+```
+

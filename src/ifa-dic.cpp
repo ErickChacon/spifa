@@ -17,8 +17,8 @@ double deviance(arma::vec y, arma::vec c, arma::vec a, arma::vec theta, arma::ma
   arma::mat Theta = vec2mat(theta, n, m);
   arma::mat LA = L % vec2mat(a, q, m);
   arma::vec linear_pred = arma::kron(c, ones_n) + arma::vectorise(Theta * LA.t());
-  arma::vec aux = log(arma::normcdf(linear_pred));
-  aux = y % aux + (1 - y) % aux;
+  arma::vec prob = arma::normcdf(linear_pred);
+  arma::vec aux = y % log(prob) + (1 - y) % log(1-prob);
   double deviance = -2 * accu(aux.elem(find_finite(aux)));
 
   return deviance;
@@ -26,7 +26,7 @@ double deviance(arma::vec y, arma::vec c, arma::vec a, arma::vec theta, arma::ma
 
 //' @export
 // [[Rcpp::export]]
-double dic_cpp(arma::vec y, arma::mat c, arma::mat a, arma::mat theta,
+Rcpp::List dic_cpp(arma::vec y, arma::mat c, arma::mat a, arma::mat theta,
     int n, int q, int m, arma::mat L) {
 
   // number of samples
@@ -56,7 +56,14 @@ double dic_cpp(arma::vec y, arma::mat c, arma::mat a, arma::mat theta,
   double n_effec_params = average_of_deviance - deviance_of_average;
   double dic = average_of_deviance + n_effec_params;
 
-  return dic;
+  // output list
+  Rcpp::List output = Rcpp::List::create(
+      Rcpp::Named("average_of_deviance") = average_of_deviance,
+      Rcpp::Named("n_effec_params") = n_effec_params,
+      Rcpp::Named("dic") = dic
+      );
+
+  return output;
 }
 
 
