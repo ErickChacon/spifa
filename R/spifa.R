@@ -18,8 +18,8 @@
 #' 
 #'
 #' @export
-spifa <- function (response, predictors = NULL, coordinates = NULL,
-    nobs, nitems, nfactors, ngp = nfactors, niter = 1000, thin = 10, standardize = TRUE,
+spifa <- function (responses, pred_formula = NULL, data = NULL,
+    nfactors, ngp = nfactors, niter = 1000, thin = 10, standardize = TRUE,
     constrains = list(A = NULL, W = NULL, V_sd = rep(1, nfactors)),
     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL, Sigma_gp_phi = NULL,
                     scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
@@ -29,6 +29,38 @@ spifa <- function (response, predictors = NULL, coordinates = NULL,
     B_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
     sigmas_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
     phi_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL)) {
+
+  # Response as vector and dimensions
+  responses <- substitute(responses)
+  responses_pos <- setNames(as.list(seq_along(data)), names(data))
+  pos <- eval(responses, responses_pos)
+  if (class(data) == "sf") {
+    response <- sf::st_set_geometry(data, NULL) %>%
+      as.matrix(.[, pos, drop = FALSE])
+  } else {
+    response <- as.matrix(data[, pos, drop = FALSE])
+  }
+  nobs <- nrow(response)
+  nitems <- ncol(response)
+  response <- as.numeric(response)
+
+  # Predictors
+  if (is.null(pred_formula)) {
+    predictors <- NULL
+  } else {
+    pred_formula <- update(pred_formula,  ~ . - 1)
+    predictors <- model.matrix(pred_formula, data)
+  }
+
+  # Coordinates
+  if (class(data) == "sf") {
+    if (st_is_longlat(data_test)) {
+      data <- sf::st_transform(data, "+init=epsg:3857")
+    }
+    coordinates <- sf::st_coordinates(data)
+  } else {
+    coordinates <- NULL
+  }
 
 
   # Restrictions for discrimination parameters (A) and Gaussian processes (W)

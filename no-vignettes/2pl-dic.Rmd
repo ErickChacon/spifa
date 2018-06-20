@@ -201,13 +201,20 @@ source("../R/spifa-methods.R")
 source("../R/spifa.R")
 
 
+predictor <- data.frame(x1 = rnorm(n), lat = rnorm(n), long = rnorm(n))
+ytest <- as.data.frame(matrix(data_long$y, n, q)) %>%
+  setNames(paste0("y", 1:10))
+data_test <- cbind(predictor, ytest)
+# data_test <- sf::st_as_sf(data_test, coords = c("long", "lat"), crs = 4326)
+# data_test_frame <- data_test
+# st_geometry(data_test_frame) <- NULL
 
-iter = 2 * 10^4
+iter = 2 * 10^3
 thin = 1
 system.time(
 samples <- spifa(
-  response = data_long$y, predictors = NULL, coordinates = NULL,
-  nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
+  response = y1:y10, pred_formula = ~ x1, data = data_test,
+  nfactors = 2, niter = iter, thin = thin,
   constrains = list(A = L_a) ,
   # adaptive = list(Sigma_R = matrix(0.001, 1,1))
   # A_opt = list(initial = disc_mat, prior_mean = disc_mat, prior_sd = 1),
@@ -218,8 +225,8 @@ samples <- spifa(
 
 system.time(
 samples2 <- spifa(
-  response = data_long$y, predictors = NULL, coordinates = NULL,
-  nobs = n, nitems = q, nfactors = 1, niter = iter, thin = thin,
+  response = y1:y10, pred_formula = NULL, data = data_test,
+  nfactors = 1, niter = iter, thin = thin,
   constrains = list(A = matrix(1, q, 1)) ,
   # adaptive = list(Sigma_R = matrix(0.001, 1,1))
   # A_opt = list(initial = disc_mat, prior_mean = disc_mat, prior_sd = 1),
@@ -273,6 +280,10 @@ as_tibble(samples, 0, 10, select = "theta") %>%
 
 as_tibble(samples, 0, 1, select = "corr") %>%
   gg_trace(alpha = 0.6)
+
+as_tibble(samples, 0, 1, select = "betas") %>%
+  gg_trace(alpha = 0.6)
+
 
 ```
 
