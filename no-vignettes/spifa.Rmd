@@ -42,6 +42,7 @@ $Z_{ij}$ such as
 rm(list = ls())
 library(datasim)
 library(tidyverse)
+library(spmirt)
 ```
 
 ### Simulation of the data
@@ -58,12 +59,12 @@ Cov <- D %*% Corr %*% D
 beta <- c(0, 0, 0)
 variance <- 0.6 * matrix(c(1, 0, 0, 0, 1, 0, 0, 0, 1), nrow = 3)
 cor.model <- "exp_cor"
-cor.params <- list(list(phi = 0.05), list(phi = 0.05), list(phi = 0.1))
+cor.params <- list(list(phi = 0.2), list(phi = 0.2), list(phi = 0.2))
 
 f <- list(
   mean ~ mfe(x1, beta = get("beta")) +
     mre(factor(id), sigma = get("Cov")) +
-    mgp(list(s1), variance = get("variance"), cor.model = get("cor.model"),
+    mgp(list(s1, s2), variance = get("variance"), cor.model = get("cor.model"),
         cor.params = get("cor.params"), range = 2),
   sd ~ I(0)
   )
@@ -84,11 +85,11 @@ ggplot(data_geo, aes(x1, response)) +
   geom_smooth(aes(col = factor(response_label))) +
   geom_point(aes(col = factor(response_label)))
 
-ggplot(data_geo, aes(s1, mgp.list.mean)) +
-  geom_line(aes(col = factor(response_label)))
+ggplot(data_geo, aes(s1, s2)) +
+  geom_point(aes(col = mgp.list.mean, size = mgp.list.mean)) +
+  facet_wrap(~response_label)
 
 vg <- data_geo %>%
-  mutate(s2 = s1) %>%
   group_by(response_label) %>%
   nest() %>%
   mutate(variog = purrr::map(data, ~ gstat::variogram(mgp.list.mean ~ 1, ~ s1 + s2, . ,
@@ -103,10 +104,10 @@ ggplot(vg, aes(dist, gamma)) +
   scale_x_continuous(limits = c(0, 3)) +
   scale_y_continuous(limits = c(0, 1.3)) +
   stat_function(fun = function(x) 0.6 * (1-exp(- x/0.05)), col = 2, size = 1) +
+  stat_function(fun = function(x) 0.6 * (1-exp(- x/0.1)), col = 3, size = 1) +
   facet_wrap(~response_label, ncol = 1)
 
 vg <- data_geo %>%
-  mutate(s2 = s1) %>%
   group_by(response_label) %>%
   nest() %>%
   mutate(variog = purrr::map(data, ~ gstat::variogram(response ~ 1, ~ s1 + s2, . ,
@@ -136,8 +137,6 @@ data_geo_wide <- data_geo %>%
   mutate(var = paste0(var, response_label)) %>%
   select(-response_label) %>%
   spread(var, value)
-
-
 ```
 
 ### SIMULATE ITEM FACTOR DATA
@@ -234,68 +233,103 @@ T_gp <- diag(m)
 ### RUN
 
 ```{r}
-Rcpp::sourceCpp("../src/ifa-driver.cpp")
-source("../R/check-arguments.R")
-source("../R/spifa-ggplot.R")
-source("../R/spifa-methods.R")
-source("../R/spifa.R")
 
+data_test <- as_tibble(matrix(data_long$y, n, q)) %>%
+  setNames(paste0("y", 1:q)) %>%
+  mutate(s1 = data_geo_wide$s1, s2 = data_geo_wide$s2)
 
-# # set.seed(5)
-# system.time(
-#   samples <- ifa_gibbs_sp(response, dist, n, q, m, cor.params, sig.params,
-#                           Corr[1:2, 1:2], fix.sigma, sigma_prop, L_a, T_gp, 0.234,
-#                           iter)
-# )
+data_test_geo <- sf::st_as_sf(data_test, coords = c("s1", "s2"))
 
-iter <- 2000
+# iter <- 2000
+# iter <- 10^5
+# thin <- 50
+iter <- 2 * 10^3
 thin <- 1
+
+system.time(
+  samples_cifa <- spifa(
+    responses = y1:y10, data = data_test, nfactors = 2,
+    niter = iter, thin = thin, standardize = TRUE,
+    constrains = list(A = L_a),
+    adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
+                    Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
+                    accep_prob = 0.234)
+    )
+  )
+
 system.time(
   samples <- spifa(
-    response = response,  predictors = NULL, coordinates = coordinates,
-    standardize = TRUE,
-    nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
-    constrains = list(A = L_a, W = T_gp, V_sd = sigmas[1:2]/2),
+    responses = y1:y10, data = data_test_geo, nfactors = 2,
+    niter = iter, thin = thin, standardize = TRUE,
+    constrains = list(A = L_a, W = T_gp, V_sd = 1), #sigmas[1:2]/2),
     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
                     Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
                     accep_prob = 0.234),
     sigmas_gp_opt = list(initial = 0.6, prior_mean = 0.6, prior_sd = 0.4),
-    phi_gp_opt = list(initial = 0.05, prior_mean = 0.05, prior_sd = 0.4))
+    phi_gp_opt = list(initial = 0.1, prior_mean = 0.1, prior_sd = 0.4))
   )
+
+save(list = c("samples", "samples_cifa"), file = "gp_samples.Rdata")
+
+# load(file = "gp_samples.Rdata")
 
 ```
 
 
 ```{r}
 
-iter = iter / thin
+iter <- iter / thin
 thin2 <- 1
 
 attr(samples, "model_info")[-c(1, 2, 3, 4)]
+attr(samples_cifa, "model_info")[-c(1, 2, 3, 4)]
 
 samples_tib <- as_tibble(samples, iter/2)
 #summary(samples_tib)
 samples_long <- gather(samples_tib)
 
-as_tibble.spifa.list(samples, 0, thin2, "c") %>%
+as_tibble(samples, 0, thin2, "c") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spifa.list(samples, 0, thin2, "a") %>%
+as_tibble(samples_cifa, 0, thin2, "c") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spifa.list(samples, iter/2, thin2, "a") %>%
+as_tibble(samples, 0, thin2, "a") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble(samples_cifa, 0, thin2, "a") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble(samples, iter/2, thin2, "a") %>%
   gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 4)
 
-as_tibble.spifa.list(samples, iter/2, thin2, "theta") %>%
+as_tibble(samples_cifa, iter/2, thin2, "a") %>%
+  gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 4)
+
+
+as_tibble(samples, iter/2, thin2, "theta") %>%
   dplyr::select(1:100) %>%
   gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 4)
 
-as_tibble.spifa.list(samples, 0, thin2, "theta") %>%
+as_tibble(samples_cifa, iter/2, thin2, "theta") %>%
+  dplyr::select(1:100) %>%
+  gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 4)
+
+
+as_tibble(samples, 0, thin2, "theta") %>%
   select(1:10) %>%
   gg_trace(alpha = 0.6)
 
-as_tibble.spifa.list(samples, 0, thin2, "corr") %>%
+as_tibble(samples_cifa, 0, thin2, "theta") %>%
+  select(1:10) %>%
   gg_trace(alpha = 0.6)
+
+as_tibble(samples, 0, thin2, "corr") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble(samples_cifa, 0, thin2, "corr") %>%
+  gg_trace(alpha = 0.6)
+
 
 as_tibble.spifa.list(samples, 0, thin2, "mgp_sd") %>%
   gg_trace(alpha = 0.6)
@@ -305,14 +339,13 @@ as_tibble.spifa.list(samples, iter/2, thin2, "mgp_sd") %>%
   stat_function(fun = dlnorm, colour = "red",
                 args = list(meanlog = log(0.6), sdlog = 0.4))
 
-
 as_tibble.spifa.list(samples, 0, thin2, "mgp_phi") %>%
   gg_trace(alpha = 0.6)
 
 as_tibble.spifa.list(samples, iter/2, thin2, "mgp_phi") %>%
   gg_density(alpha = 0.5, ridges = FALSE, aes(fill = Parameters), scale = 4) +
   stat_function(fun = dlnorm, colour = "red",
-                args = list(meanlog = log(0.05), sdlog = 0.4))
+                args = list(meanlog = log(0.1), sdlog = 0.4))
 
 as_tibble.spifa.list(samples, 0, thin2, "a") %>%
   gg_density2d(`Discrimination 1`, `Discrimination 2`, each = 10,
@@ -355,7 +388,7 @@ ability1_pred <- as_tibble.spifa.list(samples, iter/2, select = "theta") %>%
   summary() %>%
   mutate(param = data_geo$response[1:300],
          s1 = data_geo$s1[1:300],
-         s2 = s1,
+         s2 = data_geo$s2[1:300],
          estim = `50%`)
 ability1_pred %>%
     ggplot(aes(s1, `50%`)) +
@@ -367,16 +400,17 @@ ggplot(vg, aes(dist, gamma)) +
   geom_point(aes(size = np)) +
   geom_smooth() +
   expand_limits(y = 0, x = 0) +
-  scale_x_continuous(limits = c(0, 3))
+  scale_x_continuous(limits = c(0, 3)) +
+  stat_function(fun = function(x) 0.6 * (1-exp(- x/0.05)), col = 2, size = 1)
 
 ability1_pred <- as_tibble.spifa.list(samples, iter/2, select = "theta") %>%
   dplyr::select(1:300)
 ability1_pred <- ability1_pred[nrow(ability1_pred),]
 ability1_pred <- ability1_pred %>%
-  summary.spifa() %>%
+  spmirt:::summary.spifa() %>%
   mutate(param = data_geo$response[1:300],
          s1 = data_geo$s1[1:300],
-         s2 = s1,
+         s2 = data_geo$s2[1:300],
          estim = `50%`)
 ability1_pred %>%
     ggplot(aes(s1, `50%`)) +
@@ -392,10 +426,10 @@ ggplot(vg, aes(dist, gamma)) +
 
 ability2_pred <- as_tibble.spifa.list(samples, iter/2, select = "theta") %>%
   dplyr::select(301:600) %>%
-  summary() %>%
+  spmirt:::summary.spifa() %>%
   mutate(param = data_geo$response[301:600],
          s1 = data_geo$s1[301:600],
-         s2 = s1,
+         s2 = data_geo$s2[301:600],
          estim = `50%`)
 ability2_pred %>%
   ggplot(aes(s1, `50%`)) +
@@ -411,56 +445,121 @@ ggplot(vg, aes(dist, gamma)) +
 
 ability2_pred <- as_tibble.spifa.list(samples, iter/2, select = "theta") %>%
   dplyr::select(301:600)
-ability2_pred <- ability2_pred[nrow(ability2_pred),]
+# ability2_pred <- ability2_pred[nrow(ability2_pred),]
 ability2_pred <- ability2_pred %>%
-  summary.spifa() %>%
+  spmirt:::summary.spifa() %>%
   mutate(param = data_geo$response[301:600],
          s1 = data_geo$s1[301:600],
-         s2 = s1,
+         s2 = data_geo$s2[301:600],
          estim = `50%`)
 ability2_pred %>%
   ggplot(aes(s1, `50%`)) +
   geom_line() +
   geom_line(aes(s1, param, col = "real"))
-
 vg <- gstat::variogram(estim ~ 1, ~ s1 + s2, ability2_pred, cutoff = 3, width = 0.005)
 ggplot(vg, aes(dist, gamma)) +
   geom_point(aes(size = np)) +
   geom_smooth() +
   expand_limits(y = 0, x = 0) +
-  scale_x_continuous(limits = c(0, 2))
+  scale_x_continuous(limits = c(0, 2)) +
+  scale_y_continuous(limits = c(0, 2))
 
 ```
 
+### Model selection
+
+```{r}
+dic(as_tibble(samples_cifa, burnin = iter/2, thin = 1))
+dic(as_tibble(samples, burnin = iter/2, thin = 1))
+```
+
+### Prediction
+
 ```{r}
 
-newcoords <- matrix(seq(0, 2, 0.02))
+library(sf)
+# new prediction points
+margins <- st_bbox(data_test_geo)
+tol <- 0.01
+ngrid <- 30
+long_seq <- seq(margins[1] - tol, margins[3] + tol, length = ngrid)
+lat_seq <- seq(margins[2] - tol, margins[4] + tol, length = ngrid)
+newcoords <- expand.grid(gps_longitude = long_seq, gps_latitude = lat_seq) %>%
+  sf::st_as_sf(coords = c("gps_longitude", "gps_latitude"), crs = st_crs(data_test_geo))
+
+ggplot(newcoords) +
+  geom_sf()
+
+newcoords_mat <- sf::st_coordinates(newcoords)
 
 system.time(
-bla <- predict(samples, newcoords = newcoords, burnin = iter/2, thin = 10)
+bla <- as_tibble(samples, burnin = iter/2, thin = 20) %>%
+  predict(newcoords = newcoords_mat)
 )
 
-as_tibble.spifa.list(bla) %>%
-  dplyr::select(1:30) %>%
-  gg_trace()
 
-as_tibble.spifa.list(bla) %>%
-  dplyr::select(1:80) %>%
-  gg_density(ridges = TRUE)
+# SUMMARIZE PREDICTION AND JOIN WITH ORIGINAL DATASET --------------------------
 
+theta_excees <- as_tibble.spifa.list(bla) %>%
+  purrr::map_dbl( ~ sum(. > 0) / length(.)) %>%
+  as.numeric()
 
-as_tibble.spifa.list(bla) %>%
+theta_quant <- as_tibble.spifa.list(bla) %>%
   summary() %>%
-  mutate(
-  s1 = rep(as.numeric(newcoords), 2),
-  response_label = rep(1:m, each = nrow(newcoords))
-  ) %>%
-  ggplot() +
-  geom_line(aes(s1, `50%`, col = "x1")) +
-  geom_ribbon(aes(x = s1, ymin = `2.5%`, ymax = `97.5%`), alpha = 1/4) +
-  geom_line(aes(s1, mgp.list.mean), subset(data_geo, response_label < 3)) +
-  facet_wrap(~response_label)
+  mutate(exceed_prob = theta_excees) %>%
+  tidyr::extract(Parameters, c("subject", "factor"), "Theta\\[([0-9]+),([0-9]+)\\]",
+                 convert = TRUE) %>%
+  tidyr::gather(quantile, value, `2.5%`:`exceed_prob`, factor_key = TRUE) %>%
+  dplyr::mutate(
+    factor_quantile = factor(paste0("F", factor, "-", quantile),
+                      paste0("F", rep(1:m, each = 6), "-", rep(levels(quantile), m)))
+    ) %>%
+  dplyr::select(-factor, -quantile) %>%
+  tidyr::spread(factor_quantile, value) %>%
+  dplyr::arrange(subject)
 
+plop <- dplyr::bind_cols(newcoords, theta_quant)
+
+# scaling
+mean_scale <- plop %>%
+  select(`F1.10.`, `F1.50.`, `F1.90.`) %>%
+  st_set_geometry(NULL) %>%
+  colMeans() %>%
+  mean()
+scale_center_trans = function() {
+  trans_new("scale_center", function(x) x - mean_scale, function(x) x + mean_scale)}
+
+# ggplot
+plop %>%
+  ggplot() +
+  geom_sf(aes(col = `F1-50%`))
+
+
+# newcoords <- matrix(seq(0, 2, 0.02))
+#
+# system.time(
+# bla <- predict(samples, newcoords = newcoords, burnin = iter/2, thin = 10)
+# )
+#
+# as_tibble.spifa.list(bla) %>%
+#   dplyr::select(1:30) %>%
+#   gg_trace()
+#
+# as_tibble.spifa.list(bla) %>%
+#   dplyr::select(1:80) %>%
+#   gg_density(ridges = TRUE)
+#
+# as_tibble.spifa.list(bla) %>%
+#   spmirt:::summary.spifa() %>%
+#   mutate(
+#   s1 = rep(as.numeric(newcoords), 2),
+#   response_label = rep(1:m, each = nrow(newcoords))
+#   ) %>%
+#   ggplot() +
+#   geom_line(aes(s1, `50%`, col = "x1")) +
+#   geom_ribbon(aes(x = s1, ymin = `2.5%`, ymax = `97.5%`), alpha = 1/4) +
+#   geom_line(aes(s1, mgp.list.mean), subset(data_geo, response_label < 3)) +
+#   facet_wrap(~response_label)
 ```
 
 

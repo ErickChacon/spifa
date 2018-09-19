@@ -173,6 +173,7 @@ summary.spifa <- function (samples, select = names(samples)) {
   return(df)
 }
 
+#' @export
 dic <- function (x, ...) {
   UseMethod("dic", x)
 }
@@ -232,14 +233,17 @@ dic.spifa <- function (object) {
 #' 
 #'
 #' @export
-predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = NULL,
-                                thin = NULL, se.fit = FALSE, ...) {
+predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
+                                thin = 1, se.fit = FALSE, ...) {
 
-  if (inherits(object, "spifa")) {
-    object <- as.list(object)
-  } else { #} if (!inherits(object, "spifa.list")) {
-    stop("class of object must be spifa")
-  }
+  # if (inherits(object, "spifa")) {
+  #   object <- as.list(object)
+  # } else { #} if (!inherits(object, "spifa.list")) {
+  #   stop("class of object must be spifa")
+  # }
+
+  # convert to spifa.list
+  object <- as_list(object)
 
   # Information of model inference
   info <- attr(object, "model_info")
@@ -288,8 +292,8 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = NU
 
   # Information about number of posterior samples to use
   nsamples <- nrow(object$z)
-  if (is.null(burnin)) burnin <- as.integer(nsamples / 2)
-  if (is.null(thin)) thin <- as.integer( (nsamples - burnin) / 1000)
+  # if (is.null(burnin)) burnin <- as.integer(nsamples / 2)
+  # if (is.null(thin)) thin <- as.integer( (nsamples - burnin) / 1000)
 
   # List of options to call c++ function to predict
   pred_list <- list(samples_theta = t(object$theta),

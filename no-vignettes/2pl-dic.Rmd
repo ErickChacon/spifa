@@ -194,11 +194,11 @@ diag(A_prior_sd) <- 0.01
 # source("../R/spmirt.R")
 # source("../R/ggplot-mcmc.R")
 
-Rcpp::sourceCpp("../src/ifa-driver.cpp")
-source("../R/check-arguments.R")
-source("../R/spifa-ggplot.R")
-source("../R/spifa-methods.R")
-source("../R/spifa.R")
+# Rcpp::sourceCpp("../src/ifa-driver.cpp")
+# source("../R/check-arguments.R")
+# source("../R/spifa-ggplot.R")
+# source("../R/spifa-methods.R")
+# source("../R/spifa.R")
 
 
 predictor <- data.frame(x1 = rnorm(n), lat = rnorm(n), long = rnorm(n))
@@ -209,11 +209,11 @@ data_test <- cbind(predictor, ytest)
 # data_test_frame <- data_test
 # st_geometry(data_test_frame) <- NULL
 
-iter = 2 * 10^3
+iter = 2 * 10^4
 thin = 1
 system.time(
 samples <- spifa(
-  response = y1:y10, pred_formula = ~ x1, data = data_test,
+  response = y1:y10, pred_formula = NULL, data = data_test,
   nfactors = 2, niter = iter, thin = thin,
   constrains = list(A = L_a) ,
   # adaptive = list(Sigma_R = matrix(0.001, 1,1))

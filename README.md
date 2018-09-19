@@ -2,3 +2,8 @@
 
 # spmirt
 A package to fit spatial multidimensional item response models using Bayesian inference.
+
+# check
+
+- [ ] correlation
+- [ ] standard deviation of the residuals

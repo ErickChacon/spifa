@@ -6,6 +6,56 @@
 
 using namespace Rcpp;
 
+// adaptive_haario
+Rcpp::List adaptive_haario(arma::vec mean, arma::mat Sigma, int iter);
+RcppExport SEXP _spmirt_adaptive_haario(SEXP meanSEXP, SEXP SigmaSEXP, SEXP iterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    rcpp_result_gen = Rcpp::wrap(adaptive_haario(mean, Sigma, iter));
+    return rcpp_result_gen;
+END_RCPP
+}
+// variance
+arma::mat variance(arma::mat X);
+RcppExport SEXP _spmirt_variance(SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(variance(X));
+    return rcpp_result_gen;
+END_RCPP
+}
+// adaptive_haario_vanish
+Rcpp::List adaptive_haario_vanish(arma::vec mean, arma::mat Sigma, int iter);
+RcppExport SEXP _spmirt_adaptive_haario_vanish(SEXP meanSEXP, SEXP SigmaSEXP, SEXP iterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    rcpp_result_gen = Rcpp::wrap(adaptive_haario_vanish(mean, Sigma, iter));
+    return rcpp_result_gen;
+END_RCPP
+}
+// am_vanish_scaling
+Rcpp::List am_vanish_scaling(arma::vec mean, arma::mat Sigma, int iter);
+RcppExport SEXP _spmirt_am_vanish_scaling(SEXP meanSEXP, SEXP SigmaSEXP, SEXP iterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    rcpp_result_gen = Rcpp::wrap(am_vanish_scaling(mean, Sigma, iter));
+    return rcpp_result_gen;
+END_RCPP
+}
 // vec2mat
 arma::mat vec2mat(arma::vec x, int nrow, int ncol);
 RcppExport SEXP _spmirt_vec2mat(SEXP xSEXP, SEXP nrowSEXP, SEXP ncolSEXP) {
@@ -70,6 +120,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// TST
+arma::mat TST(arma::mat mgp_Sigma, arma::mat T);
+RcppExport SEXP _spmirt_TST(SEXP mgp_SigmaSEXP, SEXP TSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type mgp_Sigma(mgp_SigmaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type T(TSEXP);
+    rcpp_result_gen = Rcpp::wrap(TST(mgp_Sigma, T));
+    return rcpp_result_gen;
+END_RCPP
+}
 // subset_cpp
 Rcpp::List subset_cpp(arma::mat X, arma::vec y);
 RcppExport SEXP _spmirt_subset_cpp(SEXP XSEXP, SEXP ySEXP) {
@@ -92,6 +154,32 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type K(KSEXP);
     Rcpp::traits::input_parameter< bool >::type diag(diagSEXP);
     rcpp_result_gen = Rcpp::wrap(vec2trimatl(x, K, diag));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vec2trimatl_old
+arma::mat vec2trimatl_old(arma::vec x, int K, bool diag);
+RcppExport SEXP _spmirt_vec2trimatl_old(SEXP xSEXP, SEXP KSEXP, SEXP diagSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< bool >::type diag(diagSEXP);
+    rcpp_result_gen = Rcpp::wrap(vec2trimatl_old(x, K, diag));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vec2trimatl_test
+arma::mat vec2trimatl_test(arma::vec x, int K, bool diag);
+RcppExport SEXP _spmirt_vec2trimatl_test(SEXP xSEXP, SEXP KSEXP, SEXP diagSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< bool >::type diag(diagSEXP);
+    rcpp_result_gen = Rcpp::wrap(vec2trimatl_test(x, K, diag));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -119,6 +207,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// vec2chol_corr2
+Rcpp::List vec2chol_corr2(arma::vec x, int K);
+RcppExport SEXP _spmirt_vec2chol_corr2(SEXP xSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    rcpp_result_gen = Rcpp::wrap(vec2chol_corr2(x, K));
+    return rcpp_result_gen;
+END_RCPP
+}
 // chol_corr2vec
 arma::vec chol_corr2vec(arma::mat L_chol);
 RcppExport SEXP _spmirt_chol_corr2vec(SEXP L_cholSEXP) {
@@ -142,6 +242,37 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type Sigma_proposal(Sigma_proposalSEXP);
     rcpp_result_gen = Rcpp::wrap(probit_gp_adap(y, dist, params, iter, Sigma_proposal));
+    return rcpp_result_gen;
+END_RCPP
+}
+// probit_gp_am
+Rcpp::List probit_gp_am(Rcpp::NumericVector y, arma::mat dist, arma::vec params, int iter, arma::mat Sigma_proposal);
+RcppExport SEXP _spmirt_probit_gp_am(SEXP ySEXP, SEXP distSEXP, SEXP paramsSEXP, SEXP iterSEXP, SEXP Sigma_proposalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type dist(distSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Sigma_proposal(Sigma_proposalSEXP);
+    rcpp_result_gen = Rcpp::wrap(probit_gp_am(y, dist, params, iter, Sigma_proposal));
+    return rcpp_result_gen;
+END_RCPP
+}
+// probit_gp_am_scale
+Rcpp::List probit_gp_am_scale(Rcpp::NumericVector y, arma::mat dist, arma::vec params, int iter, arma::mat Sigma_proposal, double target);
+RcppExport SEXP _spmirt_probit_gp_am_scale(SEXP ySEXP, SEXP distSEXP, SEXP paramsSEXP, SEXP iterSEXP, SEXP Sigma_proposalSEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type dist(distSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Sigma_proposal(Sigma_proposalSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(probit_gp_am_scale(y, dist, params, iter, Sigma_proposal, target));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -187,6 +318,104 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type Sigma_proposal(Sigma_proposalSEXP);
     rcpp_result_gen = Rcpp::wrap(probit_gp_chol(y, dist, params, iter, Sigma_proposal));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dic_cpp
+Rcpp::List dic_cpp(arma::vec y, arma::mat c, arma::mat a, arma::mat theta, int n, int q, int m, arma::mat L);
+RcppExport SEXP _spmirt_dic_cpp(SEXP ySEXP, SEXP cSEXP, SEXP aSEXP, SEXP thetaSEXP, SEXP nSEXP, SEXP qSEXP, SEXP mSEXP, SEXP LSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type c(cSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type a(aSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type q(qSEXP);
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type L(LSEXP);
+    rcpp_result_gen = Rcpp::wrap(dic_cpp(y, c, a, theta, n, q, m, L));
+    return rcpp_result_gen;
+END_RCPP
+}
+// spifa_cpp
+Rcpp::List spifa_cpp(Rcpp::NumericVector response, arma::mat predictors, arma::mat distances, int nobs, int nitems, int nfactors, int ngp, int niter, int thin, bool standardize, arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd, arma::mat adap_Sigma, double adap_scale, double adap_C, double adap_alpha, double adap_accep_prob, arma::vec c_initial, arma::vec c_prior_mean, arma::vec c_prior_sd, arma::mat A_initial, arma::mat A_prior_mean, arma::mat A_prior_sd, arma::mat R_initial, double R_prior_eta, arma::mat B_initial, arma::mat B_prior_mean, arma::mat B_prior_sd, arma::vec sigmas_gp_initial, arma::vec sigmas_gp_mean, arma::vec sigmas_gp_sd, arma::vec phi_gp_initial, arma::vec phi_gp_mean, arma::vec phi_gp_sd, std::string model_type);
+RcppExport SEXP _spmirt_spifa_cpp(SEXP responseSEXP, SEXP predictorsSEXP, SEXP distancesSEXP, SEXP nobsSEXP, SEXP nitemsSEXP, SEXP nfactorsSEXP, SEXP ngpSEXP, SEXP niterSEXP, SEXP thinSEXP, SEXP standardizeSEXP, SEXP constrain_LSEXP, SEXP constrain_TSEXP, SEXP constrain_V_sdSEXP, SEXP adap_SigmaSEXP, SEXP adap_scaleSEXP, SEXP adap_CSEXP, SEXP adap_alphaSEXP, SEXP adap_accep_probSEXP, SEXP c_initialSEXP, SEXP c_prior_meanSEXP, SEXP c_prior_sdSEXP, SEXP A_initialSEXP, SEXP A_prior_meanSEXP, SEXP A_prior_sdSEXP, SEXP R_initialSEXP, SEXP R_prior_etaSEXP, SEXP B_initialSEXP, SEXP B_prior_meanSEXP, SEXP B_prior_sdSEXP, SEXP sigmas_gp_initialSEXP, SEXP sigmas_gp_meanSEXP, SEXP sigmas_gp_sdSEXP, SEXP phi_gp_initialSEXP, SEXP phi_gp_meanSEXP, SEXP phi_gp_sdSEXP, SEXP model_typeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type predictors(predictorsSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type distances(distancesSEXP);
+    Rcpp::traits::input_parameter< int >::type nobs(nobsSEXP);
+    Rcpp::traits::input_parameter< int >::type nitems(nitemsSEXP);
+    Rcpp::traits::input_parameter< int >::type nfactors(nfactorsSEXP);
+    Rcpp::traits::input_parameter< int >::type ngp(ngpSEXP);
+    Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< bool >::type standardize(standardizeSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type constrain_L(constrain_LSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type constrain_T(constrain_TSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type constrain_V_sd(constrain_V_sdSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type adap_Sigma(adap_SigmaSEXP);
+    Rcpp::traits::input_parameter< double >::type adap_scale(adap_scaleSEXP);
+    Rcpp::traits::input_parameter< double >::type adap_C(adap_CSEXP);
+    Rcpp::traits::input_parameter< double >::type adap_alpha(adap_alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type adap_accep_prob(adap_accep_probSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type c_initial(c_initialSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type c_prior_mean(c_prior_meanSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type c_prior_sd(c_prior_sdSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A_initial(A_initialSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A_prior_mean(A_prior_meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A_prior_sd(A_prior_sdSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type R_initial(R_initialSEXP);
+    Rcpp::traits::input_parameter< double >::type R_prior_eta(R_prior_etaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type B_initial(B_initialSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type B_prior_mean(B_prior_meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type B_prior_sd(B_prior_sdSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type sigmas_gp_initial(sigmas_gp_initialSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type sigmas_gp_mean(sigmas_gp_meanSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type sigmas_gp_sd(sigmas_gp_sdSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type phi_gp_initial(phi_gp_initialSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type phi_gp_mean(phi_gp_meanSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type phi_gp_sd(phi_gp_sdSEXP);
+    Rcpp::traits::input_parameter< std::string >::type model_type(model_typeSEXP);
+    rcpp_result_gen = Rcpp::wrap(spifa_cpp(response, predictors, distances, nobs, nitems, nfactors, ngp, niter, thin, standardize, constrain_L, constrain_T, constrain_V_sd, adap_Sigma, adap_scale, adap_C, adap_alpha, adap_accep_prob, c_initial, c_prior_mean, c_prior_sd, A_initial, A_prior_mean, A_prior_sd, R_initial, R_prior_eta, B_initial, B_prior_mean, B_prior_sd, sigmas_gp_initial, sigmas_gp_mean, sigmas_gp_sd, phi_gp_initial, phi_gp_mean, phi_gp_sd, model_type));
+    return rcpp_result_gen;
+END_RCPP
+}
+// predict_spifa_cpp
+Rcpp::List predict_spifa_cpp(arma::mat samples_theta, arma::mat samples_corr_chol, arma::mat samples_corr, arma::mat samples_mgp_sd, arma::mat samples_mgp_phi, arma::mat samples_betas, Rcpp::NumericVector response, arma::mat predictors, arma::mat newpredictors, arma::mat distances, arma::mat newdist, arma::mat cross_distances, int nobs, int nitems, int nfactors, int ngp, int npred, int niter, int burnin, int thin, arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd, std::string model_type);
+RcppExport SEXP _spmirt_predict_spifa_cpp(SEXP samples_thetaSEXP, SEXP samples_corr_cholSEXP, SEXP samples_corrSEXP, SEXP samples_mgp_sdSEXP, SEXP samples_mgp_phiSEXP, SEXP samples_betasSEXP, SEXP responseSEXP, SEXP predictorsSEXP, SEXP newpredictorsSEXP, SEXP distancesSEXP, SEXP newdistSEXP, SEXP cross_distancesSEXP, SEXP nobsSEXP, SEXP nitemsSEXP, SEXP nfactorsSEXP, SEXP ngpSEXP, SEXP npredSEXP, SEXP niterSEXP, SEXP burninSEXP, SEXP thinSEXP, SEXP constrain_LSEXP, SEXP constrain_TSEXP, SEXP constrain_V_sdSEXP, SEXP model_typeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type samples_theta(samples_thetaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type samples_corr_chol(samples_corr_cholSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type samples_corr(samples_corrSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type samples_mgp_sd(samples_mgp_sdSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type samples_mgp_phi(samples_mgp_phiSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type samples_betas(samples_betasSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type predictors(predictorsSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type newpredictors(newpredictorsSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type distances(distancesSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type newdist(newdistSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type cross_distances(cross_distancesSEXP);
+    Rcpp::traits::input_parameter< int >::type nobs(nobsSEXP);
+    Rcpp::traits::input_parameter< int >::type nitems(nitemsSEXP);
+    Rcpp::traits::input_parameter< int >::type nfactors(nfactorsSEXP);
+    Rcpp::traits::input_parameter< int >::type ngp(ngpSEXP);
+    Rcpp::traits::input_parameter< int >::type npred(npredSEXP);
+    Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
+    Rcpp::traits::input_parameter< int >::type burnin(burninSEXP);
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type constrain_L(constrain_LSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type constrain_T(constrain_TSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type constrain_V_sd(constrain_V_sdSEXP);
+    Rcpp::traits::input_parameter< std::string >::type model_type(model_typeSEXP);
+    rcpp_result_gen = Rcpp::wrap(predict_spifa_cpp(samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -242,72 +471,148 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// spifa_gibbs
-Rcpp::List spifa_gibbs(Rcpp::NumericVector y, int n, int q, int N, int m);
-RcppExport SEXP _spmirt_spifa_gibbs(SEXP ySEXP, SEXP nSEXP, SEXP qSEXP, SEXP NSEXP, SEXP mSEXP) {
+// ifa_gibbs_sp_cov
+Rcpp::List ifa_gibbs_sp_cov(Rcpp::NumericVector y, arma::mat X, arma::mat dist, int n, int q, int m, arma::vec mgp_phi, arma::vec mgp_sd, arma::mat Corr, double sd_fix, arma::mat sigma_prop, arma::mat L, arma::mat T, double target, int niter);
+RcppExport SEXP _spmirt_ifa_gibbs_sp_cov(SEXP ySEXP, SEXP XSEXP, SEXP distSEXP, SEXP nSEXP, SEXP qSEXP, SEXP mSEXP, SEXP mgp_phiSEXP, SEXP mgp_sdSEXP, SEXP CorrSEXP, SEXP sd_fixSEXP, SEXP sigma_propSEXP, SEXP LSEXP, SEXP TSEXP, SEXP targetSEXP, SEXP niterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type dist(distSEXP);
     Rcpp::traits::input_parameter< int >::type n(nSEXP);
     Rcpp::traits::input_parameter< int >::type q(qSEXP);
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(spifa_gibbs(y, n, q, N, m));
+    Rcpp::traits::input_parameter< arma::vec >::type mgp_phi(mgp_phiSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type mgp_sd(mgp_sdSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Corr(CorrSEXP);
+    Rcpp::traits::input_parameter< double >::type sd_fix(sd_fixSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma_prop(sigma_propSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type L(LSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type T(TSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
+    rcpp_result_gen = Rcpp::wrap(ifa_gibbs_sp_cov(y, X, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix, sigma_prop, L, T, target, niter));
     return rcpp_result_gen;
 END_RCPP
 }
-// multi_lm
-Rcpp::List multi_lm(Rcpp::NumericVector y, arma::mat dist, arma::vec params, int iter, arma::mat Sigma_proposal);
-RcppExport SEXP _spmirt_multi_lm(SEXP ySEXP, SEXP distSEXP, SEXP paramsSEXP, SEXP iterSEXP, SEXP Sigma_proposalSEXP) {
+// ifa_gibbs_sp
+Rcpp::List ifa_gibbs_sp(Rcpp::NumericVector y, arma::mat dist, int n, int q, int m, arma::vec mgp_phi, arma::vec mgp_sd, arma::mat Corr, double sd_fix, arma::mat sigma_prop, arma::mat L, arma::mat T, double target, int niter);
+RcppExport SEXP _spmirt_ifa_gibbs_sp(SEXP ySEXP, SEXP distSEXP, SEXP nSEXP, SEXP qSEXP, SEXP mSEXP, SEXP mgp_phiSEXP, SEXP mgp_sdSEXP, SEXP CorrSEXP, SEXP sd_fixSEXP, SEXP sigma_propSEXP, SEXP LSEXP, SEXP TSEXP, SEXP targetSEXP, SEXP niterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
     Rcpp::traits::input_parameter< arma::mat >::type dist(distSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type q(qSEXP);
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type mgp_phi(mgp_phiSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type mgp_sd(mgp_sdSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Corr(CorrSEXP);
+    Rcpp::traits::input_parameter< double >::type sd_fix(sd_fixSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma_prop(sigma_propSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type L(LSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type T(TSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
+    rcpp_result_gen = Rcpp::wrap(ifa_gibbs_sp(y, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix, sigma_prop, L, T, target, niter));
+    return rcpp_result_gen;
+END_RCPP
+}
+// multi_lm
+Rcpp::List multi_lm(arma::mat Y, arma::mat X, int iter, arma::mat proposal_corr_Sigma, arma::mat proposal_sigmas_Sigma);
+RcppExport SEXP _spmirt_multi_lm(SEXP YSEXP, SEXP XSEXP, SEXP iterSEXP, SEXP proposal_corr_SigmaSEXP, SEXP proposal_sigmas_SigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
     Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Sigma_proposal(Sigma_proposalSEXP);
-    rcpp_result_gen = Rcpp::wrap(multi_lm(y, dist, params, iter, Sigma_proposal));
+    Rcpp::traits::input_parameter< arma::mat >::type proposal_corr_Sigma(proposal_corr_SigmaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type proposal_sigmas_Sigma(proposal_sigmas_SigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(multi_lm(Y, X, iter, proposal_corr_Sigma, proposal_sigmas_Sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// name_samples_vec
+Rcpp::StringVector name_samples_vec(int n_elem, std::string name);
+RcppExport SEXP _spmirt_name_samples_vec(SEXP n_elemSEXP, SEXP nameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n_elem(n_elemSEXP);
+    Rcpp::traits::input_parameter< std::string >::type name(nameSEXP);
+    rcpp_result_gen = Rcpp::wrap(name_samples_vec(n_elem, name));
+    return rcpp_result_gen;
+END_RCPP
+}
+// name_samples_mat
+Rcpp::StringVector name_samples_mat(int nrow, int ncol, std::string name);
+RcppExport SEXP _spmirt_name_samples_mat(SEXP nrowSEXP, SEXP ncolSEXP, SEXP nameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type nrow(nrowSEXP);
+    Rcpp::traits::input_parameter< int >::type ncol(ncolSEXP);
+    Rcpp::traits::input_parameter< std::string >::type name(nameSEXP);
+    rcpp_result_gen = Rcpp::wrap(name_samples_mat(nrow, ncol, name));
+    return rcpp_result_gen;
+END_RCPP
+}
+// name_samples_lower
+Rcpp::StringVector name_samples_lower(int nrow, int ncol, std::string name, bool diag);
+RcppExport SEXP _spmirt_name_samples_lower(SEXP nrowSEXP, SEXP ncolSEXP, SEXP nameSEXP, SEXP diagSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type nrow(nrowSEXP);
+    Rcpp::traits::input_parameter< int >::type ncol(ncolSEXP);
+    Rcpp::traits::input_parameter< std::string >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< bool >::type diag(diagSEXP);
+    rcpp_result_gen = Rcpp::wrap(name_samples_lower(nrow, ncol, name, diag));
     return rcpp_result_gen;
 END_RCPP
 }
 // dmvnorm
-double dmvnorm(arma::vec x, arma::vec mean, arma::mat sigma);
-RcppExport SEXP _spmirt_dmvnorm(SEXP xSEXP, SEXP meanSEXP, SEXP sigmaSEXP) {
+double dmvnorm(arma::mat X, arma::mat Mean, arma::mat Sigma, bool logpdf);
+RcppExport SEXP _spmirt_dmvnorm(SEXP XSEXP, SEXP MeanSEXP, SEXP SigmaSEXP, SEXP logpdfSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type sigma(sigmaSEXP);
-    rcpp_result_gen = Rcpp::wrap(dmvnorm(x, mean, sigma));
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Mean(MeanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< bool >::type logpdf(logpdfSEXP);
+    rcpp_result_gen = Rcpp::wrap(dmvnorm(X, Mean, Sigma, logpdf));
     return rcpp_result_gen;
 END_RCPP
 }
 // dmvnorm_chol
-double dmvnorm_chol(arma::vec x, arma::vec mean, arma::mat L);
-RcppExport SEXP _spmirt_dmvnorm_chol(SEXP xSEXP, SEXP meanSEXP, SEXP LSEXP) {
+double dmvnorm_chol(arma::mat X, arma::mat Mean, arma::mat L, bool logpdf);
+RcppExport SEXP _spmirt_dmvnorm_chol(SEXP XSEXP, SEXP MeanSEXP, SEXP LSEXP, SEXP logpdfSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Mean(MeanSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type L(LSEXP);
-    rcpp_result_gen = Rcpp::wrap(dmvnorm_chol(x, mean, L));
+    Rcpp::traits::input_parameter< bool >::type logpdf(logpdfSEXP);
+    rcpp_result_gen = Rcpp::wrap(dmvnorm_chol(X, Mean, L, logpdf));
     return rcpp_result_gen;
 END_RCPP
 }
 // dmvnorm_cholinv
-double dmvnorm_cholinv(arma::vec x, arma::vec mean, arma::mat L_inv);
-RcppExport SEXP _spmirt_dmvnorm_cholinv(SEXP xSEXP, SEXP meanSEXP, SEXP L_invSEXP) {
+double dmvnorm_cholinv(arma::mat X, arma::mat Mean, arma::mat L_inv, bool logpdf);
+RcppExport SEXP _spmirt_dmvnorm_cholinv(SEXP XSEXP, SEXP MeanSEXP, SEXP L_invSEXP, SEXP logpdfSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Mean(MeanSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type L_inv(L_invSEXP);
-    rcpp_result_gen = Rcpp::wrap(dmvnorm_cholinv(x, mean, L_inv));
+    Rcpp::traits::input_parameter< bool >::type logpdf(logpdfSEXP);
+    rcpp_result_gen = Rcpp::wrap(dmvnorm_cholinv(X, Mean, L_inv, logpdf));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -325,55 +630,82 @@ BEGIN_RCPP
 END_RCPP
 }
 // dinvwish
-double dinvwish(double v, arma::mat X, arma::mat S);
-RcppExport SEXP _spmirt_dinvwish(SEXP vSEXP, SEXP XSEXP, SEXP SSEXP) {
+double dinvwish(double v, arma::mat X, arma::mat S, bool logpdf);
+RcppExport SEXP _spmirt_dinvwish(SEXP vSEXP, SEXP XSEXP, SEXP SSEXP, SEXP logpdfSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type v(vSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type S(SSEXP);
-    rcpp_result_gen = Rcpp::wrap(dinvwish(v, X, S));
+    Rcpp::traits::input_parameter< bool >::type logpdf(logpdfSEXP);
+    rcpp_result_gen = Rcpp::wrap(dinvwish(v, X, S, logpdf));
     return rcpp_result_gen;
 END_RCPP
 }
 // dlkj_corr
-double dlkj_corr(arma::mat R, double eta, bool loglik);
-RcppExport SEXP _spmirt_dlkj_corr(SEXP RSEXP, SEXP etaSEXP, SEXP loglikSEXP) {
+double dlkj_corr(arma::mat R, double eta, bool logpdf);
+RcppExport SEXP _spmirt_dlkj_corr(SEXP RSEXP, SEXP etaSEXP, SEXP logpdfSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
-    Rcpp::traits::input_parameter< bool >::type loglik(loglikSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlkj_corr(R, eta, loglik));
+    Rcpp::traits::input_parameter< bool >::type logpdf(logpdfSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlkj_corr(R, eta, logpdf));
     return rcpp_result_gen;
 END_RCPP
 }
 // dlkj_corr_chol
-double dlkj_corr_chol(arma::mat L, double eta, bool loglik);
-RcppExport SEXP _spmirt_dlkj_corr_chol(SEXP LSEXP, SEXP etaSEXP, SEXP loglikSEXP) {
+double dlkj_corr_chol(arma::mat L, double eta, bool logpdf);
+RcppExport SEXP _spmirt_dlkj_corr_chol(SEXP LSEXP, SEXP etaSEXP, SEXP logpdfSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat >::type L(LSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
-    Rcpp::traits::input_parameter< bool >::type loglik(loglikSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlkj_corr_chol(L, eta, loglik));
+    Rcpp::traits::input_parameter< bool >::type logpdf(logpdfSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlkj_corr_chol(L, eta, logpdf));
     return rcpp_result_gen;
 END_RCPP
 }
 // dlkj_corr_free
-double dlkj_corr_free(arma::vec x, int K, double eta, bool loglik);
-RcppExport SEXP _spmirt_dlkj_corr_free(SEXP xSEXP, SEXP KSEXP, SEXP etaSEXP, SEXP loglikSEXP) {
+double dlkj_corr_free(arma::vec x, int K, double eta, bool logpdf);
+RcppExport SEXP _spmirt_dlkj_corr_free(SEXP xSEXP, SEXP KSEXP, SEXP etaSEXP, SEXP logpdfSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
     Rcpp::traits::input_parameter< int >::type K(KSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
-    Rcpp::traits::input_parameter< bool >::type loglik(loglikSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlkj_corr_free(x, K, eta, loglik));
+    Rcpp::traits::input_parameter< bool >::type logpdf(logpdfSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlkj_corr_free(x, K, eta, logpdf));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dlkj_corr_free2
+double dlkj_corr_free2(arma::vec x, int K, double eta, bool logpdf);
+RcppExport SEXP _spmirt_dlkj_corr_free2(SEXP xSEXP, SEXP KSEXP, SEXP etaSEXP, SEXP logpdfSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< bool >::type logpdf(logpdfSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlkj_corr_free2(x, K, eta, logpdf));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test1
+arma::mat test1(arma::vec A, arma::mat B);
+RcppExport SEXP _spmirt_test1(SEXP ASEXP, SEXP BSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type A(ASEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type B(BSEXP);
+    rcpp_result_gen = Rcpp::wrap(test1(A, B));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -513,34 +845,53 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_spmirt_adaptive_haario", (DL_FUNC) &_spmirt_adaptive_haario, 3},
+    {"_spmirt_variance", (DL_FUNC) &_spmirt_variance, 1},
+    {"_spmirt_adaptive_haario_vanish", (DL_FUNC) &_spmirt_adaptive_haario_vanish, 3},
+    {"_spmirt_am_vanish_scaling", (DL_FUNC) &_spmirt_am_vanish_scaling, 3},
     {"_spmirt_vec2mat", (DL_FUNC) &_spmirt_vec2mat, 3},
     {"_spmirt_vec2matt", (DL_FUNC) &_spmirt_vec2matt, 3},
     {"_spmirt_vecsub", (DL_FUNC) &_spmirt_vecsub, 3},
     {"_spmirt_vecsub1", (DL_FUNC) &_spmirt_vecsub1, 2},
     {"_spmirt_matsub1", (DL_FUNC) &_spmirt_matsub1, 3},
+    {"_spmirt_TST", (DL_FUNC) &_spmirt_TST, 2},
     {"_spmirt_subset_cpp", (DL_FUNC) &_spmirt_subset_cpp, 2},
     {"_spmirt_vec2trimatl", (DL_FUNC) &_spmirt_vec2trimatl, 3},
+    {"_spmirt_vec2trimatl_old", (DL_FUNC) &_spmirt_vec2trimatl_old, 3},
+    {"_spmirt_vec2trimatl_test", (DL_FUNC) &_spmirt_vec2trimatl_test, 3},
     {"_spmirt_trimatl2vec", (DL_FUNC) &_spmirt_trimatl2vec, 2},
     {"_spmirt_vec2chol_corr", (DL_FUNC) &_spmirt_vec2chol_corr, 2},
+    {"_spmirt_vec2chol_corr2", (DL_FUNC) &_spmirt_vec2chol_corr2, 2},
     {"_spmirt_chol_corr2vec", (DL_FUNC) &_spmirt_chol_corr2vec, 1},
     {"_spmirt_probit_gp_adap", (DL_FUNC) &_spmirt_probit_gp_adap, 5},
+    {"_spmirt_probit_gp_am", (DL_FUNC) &_spmirt_probit_gp_am, 5},
+    {"_spmirt_probit_gp_am_scale", (DL_FUNC) &_spmirt_probit_gp_am_scale, 6},
     {"_spmirt_probit_gp", (DL_FUNC) &_spmirt_probit_gp, 5},
     {"_spmirt_probit_gp_chol2", (DL_FUNC) &_spmirt_probit_gp_chol2, 5},
     {"_spmirt_probit_gp_chol", (DL_FUNC) &_spmirt_probit_gp_chol, 5},
+    {"_spmirt_dic_cpp", (DL_FUNC) &_spmirt_dic_cpp, 8},
+    {"_spmirt_spifa_cpp", (DL_FUNC) &_spmirt_spifa_cpp, 36},
+    {"_spmirt_predict_spifa_cpp", (DL_FUNC) &_spmirt_predict_spifa_cpp, 24},
     {"_spmirt_logit", (DL_FUNC) &_spmirt_logit, 1},
     {"_spmirt_logistic", (DL_FUNC) &_spmirt_logistic, 1},
     {"_spmirt_ifa_gibbs", (DL_FUNC) &_spmirt_ifa_gibbs, 5},
     {"_spmirt_ifa_gibbs_nonide", (DL_FUNC) &_spmirt_ifa_gibbs_nonide, 5},
-    {"_spmirt_spifa_gibbs", (DL_FUNC) &_spmirt_spifa_gibbs, 5},
+    {"_spmirt_ifa_gibbs_sp_cov", (DL_FUNC) &_spmirt_ifa_gibbs_sp_cov, 15},
+    {"_spmirt_ifa_gibbs_sp", (DL_FUNC) &_spmirt_ifa_gibbs_sp, 14},
     {"_spmirt_multi_lm", (DL_FUNC) &_spmirt_multi_lm, 5},
-    {"_spmirt_dmvnorm", (DL_FUNC) &_spmirt_dmvnorm, 3},
-    {"_spmirt_dmvnorm_chol", (DL_FUNC) &_spmirt_dmvnorm_chol, 3},
-    {"_spmirt_dmvnorm_cholinv", (DL_FUNC) &_spmirt_dmvnorm_cholinv, 3},
+    {"_spmirt_name_samples_vec", (DL_FUNC) &_spmirt_name_samples_vec, 2},
+    {"_spmirt_name_samples_mat", (DL_FUNC) &_spmirt_name_samples_mat, 3},
+    {"_spmirt_name_samples_lower", (DL_FUNC) &_spmirt_name_samples_lower, 4},
+    {"_spmirt_dmvnorm", (DL_FUNC) &_spmirt_dmvnorm, 4},
+    {"_spmirt_dmvnorm_chol", (DL_FUNC) &_spmirt_dmvnorm_chol, 4},
+    {"_spmirt_dmvnorm_cholinv", (DL_FUNC) &_spmirt_dmvnorm_cholinv, 4},
     {"_spmirt_dmvnorm_prec", (DL_FUNC) &_spmirt_dmvnorm_prec, 3},
-    {"_spmirt_dinvwish", (DL_FUNC) &_spmirt_dinvwish, 3},
+    {"_spmirt_dinvwish", (DL_FUNC) &_spmirt_dinvwish, 4},
     {"_spmirt_dlkj_corr", (DL_FUNC) &_spmirt_dlkj_corr, 3},
     {"_spmirt_dlkj_corr_chol", (DL_FUNC) &_spmirt_dlkj_corr_chol, 3},
     {"_spmirt_dlkj_corr_free", (DL_FUNC) &_spmirt_dlkj_corr_free, 4},
+    {"_spmirt_dlkj_corr_free2", (DL_FUNC) &_spmirt_dlkj_corr_free2, 4},
+    {"_spmirt_test1", (DL_FUNC) &_spmirt_test1, 2},
     {"_spmirt_testing", (DL_FUNC) &_spmirt_testing, 2},
     {"_spmirt_rcpp_hello_world", (DL_FUNC) &_spmirt_rcpp_hello_world, 0},
     {"_spmirt_matmatmat", (DL_FUNC) &_spmirt_matmatmat, 1},

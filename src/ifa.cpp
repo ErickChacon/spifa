@@ -529,8 +529,13 @@ Rcpp::List Ifa::predict(arma::mat samples_theta, arma::mat samples_corr_chol,
       arma::vec pred_mean = new_mean + L_inv_S21.t() * L_inv_res;
       arma::mat pred_var = new_mgp_Sigma - L_inv_S21.t() * L_inv_S21;
       // sample prediction
-      prediction.col(isave) =
-        pred_mean + arma::chol(pred_var, "lower") * arma::randn(npred * m);
+      if (true) {
+        prediction.col(isave) =
+          pred_mean + sqrt(pred_var.diag()) % arma::randn(npred * m);
+      } else {
+        prediction.col(isave) =
+          pred_mean + arma::chol(pred_var, "lower") * arma::randn(npred * m);
+      }
       isave++;
     }
   }

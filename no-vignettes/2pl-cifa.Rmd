@@ -103,9 +103,11 @@ discrimination2 <- runif(q, 0, 2)
 # discrimination2 <- c(0, 1, 1.6777, 0.5975, 0, 0.5199, 0.034, 1.26876, 1.1125, 1.3469)
 discrimination1[1] = 1
 discrimination2[2] = 1
-discrimination2[1] <- 0
 discrimination1[4] <- 0
+discrimination1[8] <- 0
+discrimination2[1] <- 0
 discrimination2[5] <- 0
+discrimination2[7] <- 0
 
 ```
 
@@ -166,14 +168,18 @@ ggplot(explor, aes(ability2, endorse)) + geom_point(alpha = 0.5)
 
 ```{r}
 
-data_long$y[sample(1:(n*q), (5*n*q/100))] <- NA
+# data_long$y[sample(1:(n*q), (5*n*q/100))] <- NA
 
 iter <- 1 * 10 ^ 5
 thin <- 10
 disc_mat <- cbind(cbind(discrimination1), cbind(discrimination2))
 L_a <- lower.tri(disc_mat, diag = TRUE) * 1
 L_a[4,1] <- 0
+L_a[8,1] <- 0
+L_a[1,2] <- 0
 L_a[5,2] <- 0
+L_a[7,2] <- 0
+
 
 # L_a <- matrix(1, q, 2)
 # L_a[c(1, 5, 8, 16)] <- 0
@@ -184,28 +190,19 @@ diag(a_mean) <- 1
 A_prior_sd <-  matrix(2, q, m)
 diag(A_prior_sd) <- 0.01
 
+# predictor <- data.frame(x1 = rnorm(n), lat = rnorm(n), long = rnorm(n))
+data_test <- as.data.frame(matrix(data_long$y, n, q)) %>%
+  setNames(paste0("y", 1:10))
+# data_test <- cbind(predictor, ytest)
+
 # a_mean[1,] <- 1
 
-# # Rcpp::sourceCpp("../src/correlation.cpp")
-# # Rcpp::sourceCpp("../src/ifa-main.cpp")
-# Rcpp::sourceCpp("../src/ifa-driver.cpp")
-# source("../R/spmirt.R")
-# source("../R/ggplot-mcmc.R")
-
-Rcpp::sourceCpp("../src/ifa-driver.cpp")
-source("../R/check-arguments.R")
-source("../R/spifa-ggplot.R")
-source("../R/spifa-methods.R")
-source("../R/spifa.R")
-
-
-
-iter = 10^3
-thin = 1
+iter = 4 * 10^4
+thin = 10
 system.time(
 samples <- spifa(
-  response = data_long$y, predictors = NULL, coordinates = NULL,
-  nobs = n, nitems = q, nfactors = 2, niter = iter, thin = thin,
+  response = y1:y10, data = data_test,
+  nfactors = 2, niter = iter, thin = thin,
   constrains = list(A = L_a) ,
   # adaptive = list(Sigma_R = matrix(0.001, 1,1))
   # A_opt = list(initial = disc_mat, prior_mean = disc_mat, prior_sd = 1),

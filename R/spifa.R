@@ -34,9 +34,10 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
   responses <- substitute(responses)
   responses_pos <- setNames(as.list(seq_along(data)), names(data))
   pos <- eval(responses, responses_pos)
-  if (class(data) == "sf") {
-    response <- sf::st_set_geometry(data, NULL) %>%
-      as.matrix(.[, pos, drop = FALSE])
+  if (inherits(data, "sf")) {
+    # response <- sf::st_set_geometry(data, NULL) %>%
+    #   as.matrix(.[, pos, drop = FALSE])
+    response <- as.matrix(sf::st_set_geometry(data, NULL)[, pos, drop = FALSE])
   } else {
     response <- as.matrix(data[, pos, drop = FALSE])
   }
@@ -53,9 +54,11 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
   }
 
   # Coordinates
-  if (class(data) == "sf") {
-    if (st_is_longlat(data_test)) {
-      data <- sf::st_transform(data, "+init=epsg:3857")
+  if (inherits(data, "sf")) {
+    if (!is.na(sf::st_is_longlat(data))) {
+      if (sf::st_is_longlat(data)) {
+        data <- sf::st_transform(data, "+init=epsg:3857")
+      }
     }
     coordinates <- sf::st_coordinates(data)
   } else {
