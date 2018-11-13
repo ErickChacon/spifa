@@ -49,25 +49,62 @@ arma::vec rmvnorm_rest_Q(arma::vec mu, arma::mat Q, arma::mat A, arma::vec e) {
 
 //' @export
 // [[Rcpp::export]]
-arma::mat gamcpp(arma::vec y, arma::mat X, arma::mat D, double sigma2, double tau2) {
+double plop() {
+  double x = R::rgamma(0.001, 1 / 0.001);
+  return x;
+}
 
-  // const int n = y.n_elem;
+//' @export
+// [[Rcpp::export]]
+Rcpp::List gamcpp(arma::vec y, arma::mat X, arma::mat D, double sigma2, double tau2,
+    int niter) {
+
+  const int n = X.n_rows;
   const int p = X.n_cols;
-  const int niter = 1000;
   arma::mat XtX = X.t() * X;
   arma::mat DtD = D.t() * D;
+  // const int niter = 1000;
+
+  const double sigma2_a_prior = 0.001;
+  const double sigma2_b_prior = 0.001;
+
+  const double tau2_a_prior = 0.001;
+  const double tau2_b_prior = 0.001;
 
   arma::mat beta_samples(p, niter);
+  arma::mat sigma2_samples(1, niter);
+  arma::mat tau2_samples(1, niter);
 
   for (int i = 0; i < niter; ++i) {
+
+    // sample beta
     arma::mat beta_Q = XtX / sigma2 + DtD / tau2;
     arma::mat beta_Q_chol = arma::chol(beta_Q, "lower");
-    arma::mat beta_mean = solve_sympd_chol(beta_Q_chol, X.t() * y) / sigma2;
+    arma::mat beta_mean = solve_sympd_chol(beta_Q_chol, X.t() * y / sigma2);
     arma::vec beta = beta_mean;
     beta += arma::solve(arma::trimatu(beta_Q_chol.t()), arma::randn(p));
     beta_samples.col(i) = beta;
+
+    // sample sigma2
+    double sigma2_a = sigma2_a_prior + n / 2;
+    double sigma2_b = sigma2_b_prior + arma::accu(square(y - X * beta)) / 2;
+    sigma2 = 1 / R::rgamma(sigma2_a, 1 / sigma2_b);
+    sigma2_samples.col(i) = sigma2;
+
+    // sample sigma2
+    double tau2_a = tau2_a_prior + p / 2 - 1;
+    double tau2_b = tau2_b_prior + arma::accu(square(D * beta)) / 2;
+    tau2 = 1 / R::rgamma(tau2_a, 1 / tau2_b);
+    tau2_samples.col(i) = tau2;
+
   }
 
-  return beta_samples;
+  Rcpp::List output = Rcpp::List::create(
+      Rcpp::Named("beta") = beta_samples.t(),
+      Rcpp::Named("sigma2_samples") = sigma2_samples.t(),
+      Rcpp::Named("tau2_samples") = tau2_samples.t()
+      );
+
+  return output;
 }
 
