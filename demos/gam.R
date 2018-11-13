@@ -22,8 +22,8 @@ n_knots <- 50
 sm <- smoothCon(s(x, k = n_knots, bs = "ps"), data = data, knots = NULL)[[1]]
 X <- sm$X
 D <- sm$D
-tao <- 0.01
-sigma <- 1.5
+tao <- 0.001
+sigma <- 9
 beta <- cumsum(cumsum(rnorm(n_knots, tao)))
 plot(beta, type = "l")
 
