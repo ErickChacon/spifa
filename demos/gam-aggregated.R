@@ -11,7 +11,7 @@ Rcpp::sourceCpp("gam.cpp")
 
 # simulate betas
 tau <- 0.01
-n_knots <- 50
+n_knots <- 20
 beta <- cumsum(cumsum(rnorm(n_knots, tau)))
 plot(beta)
 
@@ -22,11 +22,26 @@ sm <- smoothCon(s(x, k = n_knots, bs = "ps"), data = data_ind, knots = NULL)[[1]
 X_ind <- sm$X
 D_ind <- sm$D
 sigma_ind <- 9
-data_ind$f <- X_ind %*% cbind(beta)
+data_ind$f <- as.numeric(X_ind %*% cbind(beta))
 data_ind$y <- data_ind$f + rnorm(n_ind, sd = sigma_ind)
 ggplot(data_ind, aes(x, y)) +
   geom_point() +
   geom_line(aes(x, f), col = 2, lwd = 2)
+
+# aggregated data
+n_agg <- 10
+breaks <- sort(c(runif(n_agg - 1, -10, 10), -10, 10))
+data_ind$cut <- cut(data_ind$x, breaks, include.lowest = TRUE)
+
+data_agg <- data_ind %>%
+  # dplyr::select(- x) %>%
+  group_by(cut) %>%
+  summarise_all(mean)
+
+ggplot(data_ind, aes(x, y)) +
+  geom_point() +
+  geom_line(aes(x, f), col = 2, lwd = 2) +
+  geom_point(aes(x, f), data_agg, col = 3)
 
 bla <- gamcpp(data$y, X, D, 1, 1, niter = 10000)
 beta_est <- apply(bla$beta, 2, median)
