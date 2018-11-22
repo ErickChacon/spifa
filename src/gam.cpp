@@ -44,8 +44,22 @@ arma::vec rmvnorm_rest_Q(arma::vec mu, arma::mat Q, arma::mat A, arma::vec e) {
   x = x - U.t() * c;
 
   return x;
-
 }
+
+//' @export
+// [[Rcpp::export]]
+arma::vec rmvnorm_Q(arma::vec mu, arma::mat Q) {
+
+  const int n = mu.n_elem;
+
+  // unrestricted simulation
+  arma::mat Q_chol = arma::chol(Q, "lower");
+  arma::vec x = mu + arma::solve(arma::trimatu(Q_chol.t()), arma::randn(n));
+
+  return x;
+}
+
+
 
 //' @export
 // [[Rcpp::export]]
