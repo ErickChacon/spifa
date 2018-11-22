@@ -39,16 +39,16 @@ ggplot(data, aes(x, y)) +
   geom_point() +
   geom_point(aes(x, y_est), col = 2)
 
-hist(bla$sigma2 ^ 0.5, 100)
-hist(bla$tau2 ^ 0.5, 100)
-
-plot(bla$sigma2 ^ 0.5, type = "l")
-plot(bla$tau2 ^ 0.5, type = "l")
-
-
-
-
-
-
-
-
+# hist(bla$sigma2 ^ 0.5, 100)
+# hist(bla$tau2 ^ 0.5, 100)
+#
+# plot(bla$sigma2 ^ 0.5, type = "l")
+# plot(bla$tau2 ^ 0.5, type = "l")
+#
+#
+#
+#
+#
+#
+#
+#
