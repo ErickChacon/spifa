@@ -28,6 +28,27 @@ arma::mat solve_sympd_chol(arma::mat A_chol, arma::mat B) {
 
 //' @export
 // [[Rcpp::export]]
+// Rcpp::List eigs_sym(arma::mat Q, int k) {
+arma::sp_mat eigs_sym(arma::mat Q, int k) {
+
+  arma::sp_mat Q_sp = arma::sp_mat(Q);
+
+  arma::vec eigval;
+  arma::mat eigvec;
+  // int k = Q_sp.n_rows;
+
+  eigs_sym(eigval, eigvec, Q_sp, k);
+
+  Rcpp::List output = Rcpp::List::create(
+      Rcpp::Named("values") = eigval,
+      Rcpp::Named("vectors") = eigvec
+      );
+
+  return Q_sp;
+}
+
+//' @export
+// [[Rcpp::export]]
 arma::vec rmvnorm_rest_Q(arma::vec mu, arma::mat Q, arma::mat A, arma::vec e) {
 
   const int n = mu.n_elem;
