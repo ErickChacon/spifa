@@ -26,25 +26,27 @@ arma::mat solve_sympd_chol(arma::mat A_chol, arma::mat B) {
   return X;
 }
 
+
 //' @export
 // [[Rcpp::export]]
-// Rcpp::List eigs_sym(arma::mat Q, int k) {
-arma::sp_mat eigs_sym(arma::mat Q, int k) {
+arma::vec rimvnorm_Q_eig(arma::mat Q) {
 
-  arma::sp_mat Q_sp = arma::sp_mat(Q);
-
+  double tol = 1.5e-10;
   arma::vec eigval;
   arma::mat eigvec;
-  // int k = Q_sp.n_rows;
 
-  eigs_sym(eigval, eigvec, Q_sp, k);
+  eig_sym(eigval, eigvec, Q);
 
-  Rcpp::List output = Rcpp::List::create(
-      Rcpp::Named("values") = eigval,
-      Rcpp::Named("vectors") = eigvec
-      );
+  arma::uvec keep = find(abs(eigval) > tol);
+  Rcpp::Rcout << "Number of eigenvalues equals to zero: " << eigval.n_elem - keep.n_elem << std::endl;
 
-  return Q_sp;
+  eigval = eigval.elem(keep);
+  eigvec = eigvec.cols(keep);
+
+  arma::vec x = pow(eigval, - 0.5) % arma::randn(eigval.n_elem);
+  x = eigvec * x;
+
+  return x;
 }
 
 //' @export
