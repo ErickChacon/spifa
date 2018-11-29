@@ -126,12 +126,12 @@ gg_y_est <- ggplot(data_ind, aes(x1, x2)) +
   scale_fill_distiller(palette = "Spectral") +
   coord_fixed()
 
-print(gg_rw1 + gg_f + gg_y + gg_agg + gg_agg_est + gg_y_est)
-
-
-pdf("gam_2d_aggregated.pdf", width = 7)
 print(gg_rw1 + gg_f + gg_y + gg_agg + gg_agg_est + gg_y_est + plot_layout(2))
-dev.off()
+
+
+# pdf("gam_2d_aggregated.pdf", width = 7)
+# print(gg_rw1 + gg_f + gg_y + gg_agg + gg_agg_est + gg_y_est + plot_layout(2))
+# dev.off()
 
 
 
