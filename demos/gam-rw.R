@@ -74,3 +74,5 @@ plot(r1, col = colorRampPalette(brewer.pal(11, "Spectral"))(30), axes = FALSE, b
 plot(rasterToPolygons(r1), add = TRUE, border = "black", lwd = 1)
 par(opar)
 
+
+
