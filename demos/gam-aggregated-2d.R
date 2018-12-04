@@ -67,7 +67,7 @@ gg_y <- ggplot(data_ind, aes(x1, x2)) +
   coord_fixed()
 
 # aggregated data
-n_agg <- 6
+n_agg <- 5
 breaks1 <- sort(c(runif(n_agg - 1, -10, 10), -10, 10))
 breaks2 <- sort(c(runif(n_agg - 1, -10, 10), -10, 10))
 lengths <- diff(breaks1)
