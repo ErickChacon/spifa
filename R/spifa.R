@@ -15,7 +15,7 @@
 #'
 #' @examples
 #'
-#' 
+#' bla
 #'
 #' @export
 spifa <- function (responses, pred_formula = NULL, data = NULL,

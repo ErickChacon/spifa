@@ -1,12 +1,12 @@
 Package: spmirt
 Type: Package
-Title: Spatial Multidimensional Item Response Theory
+Title: Spatial Item Factor Analysis
 Version: 1.0
 Date: 2017-11-30
 Authors@R: person("Erick A.", "Chacon-Montalvan", email = "eral.th07@gmail.com",
         role = c("aut", "cre"))
 Maintainer: Erick A. Chacon-Montalvan <eral.th07@gmail.com>
-Description: Fits spatial multidimensional item response models using Bayesian
+Description: Fits spatial item factor analysis using Bayesian
         inference  with conjugates priors and using auxiliary variables with probit
         link function.
 License: GPL (>= 2) | file LICENSE
