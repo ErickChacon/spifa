@@ -20,12 +20,12 @@
 #'
 #' @export
 adaptive_haario <- function(mean, Sigma, iter) {
-    .Call(`_spmirt_adaptive_haario`, mean, Sigma, iter)
+    .Call(`_spifa_adaptive_haario`, mean, Sigma, iter)
 }
 
 #' @export
 variance <- function(X) {
-    .Call(`_spmirt_variance`, X)
+    .Call(`_spifa_variance`, X)
 }
 
 #' @title Testing Adative Sampling by Haario with vanishing adaptation
@@ -47,7 +47,7 @@ variance <- function(X) {
 #'
 #' @export
 adaptive_haario_vanish <- function(mean, Sigma, iter) {
-    .Call(`_spmirt_adaptive_haario_vanish`, mean, Sigma, iter)
+    .Call(`_spifa_adaptive_haario_vanish`, mean, Sigma, iter)
 }
 
 #' @title AM Algorithm with Global Adaptive Scaling by Christophe
@@ -69,77 +69,112 @@ adaptive_haario_vanish <- function(mean, Sigma, iter) {
 #'
 #' @export
 am_vanish_scaling <- function(mean, Sigma, iter) {
-    .Call(`_spmirt_am_vanish_scaling`, mean, Sigma, iter)
+    .Call(`_spifa_am_vanish_scaling`, mean, Sigma, iter)
 }
 
 #' @export
 vec2mat <- function(x, nrow, ncol) {
-    .Call(`_spmirt_vec2mat`, x, nrow, ncol)
+    .Call(`_spifa_vec2mat`, x, nrow, ncol)
 }
 
 #' @export
 vec2matt <- function(x, nrow, ncol) {
-    .Call(`_spmirt_vec2matt`, x, nrow, ncol)
+    .Call(`_spifa_vec2matt`, x, nrow, ncol)
 }
 
 #' @export
 vecsub <- function(x, first_index, n_length) {
-    .Call(`_spmirt_vecsub`, x, first_index, n_length)
+    .Call(`_spifa_vecsub`, x, first_index, n_length)
 }
 
 #' @export
 vecsub1 <- function(x, index) {
-    .Call(`_spmirt_vecsub1`, x, index)
+    .Call(`_spifa_vecsub1`, x, index)
 }
 
 #' @export
 matsub1 <- function(x, index_row, index_col) {
-    .Call(`_spmirt_matsub1`, x, index_row, index_col)
+    .Call(`_spifa_matsub1`, x, index_row, index_col)
 }
 
 #' @export
 TST <- function(mgp_Sigma, T) {
-    .Call(`_spmirt_TST`, mgp_Sigma, T)
+    .Call(`_spifa_TST`, mgp_Sigma, T)
 }
 
 #' @export
 subset_cpp <- function(X, y) {
-    .Call(`_spmirt_subset_cpp`, X, y)
+    .Call(`_spifa_subset_cpp`, X, y)
 }
 
 #' @export
 vec2trimatl <- function(x, K, diag = TRUE) {
-    .Call(`_spmirt_vec2trimatl`, x, K, diag)
+    .Call(`_spifa_vec2trimatl`, x, K, diag)
 }
 
 #' @export
 vec2trimatl_old <- function(x, K, diag = TRUE) {
-    .Call(`_spmirt_vec2trimatl_old`, x, K, diag)
+    .Call(`_spifa_vec2trimatl_old`, x, K, diag)
 }
 
 #' @export
 vec2trimatl_test <- function(x, K, diag = TRUE) {
-    .Call(`_spmirt_vec2trimatl_test`, x, K, diag)
+    .Call(`_spifa_vec2trimatl_test`, x, K, diag)
 }
 
 #' @export
 trimatl2vec <- function(L, diag = TRUE) {
-    .Call(`_spmirt_trimatl2vec`, L, diag)
+    .Call(`_spifa_trimatl2vec`, L, diag)
 }
 
 #' @export
 vec2chol_corr <- function(x, K) {
-    .Call(`_spmirt_vec2chol_corr`, x, K)
+    .Call(`_spifa_vec2chol_corr`, x, K)
 }
 
 #' @export
 vec2chol_corr2 <- function(x, K) {
-    .Call(`_spmirt_vec2chol_corr2`, x, K)
+    .Call(`_spifa_vec2chol_corr2`, x, K)
 }
 
 #' @export
 chol_corr2vec <- function(L_chol) {
-    .Call(`_spmirt_chol_corr2vec`, L_chol)
+    .Call(`_spifa_chol_corr2vec`, L_chol)
+}
+
+#' @export
+solve_sympd <- function(A, B) {
+    .Call(`_spifa_solve_sympd`, A, B)
+}
+
+#' @export
+solve_sympd_chol <- function(A_chol, B) {
+    .Call(`_spifa_solve_sympd_chol`, A_chol, B)
+}
+
+#' @export
+rimvnorm_Q_eig <- function(Q) {
+    .Call(`_spifa_rimvnorm_Q_eig`, Q)
+}
+
+#' @export
+rmvnorm_rest_Q <- function(mu, Q, A, e) {
+    .Call(`_spifa_rmvnorm_rest_Q`, mu, Q, A, e)
+}
+
+#' @export
+rmvnorm_Q <- function(mu, Q) {
+    .Call(`_spifa_rmvnorm_Q`, mu, Q)
+}
+
+#' @export
+plop <- function() {
+    .Call(`_spifa_plop`)
+}
+
+#' @export
+gamcpp <- function(y, X, D, sigma2, tau2, niter) {
+    .Call(`_spifa_gamcpp`, y, X, D, sigma2, tau2, niter)
 }
 
 #' @title Spatial Probit Model
@@ -161,7 +196,7 @@ chol_corr2vec <- function(L_chol) {
 #'
 #' @export
 probit_gp_adap <- function(y, dist, params, iter, Sigma_proposal) {
-    .Call(`_spmirt_probit_gp_adap`, y, dist, params, iter, Sigma_proposal)
+    .Call(`_spifa_probit_gp_adap`, y, dist, params, iter, Sigma_proposal)
 }
 
 #' @title Spatial Probit Model
@@ -183,7 +218,7 @@ probit_gp_adap <- function(y, dist, params, iter, Sigma_proposal) {
 #'
 #' @export
 probit_gp_am <- function(y, dist, params, iter, Sigma_proposal) {
-    .Call(`_spmirt_probit_gp_am`, y, dist, params, iter, Sigma_proposal)
+    .Call(`_spifa_probit_gp_am`, y, dist, params, iter, Sigma_proposal)
 }
 
 #' @title Spatial Probit Model
@@ -205,51 +240,7 @@ probit_gp_am <- function(y, dist, params, iter, Sigma_proposal) {
 #'
 #' @export
 probit_gp_am_scale <- function(y, dist, params, iter, Sigma_proposal, target) {
-    .Call(`_spmirt_probit_gp_am_scale`, y, dist, params, iter, Sigma_proposal, target)
-}
-
-#' @title Spatial Probit Model
-#'
-#' @description
-#' \code{ifa_gibbs} description.
-#'
-#' @details
-#' details.
-#'
-#' @param par.
-#'
-#' @return return.
-#'
-#' @author Erick A. Chacon-Montalvan
-#'
-#' @examples
-#'
-#'
-#' @export
-probit_gp <- function(y, dist, params, iter, Sigma_proposal) {
-    .Call(`_spmirt_probit_gp`, y, dist, params, iter, Sigma_proposal)
-}
-
-#' @title Spatial Probit Model
-#'
-#' @description
-#' \code{ifa_gibbs} description.
-#'
-#' @details
-#' details.
-#'
-#' @param par.
-#'
-#' @return return.
-#'
-#' @author Erick A. Chacon-Montalvan
-#'
-#' @examples
-#'
-#'
-#' @export
-probit_gp_chol2 <- function(y, dist, params, iter, Sigma_proposal) {
-    .Call(`_spmirt_probit_gp_chol2`, y, dist, params, iter, Sigma_proposal)
+    .Call(`_spifa_probit_gp_am_scale`, y, dist, params, iter, Sigma_proposal, target)
 }
 
 #' @title Spatial Probit Model
@@ -271,33 +262,10 @@ probit_gp_chol2 <- function(y, dist, params, iter, Sigma_proposal) {
 #'
 #' @export
 probit_gp_chol <- function(y, dist, params, iter, Sigma_proposal) {
-    .Call(`_spmirt_probit_gp_chol`, y, dist, params, iter, Sigma_proposal)
+    .Call(`_spifa_probit_gp_chol`, y, dist, params, iter, Sigma_proposal)
 }
 
-#' @export
-dic_cpp <- function(y, c, a, theta, n, q, m, L) {
-    .Call(`_spmirt_dic_cpp`, y, c, a, theta, n, q, m, L)
-}
-
-spifa_cpp <- function(response, predictors, distances, nobs, nitems, nfactors, ngp, niter, thin, standardize, constrain_L, constrain_T, constrain_V_sd, adap_Sigma, adap_scale, adap_C, adap_alpha, adap_accep_prob, c_initial, c_prior_mean, c_prior_sd, A_initial, A_prior_mean, A_prior_sd, R_initial, R_prior_eta, B_initial, B_prior_mean, B_prior_sd, sigmas_gp_initial, sigmas_gp_mean, sigmas_gp_sd, phi_gp_initial, phi_gp_mean, phi_gp_sd, model_type) {
-    .Call(`_spmirt_spifa_cpp`, response, predictors, distances, nobs, nitems, nfactors, ngp, niter, thin, standardize, constrain_L, constrain_T, constrain_V_sd, adap_Sigma, adap_scale, adap_C, adap_alpha, adap_accep_prob, c_initial, c_prior_mean, c_prior_sd, A_initial, A_prior_mean, A_prior_sd, R_initial, R_prior_eta, B_initial, B_prior_mean, B_prior_sd, sigmas_gp_initial, sigmas_gp_mean, sigmas_gp_sd, phi_gp_initial, phi_gp_mean, phi_gp_sd, model_type)
-}
-
-predict_spifa_cpp <- function(samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type) {
-    .Call(`_spmirt_predict_spifa_cpp`, samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type)
-}
-
-#' @export
-logit <- function(p) {
-    .Call(`_spmirt_logit`, p)
-}
-
-#' @export
-logistic <- function(x) {
-    .Call(`_spmirt_logistic`, x)
-}
-
-#' @title Bayesian item factor analysis
+#' @title Spatial Probit Model
 #'
 #' @description
 #' \code{ifa_gibbs} description.
@@ -312,11 +280,56 @@ logistic <- function(x) {
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#' 
+#'
 #'
 #' @export
-ifa_gibbs <- function(y, n, q, N, m = 1L) {
-    .Call(`_spmirt_ifa_gibbs`, y, n, q, N, m)
+probit_gp_chol2 <- function(y, dist, params, iter, Sigma_proposal) {
+    .Call(`_spifa_probit_gp_chol2`, y, dist, params, iter, Sigma_proposal)
+}
+
+#' @title Spatial Probit Model
+#'
+#' @description
+#' \code{ifa_gibbs} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#'
+#'
+#' @export
+probit_gp <- function(y, dist, params, iter, Sigma_proposal) {
+    .Call(`_spifa_probit_gp`, y, dist, params, iter, Sigma_proposal)
+}
+
+#' @export
+dic_cpp <- function(y, c, a, theta, n, q, m, L) {
+    .Call(`_spifa_dic_cpp`, y, c, a, theta, n, q, m, L)
+}
+
+spifa_cpp <- function(response, predictors, distances, nobs, nitems, nfactors, ngp, niter, thin, standardize, constrain_L, constrain_T, constrain_V_sd, adap_Sigma, adap_scale, adap_C, adap_alpha, adap_accep_prob, c_initial, c_prior_mean, c_prior_sd, A_initial, A_prior_mean, A_prior_sd, R_initial, R_prior_eta, B_initial, B_prior_mean, B_prior_sd, sigmas_gp_initial, sigmas_gp_mean, sigmas_gp_sd, phi_gp_initial, phi_gp_mean, phi_gp_sd, model_type) {
+    .Call(`_spifa_spifa_cpp`, response, predictors, distances, nobs, nitems, nfactors, ngp, niter, thin, standardize, constrain_L, constrain_T, constrain_V_sd, adap_Sigma, adap_scale, adap_C, adap_alpha, adap_accep_prob, c_initial, c_prior_mean, c_prior_sd, A_initial, A_prior_mean, A_prior_sd, R_initial, R_prior_eta, B_initial, B_prior_mean, B_prior_sd, sigmas_gp_initial, sigmas_gp_mean, sigmas_gp_sd, phi_gp_initial, phi_gp_mean, phi_gp_sd, model_type)
+}
+
+predict_spifa_cpp <- function(samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type) {
+    .Call(`_spifa_predict_spifa_cpp`, samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type)
+}
+
+#' @export
+logit <- function(p) {
+    .Call(`_spifa_logit`, p)
+}
+
+#' @export
+logistic <- function(x) {
+    .Call(`_spifa_logistic`, x)
 }
 
 #' @title Bayesian item factor analysis
@@ -338,7 +351,7 @@ ifa_gibbs <- function(y, n, q, N, m = 1L) {
 #'
 #' @export
 ifa_gibbs_nonide <- function(y, n, q, N, m = 1L) {
-    .Call(`_spmirt_ifa_gibbs_nonide`, y, n, q, N, m)
+    .Call(`_spifa_ifa_gibbs_nonide`, y, n, q, N, m)
 }
 
 #' @title Spatial Confirmatory Item Factor Analysis
@@ -360,7 +373,7 @@ ifa_gibbs_nonide <- function(y, n, q, N, m = 1L) {
 #'
 #' @export
 ifa_gibbs_sp_cov <- function(y, X, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix, sigma_prop, L, T, target = 0.234, niter = 1000L) {
-    .Call(`_spmirt_ifa_gibbs_sp_cov`, y, X, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix, sigma_prop, L, T, target, niter)
+    .Call(`_spifa_ifa_gibbs_sp_cov`, y, X, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix, sigma_prop, L, T, target, niter)
 }
 
 #' @title Spatial Confirmatory Item Factor Analysis
@@ -382,7 +395,29 @@ ifa_gibbs_sp_cov <- function(y, X, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix,
 #'
 #' @export
 ifa_gibbs_sp <- function(y, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix, sigma_prop, L, T, target = 0.234, niter = 1000L) {
-    .Call(`_spmirt_ifa_gibbs_sp`, y, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix, sigma_prop, L, T, target, niter)
+    .Call(`_spifa_ifa_gibbs_sp`, y, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix, sigma_prop, L, T, target, niter)
+}
+
+#' @title Bayesian item factor analysis
+#'
+#' @description
+#' \code{ifa_gibbs} description.
+#'
+#' @details
+#' details.
+#'
+#' @param par.
+#'
+#' @return return.
+#'
+#' @author Erick A. Chacon-Montalvan
+#'
+#' @examples
+#' 
+#'
+#' @export
+ifa_gibbs <- function(y, n, q, N, m = 1L) {
+    .Call(`_spifa_ifa_gibbs`, y, n, q, N, m)
 }
 
 #' @title Multivariate Linear Model
@@ -404,131 +439,131 @@ ifa_gibbs_sp <- function(y, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix, sigma_
 #'
 #' @export
 multi_lm <- function(Y, X, iter, proposal_corr_Sigma, proposal_sigmas_Sigma) {
-    .Call(`_spmirt_multi_lm`, Y, X, iter, proposal_corr_Sigma, proposal_sigmas_Sigma)
+    .Call(`_spifa_multi_lm`, Y, X, iter, proposal_corr_Sigma, proposal_sigmas_Sigma)
 }
 
 #' @export
 name_samples_vec <- function(n_elem, name) {
-    .Call(`_spmirt_name_samples_vec`, n_elem, name)
+    .Call(`_spifa_name_samples_vec`, n_elem, name)
 }
 
 #' @export
 name_samples_mat <- function(nrow, ncol, name) {
-    .Call(`_spmirt_name_samples_mat`, nrow, ncol, name)
+    .Call(`_spifa_name_samples_mat`, nrow, ncol, name)
 }
 
 #' @export
 name_samples_lower <- function(nrow, ncol, name, diag = TRUE) {
-    .Call(`_spmirt_name_samples_lower`, nrow, ncol, name, diag)
+    .Call(`_spifa_name_samples_lower`, nrow, ncol, name, diag)
 }
 
 #' @export
 dmvnorm <- function(X, Mean, Sigma, logpdf = TRUE) {
-    .Call(`_spmirt_dmvnorm`, X, Mean, Sigma, logpdf)
+    .Call(`_spifa_dmvnorm`, X, Mean, Sigma, logpdf)
 }
 
 #' @export
 dmvnorm_chol <- function(X, Mean, L, logpdf = TRUE) {
-    .Call(`_spmirt_dmvnorm_chol`, X, Mean, L, logpdf)
+    .Call(`_spifa_dmvnorm_chol`, X, Mean, L, logpdf)
 }
 
 #' @export
 dmvnorm_cholinv <- function(X, Mean, L_inv, logpdf = TRUE) {
-    .Call(`_spmirt_dmvnorm_cholinv`, X, Mean, L_inv, logpdf)
+    .Call(`_spifa_dmvnorm_cholinv`, X, Mean, L_inv, logpdf)
 }
 
 #' @export
 dmvnorm_prec <- function(x, mean, sigma_inv) {
-    .Call(`_spmirt_dmvnorm_prec`, x, mean, sigma_inv)
+    .Call(`_spifa_dmvnorm_prec`, x, mean, sigma_inv)
 }
 
 #' @export
 dinvwish <- function(v, X, S, logpdf = TRUE) {
-    .Call(`_spmirt_dinvwish`, v, X, S, logpdf)
+    .Call(`_spifa_dinvwish`, v, X, S, logpdf)
 }
 
 #' @export
 dlkj_corr <- function(R, eta, logpdf = TRUE) {
-    .Call(`_spmirt_dlkj_corr`, R, eta, logpdf)
+    .Call(`_spifa_dlkj_corr`, R, eta, logpdf)
 }
 
 #' @export
 dlkj_corr_chol <- function(L, eta, logpdf = TRUE) {
-    .Call(`_spmirt_dlkj_corr_chol`, L, eta, logpdf)
+    .Call(`_spifa_dlkj_corr_chol`, L, eta, logpdf)
 }
 
 #' @export
 dlkj_corr_free <- function(x, K, eta, logpdf = TRUE) {
-    .Call(`_spmirt_dlkj_corr_free`, x, K, eta, logpdf)
+    .Call(`_spifa_dlkj_corr_free`, x, K, eta, logpdf)
 }
 
 #' @export
 dlkj_corr_free2 <- function(x, K, eta, logpdf = TRUE) {
-    .Call(`_spmirt_dlkj_corr_free2`, x, K, eta, logpdf)
+    .Call(`_spifa_dlkj_corr_free2`, x, K, eta, logpdf)
 }
 
 #' @export
 test1 <- function(A, B) {
-    .Call(`_spmirt_test1`, A, B)
+    .Call(`_spifa_test1`, A, B)
 }
 
 #' @export
 testing <- function(X, y) {
-    .Call(`_spmirt_testing`, X, y)
+    .Call(`_spifa_testing`, X, y)
 }
 
 #' @export
 rcpp_hello_world <- function() {
-    .Call(`_spmirt_rcpp_hello_world`)
+    .Call(`_spifa_rcpp_hello_world`)
 }
 
 #' @export
 matmatmat <- function(x) {
-    .Call(`_spmirt_matmatmat`, x)
+    .Call(`_spifa_matmatmat`, x)
 }
 
 #' @export
 matmat <- function(x) {
-    .Call(`_spmirt_matmat`, x)
+    .Call(`_spifa_matmat`, x)
 }
 
 #' @export
 ar_chol <- function(x) {
-    .Call(`_spmirt_ar_chol`, x)
+    .Call(`_spifa_ar_chol`, x)
 }
 
 #' @export
 mat_inv <- function(x) {
-    .Call(`_spmirt_mat_inv`, x)
+    .Call(`_spifa_mat_inv`, x)
 }
 
 #' @export
 mat_inv2 <- function(x) {
-    .Call(`_spmirt_mat_inv2`, x)
+    .Call(`_spifa_mat_inv2`, x)
 }
 
 #' @export
 inv_chol <- function(x) {
-    .Call(`_spmirt_inv_chol`, x)
+    .Call(`_spifa_inv_chol`, x)
 }
 
 #' @export
 inv_solve <- function(x, eye) {
-    .Call(`_spmirt_inv_solve`, x, eye)
+    .Call(`_spifa_inv_solve`, x, eye)
 }
 
 #' @export
 inv_solve2 <- function(x, eye) {
-    .Call(`_spmirt_inv_solve2`, x, eye)
+    .Call(`_spifa_inv_solve2`, x, eye)
 }
 
 #' @export
 inv_form <- function(x, eye) {
-    .Call(`_spmirt_inv_form`, x, eye)
+    .Call(`_spifa_inv_form`, x, eye)
 }
 
 #' @export
 rcpptn_hello_world <- function() {
-    .Call(`_spmirt_rcpptn_hello_world`)
+    .Call(`_spifa_rcpptn_hello_world`)
 }
 

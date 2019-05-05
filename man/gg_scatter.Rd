@@ -4,8 +4,8 @@
 \alias{gg_scatter}
 \title{2D Scatterplot of Samples}
 \usage{
-gg_scatter(samples, var1, var2, each = NULL, keys = c("group", "Parameter"),
-  highlight = NULL, ncol = NULL, points_alpha = 0.5)
+gg_scatter(samples, var1, var2, each = NULL, keys = c("group",
+  "Parameter"), highlight = NULL, ncol = NULL, points_alpha = 0.5)
 }
 \arguments{
 \item{par.}{}

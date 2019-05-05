@@ -126,7 +126,7 @@ Ifa::Ifa(Rcpp::NumericVector response, arma::mat predictors, arma::mat distances
   T_index(find(T != 0)),
   V_sd(constrain_V_sd)
 {
-};
+}
 
 
 
@@ -548,5 +548,5 @@ Rcpp::List Ifa::predict(arma::mat samples_theta, arma::mat samples_corr_chol,
       );
 
   return output;
-};
+}
 

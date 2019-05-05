@@ -1,8 +1,9 @@
-Package: spmirt
+Package: spifa
 Type: Package
 Title: Spatial Item Factor Analysis
 Version: 1.0
 Date: 2017-11-30
+Encoding: UTF-8
 Authors@R: person("Erick A.", "Chacon-Montalvan", email = "eral.th07@gmail.com",
         role = c("aut", "cre"))
 Maintainer: Erick A. Chacon-Montalvan <eral.th07@gmail.com>
@@ -18,7 +19,7 @@ Imports: Rcpp (>= 0.12.13),
 LinkingTo: Rcpp,
            RcppArmadillo,
            RcppTN
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr

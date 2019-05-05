@@ -1,5 +1,5 @@
 
-#' @useDynLib spmirt, .registration = TRUE
+#' @useDynLib spifa, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @import RcppTN
 NULL

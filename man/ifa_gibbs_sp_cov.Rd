@@ -4,8 +4,8 @@
 \alias{ifa_gibbs_sp_cov}
 \title{Spatial Confirmatory Item Factor Analysis}
 \usage{
-ifa_gibbs_sp_cov(y, X, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix, sigma_prop,
-  L, T, target = 0.234, niter = 1000L)
+ifa_gibbs_sp_cov(y, X, dist, n, q, m, mgp_phi, mgp_sd, Corr, sd_fix,
+  sigma_prop, L, T, target = 0.234, niter = 1000L)
 }
 \arguments{
 \item{par.}{}
