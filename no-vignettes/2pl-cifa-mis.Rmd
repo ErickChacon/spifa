@@ -9,15 +9,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
-knitr::opts_chunk$set(fig.width = 7, fig.height = 4)
-# knitr::opts_chunk$set(fig.width = 6, fig.height = 4)
-knitr::opts_chunk$set(comment = "#>")
-options(width = 100)
-# set.seed(1)
-```
-
 In this vignette, we show how to use the **spifa** package to fit a
 multidimensional 2 parameter logistic model used in item response theory. Let
 $Y_{ij}$ be the response for item
