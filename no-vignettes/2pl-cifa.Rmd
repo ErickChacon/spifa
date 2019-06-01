@@ -9,6 +9,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+## Introduction
+
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
 knitr::opts_chunk$set(fig.width = 7, fig.height = 4)
@@ -38,7 +40,7 @@ $Z_{ij}$ such as
   {a}_j & \sim {N}(0, \sigma_a^2{I}_m)\\
 \end{align}
 
-### Required packages
+## Required packages
 
 ```{r}
 rm(list = ls())
@@ -47,7 +49,7 @@ library(datasim)
 library(tidyverse)
 ```
 
-### Simulation of the data
+## Simulation of the data
 
 First, simulate correlated factors:
 
@@ -83,7 +85,6 @@ data_geo_wide <- data_geo %>%
   mutate(var = paste0(var, response_label)) %>%
   select(-response_label) %>%
   spread(var, value)
-
 
 ```
 
@@ -148,7 +149,7 @@ data_long <- dplyr::rename(data_long, subject = id,
 knitr::kable(head(data_long, 20))
 ```
 
-### Exploratory analysis
+## Exploratory analysis
 
 We can see the relationship between the latent abilities and the proportion of
 endorsed items.
@@ -220,7 +221,7 @@ attr(samples, "model_info")[-c(1,2,3)]
 
 ```
 
-### Convert to tibble, burn-in, thinning, select
+## Convert to tibble, burn-in, thinning, select
 
 ```{r, results = 'asis'}
 
@@ -241,7 +242,7 @@ knitr::kable(head(samples_long, 10), digits = 2)
 
 ```
 
-### Visualize trace-plots
+## Visualize trace-plots
 
 ```{r, fig.height = 6}
 
@@ -274,7 +275,7 @@ as_tibble(samples, 0, 1, select = "corr") %>%
 
 ```
 
-### Visualize trace on 2d
+## Visualize trace on 2d
 
 Sampling of the first two discrimination parameters.
 
@@ -289,7 +290,7 @@ as_tibble(samples, 0, 10, "a") %>%
 ```
 
 
-### Density Plots
+## Density Plots
 
 ```{r}
 
@@ -311,7 +312,7 @@ as_tibble(samples, iter/2, 10, "theta") %>%
 
 ```
 
-### 2D Density Plots
+## 2D Density Plots
 
 ```{r, fig.height = 6}
 
@@ -325,7 +326,9 @@ as_tibble(samples, 0, 10, "a") %>%
 ```
 
 
-### Remove burn-in and summarise parameters
+hoal bla, what is this hoss
+
+## Remove burn-in and summarise parameters
 
 ```{r}
 
@@ -344,12 +347,10 @@ as_tibble(samples, iter/2, select = c("c", "a")) %>%
 
 ```
 
-
-### Credible Intervals
+## Credible Intervals
 
 
 ```{r}
-
 as_tibble(samples, iter/ 2, select = "a") %>%
   summary() %>%
   mutate(param = c(discrimination1, discrimination2)) %>%
@@ -375,5 +376,4 @@ as_tibble(samples, iter/2, select = "theta") %>%
   mutate(param = unique(data_long$ability2)) %>%
   gg_errorbar(sorted = TRUE) +
   geom_point(aes(y = param), col = 3)
-
 ```
