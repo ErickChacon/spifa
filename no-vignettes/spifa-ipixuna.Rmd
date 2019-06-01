@@ -1,0 +1,81 @@
+---
+title: "Spatial Item Factor Analysis"
+author: "Erick A. Chacon-Montalvan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Spatial Item Factor Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(fig.width = 7, fig.height = 4)
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+```
+
+In this vignette, we show how to use the **spifa** package to fit a
+multidimensional 2 parameter logistic model used in item response theory. Let
+$Y_{ij}$ be the response for item
+$j$ in the individual $i$. The model can be defined by using an auxiliary variable
+$Z_{ij}$ such as
+\begin{align}
+  {Y}_{ij}  & =
+  \left\lbrace
+  \begin{array}[2]{cc}
+    1 & \text{if} ~ {Z}_{ij} > 0\\
+    0 & \text{otherwise}
+  \end{array}
+  \right.\\
+  {Z}_{ij} & = c_j + a_j^\intercal\theta_i + \epsilon_{ij},
+  ~~ \epsilon_{ij} \sim {N}(0, 1)\\
+  {\theta}_i & \sim {N}({0}, {I}_m)\\
+  c_j & \sim {N}(0, \sigma_c^2)\\
+  {a}_j & \sim {N}(0, \sigma_a^2{I}_m)\\
+\end{align}
+
+### Required packages
+
+```{r}
+library(tidyverse)
+library(spifa)
+```
+
+### PREPARE DATA
+
+```{r}
+
+data(ipixuna)
+
+ipixuna_wide <- ipixuna %>%
+  dplyr::select(- (theta1:size)) %>%
+  tidyr::spread(response_label, response) %>%
+  sf::st_as_sf(coords = c("long", "lat"), crs = 3857)
+
+
+```
+
+### RUN
+
+```{r}
+
+L_a <- lower.tri(matrix(1, 10, 2), diag = TRUE)
+L_a[c(3,5,8), 1] <- 0
+L_a[c(4,5,10), 2] <- 0
+
+system.time(
+  samples <- spifa(
+    responses = `item 1`:`item 10`, data = ipixuna_wide, nfactors = 2,
+    niter = 100, thin = 1, standardize = FALSE,
+    constrains = list(A = L_a, W = diag(2), V_sd = 0.4 ^ 0.5),
+    adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
+                    Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
+                    accep_prob = 0.234),
+    sigmas_gp_opt = list(initial = 0.6, prior_mean = 0.6, prior_sd = 0.4),
+    phi_gp_opt = list(initial = 100, prior_mean = 100, prior_sd = 4))
+  )
+
+```
+

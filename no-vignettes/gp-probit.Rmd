@@ -1,0 +1,151 @@
+---
+title: " Bayesian Inference for Geostatistical Probit Models"
+author: "Erick A. Chacon-Montalvan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Geostatistical Probit Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(fig.width = 6, fig.height = 4)
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+```
+
+### Required packages
+
+```{r}
+rm(list = ls())
+library(spmirt)
+library(datasim)
+library(tidyverse)
+```
+
+### Simulation of the data
+
+```{r}
+n <- 1000
+
+f <- list(
+  prob ~ I(0) +
+    gp(list(s1, s2), cor.model = "exp_cor", cor.params = list(phi = 0.03),
+       sigma2 = 1),
+  size ~ I(1)
+  )
+data <- sim_model(formula = f,
+                  link_inv = list(pnorm, identity),
+                  generator = rbinom,
+                  n = n
+                  # ,
+                  # seed = 2
+                  )
+data <- dplyr::rename(data, gp = gp.list.prob)
+```
+
+### Visualization
+
+
+```{r}
+ggplot(data, aes(s1, s2)) +
+  geom_point(aes(col = gp)) +
+  scale_colour_distiller(palette = "RdYlBu")
+
+ggplot(data, aes(s1, s2)) +
+  geom_point(aes(col = factor(response)), size = 0.5)
+
+vg <- gstat::variogram(gp ~ 1, ~ s1 + s2, data, cutoff = 0.7, width = 0.005)
+ggplot(vg, aes(dist, gamma, weight = np)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 0.7))
+
+vg <- gstat::variogram(response ~ 1, ~ s1 + s2, data, cutoff = 0.7, width = 0.005)
+ggplot(vg, aes(dist, gamma)) +
+  geom_point(aes(size = np)) +
+  geom_smooth() +
+  expand_limits(y = 0, x = 0) +
+  scale_x_continuous(limits = c(0, 0.7))
+
+```
+
+
+### Fitting the model
+
+```{r}
+
+iter <- 5000
+dist <- as.matrix(dist(dplyr::select(data, s1, s2)))
+sigma_prop <- matrix(c(0.1, 0.05, 0.05, 0.1), 2) / 10
+system.time(
+  samples <- probit_gp_chol(data$response, dist, c(log(1), log(0.05)), iter, sigma_prop)
+)
+purrr::map(samples, dim)
+```
+
+### Check sampling
+
+Sampling of the correlation parameters.
+
+```{r}
+param_df <- data.frame(sigma2 = 1, phi = 0.03)
+samples$param[, 1:2] %>%
+  as_tibble() %>%
+  setNames(c("sigma2", "phi")) %>%
+  ggplot(aes(sigma2, phi)) +
+    geom_point(alpha = 0.5) +
+    geom_path(alpha = 0.4, linetype = 2) +
+    geom_point(data = param_df, col = 2)
+```
+
+### Remove burn-in and summarise parameters
+
+```{r}
+
+# Organize and summarise output
+samples_after_burin <- samples %>% purrr::map(~ .[(0.5 * iter):iter, ])
+samples_params <- samples_after_burin[2]
+real_params <- list(param = c(1, 0.03))
+
+samples_params_summary <- samples_params %>%
+  map(~ apply(., 2, function (x) quantile(x, c(0.025, 0.5, 0.975)))) %>%
+  map(~ as_tibble(t(.))) %>%
+  map(~ setNames(., make.names(names(.)))) %>%
+  map2(real_params, ~ mutate(.x, param = .y)) %>%
+  setNames(c("Correlation Paramaeters"))
+
+```
+
+### Visualize trace-plots
+
+```{r}
+gg_trace <- function (samples, name) {
+  samples %>%
+    as_tibble() %>%
+    setNames(paste0(name, 1:ncol(samples))) %>%
+    mutate(iteration = 1:n()) %>%
+    gather(varname, varvalue, -iteration) %>%
+    ggplot(aes(iteration, varvalue, group = varname, col = varname)) +
+      geom_path(alpha = 0.4, linetype = 1) +
+      facet_wrap(~ varname, scales = "free_y")
+}
+
+samples_params %>%
+  map2(c("param"), ~ gg_trace(.x[,1:2], .y))
+
+```
+
+### Visualize credible intervals
+
+```{r}
+# Visualize results
+samples_params_summary %>%
+  map(~ ggplot(., aes(X50., param)) +
+          geom_errorbar(aes(ymin = X2.5., ymax = X97.5.), width = 0.05) +
+          geom_point(col = 2)
+        )
+```
