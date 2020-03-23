@@ -11,14 +11,14 @@
 #'
 #' @return return.
 #'
-#' @author Erick A. Chacon-Montalvan
+#' @author Erick A. Chacón-Montalván
 #'
 #' @examples
 #'
 #' bla
 #'
 #' @export
-spifa <- function (responses, pred_formula = NULL, data = NULL,
+spifa <- function (responses, pred_formula = NULL, coords = NULL, data = NULL,
     nfactors, ngp = nfactors, niter = 1000, thin = 10, standardize = TRUE,
     constrains = list(A = NULL, W = NULL, V_sd = rep(1, nfactors)),
     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL, Sigma_gp_phi = NULL,
@@ -28,19 +28,32 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
     R_opt = list(initial = NULL, prior_eta = 1.5),
     B_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
     sigmas_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-    phi_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL)) {
+    phi_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
+    execute = TRUE) {
 
-  # Response as vector and dimensions
+  # Names to substitute and variables of data
   responses <- substitute(responses)
-  responses_pos <- setNames(as.list(seq_along(data)), names(data))
-  pos <- eval(responses, responses_pos)
-  if (inherits(data, "sf")) {
-    # response <- sf::st_set_geometry(data, NULL) %>%
-    #   as.matrix(.[, pos, drop = FALSE])
-    response <- as.matrix(sf::st_set_geometry(data, NULL)[, pos, drop = FALSE])
+  coords <- substitute(coords)
+  vars <- setNames(as.list(seq_along(data)), names(data))
+  vars_sfc <- sapply(data, function (x) inherits(x, "sfc"))
+
+  # Coordinates
+  if (!is.null(coords)) {
+    coords_pos <- eval(coords, vars, parent.frame())
+    if (sum(vars_sfc) > 0 && length(coords_pos) == 1) {
+      coordinates <- data[[coords_pos]]
+    } else {
+      coordinates <- data[, coords_pos, drop = FALSE]
+    }
   } else {
-    response <- as.matrix(data[, pos, drop = FALSE])
+    coordinates <- NULL
   }
+
+  # Responses
+  responses_pos <- eval(responses, vars, parent.frame())
+  response <- data[, responses_pos, drop = FALSE]
+  if (inherits(response, "sf")) response <- sf::st_set_geometry(response, NULL)
+  response <- as.matrix(response)
   nobs <- nrow(response)
   nitems <- ncol(response)
   response <- as.numeric(response)
@@ -53,21 +66,7 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
     predictors <- model.matrix(pred_formula, data)
   }
 
-  # Coordinates
-  if (inherits(data, "sf")) {
-    if (!is.na(sf::st_is_longlat(data))) {
-      if (sf::st_is_longlat(data)) {
-        data <- sf::st_transform(data, "+init=epsg:3857")
-      }
-    }
-    coordinates <- sf::st_coordinates(data)
-  } else {
-    coordinates <- NULL
-  }
-
-
   # Restrictions for discrimination parameters (A) and Gaussian processes (W)
-
   constrain_L_explo <- matrix(NA, nitems, nfactors)
   constrain_L_explo <- lower.tri(constrain_L_explo, diag = TRUE) * 1
   constrain_L <- check_param_mat(constrains, "A", c(nitems, nfactors), constrain_L_explo)
@@ -78,7 +77,6 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
   n_corr <- nfactors * (nfactors - 1) / 2
 
   # Detect type of model to be fitted: EIFA, CIFA, CIFA_PRED, SPIFA, SPIFA_PRED
-
   if (!is.null(coordinates)) {
     if (!is.null(predictors)) {
       model_type = "spifa_pred"
@@ -99,14 +97,12 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
   }
 
   # Optional arguments for difficulty parameters (c)
-
   c_prior_mean <- check_param_vec(c_opt, "prior_mean", nitems, 0)
   c_prior_sd <- check_param_vec(c_opt, "prior_sd", nitems, 1)
   c_initial <- check_param_vec(c_opt, "initial", nitems,
                                rnorm(nitems, c_prior_mean, c_prior_sd))
 
   # Optional arguments for discrimination parameters (A)
-
   A_prior_mean <-
     check_param_mat2(A_opt, "prior_mean", c(nitems, nfactors), diag(1, nitems, nfactors))
   A_prior_sd <-
@@ -115,7 +111,6 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
     check_param_mat2(A_opt, "initial", c(nitems, nfactors), A_prior_mean)
 
   # Adaptive Metropolis-Hastings arguments for proposed covariance matrix
-
   adap_Sigma_R <- check_param_matdiag(adaptive, "Sigma_R", n_corr, diag(n_corr) * 0.001)
   adap_Sigma_gp_sd <-
     check_param_matdiag(adaptive, "Sigma_gp_sd", nsigmas, diag(nsigmas) * 0.001)
@@ -127,7 +122,6 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
   adap_accep_prob <- ifelse(is.null(adaptive$accep_prob), 0.234, adaptive$accep_prob)
 
   # Create general sigma proposal in order: gp_sd, gp_phi, corr_free
-
   if (is.null(coordinates)) {
     if (is.null(adaptive$Sigma)) {
       adap_Sigma <- adap_Sigma_R
@@ -146,7 +140,6 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
   }
 
   # Optional arguments for parameter of residual correlation R
-
   if (is.null(R_opt$initial)) {
     R_initial <- diag(nfactors)
   } else if (sum(dim(R_opt$initial) == c(nfactors, nfactors)) == 2) {
@@ -163,7 +156,6 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
   R_prior_eta <- ifelse(is.null(R_opt$prior_eta), 1, R_opt$prior_eta)
 
   # Optional arguments for parameter of fixed effects (Beta)
-
   if (is.null(predictors)) {
     B_prior_mean <- matrix(NA, 1, nfactors)
     B_prior_sd <- matrix(NA, 1, nfactors)
@@ -176,7 +168,6 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
   }
 
   # Optional arguments for GP standard deviations and  scale parameters
-
   if (is.null(coordinates)) {
     sigmas_gp_mean <- rep(NA, nsigmas)
     sigmas_gp_sd <- rep(NA, nsigmas)
@@ -194,10 +185,16 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
   }
 
   # Compute predictors and distances as matrices
-
   if (is.null(predictors))  predictors <- matrix(NA)
   if (is.null(coordinates)) {
     distances <- matrix(NA)
+  } else if (inherits(coordinates, "sfc")) {
+    distances <- sf::st_transform(coordinates, crs = 3857) %>%
+      sf::st_coordinates()  %>%
+      dist()  %>%
+      as.matrix()
+    # distances <- unclass(sf::st_distance(coordinates))
+    # distances <- (distances + t(distances)) / 2
   } else {
     distances <- as.matrix(dist(coordinates))
   }
@@ -220,15 +217,18 @@ spifa <- function (responses, pred_formula = NULL, data = NULL,
     model_type = model_type
     )
 
-
-  # Execute model calling c++ spifa function
-  samples <- do.call(spifa_cpp, model_info)
-
-  # Update model_info list
-  constrain_V_sd <- attr(samples, "V_sd")
-  attr(samples, "V_sd") <- NULL
-  model_info$constrain_V_sd <- constrain_V_sd
-  model_info <- append(model_info, list(coordinates = coordinates), 2)
+  # Execute c++ if requested
+  if (execute) {
+    # Execute model calling c++ spifa function
+    samples <- do.call(spifa_cpp, model_info)
+    # Update model_info list
+    constrain_V_sd <- attr(samples, "V_sd")
+    attr(samples, "V_sd") <- NULL
+    model_info$constrain_V_sd <- constrain_V_sd
+    model_info <- append(model_info, list(coordinates = coordinates), 2)
+  } else {
+    samples <- list()
+  }
 
   # Add model_info to MCMC samples
   attr(samples, "model_info") <- model_info

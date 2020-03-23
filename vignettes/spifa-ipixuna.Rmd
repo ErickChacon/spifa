@@ -1,0 +1,138 @@
+---
+title: "Spatial Item Factor Analysis"
+author: "Erick A. Chacon-Montalvan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Spatial Item Factor Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(fig.width = 7, fig.height = 4)
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+```
+
+## Introduction
+
+In this vignette, we show how to use the **spifa** package to fit a
+multidimensional 2 parameter logistic model used in item response theory. Let
+$Y_{ij}$ be the response for item
+$j$ in the individual $i$. The model can be defined by using an auxiliary variable
+$Z_{ij}$ such as
+\begin{align}
+  {Y}_{ij}  & =
+  \left\lbrace
+  \begin{array}[2]{cc}
+    1 & \text{if} ~ {Z}_{ij} > 0\\
+    0 & \text{otherwise}
+  \end{array}
+  \right.\\
+  {Z}_{ij} & = c_j + a_j^\intercal\theta_i + \epsilon_{ij},
+  ~~ \epsilon_{ij} \sim {N}(0, 1)\\
+  {\theta}_i & \sim {N}({0}, {I}_m)\\
+  c_j & \sim {N}(0, \sigma_c^2)\\
+  {a}_j & \sim {N}(0, \sigma_a^2{I}_m)\\
+\end{align}
+
+## Load required packages and data
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(spifa)
+
+data(ipixuna)
+# ipixuna_wide <- ipixuna_wide %>%
+#   sf::st_sf()
+#   dplyr::select(-coords)
+# ipixuna_wide[c("lon", "lat")] <- list(rnorm(200), rnorm(200))
+```
+
+```{r}
+knitr::kable(head(ipixuna, 10))
+```
+
+```{r}
+knitr::kable(head(ipixuna_wide, 10))
+```
+
+## Fit a spifa model for Ipixuna data
+
+```{r}
+# data(ipixuna)
+# ipixuna_wide <- sf::st_sf(ipixuna_wide)
+
+
+# parameters used for simulation
+parameters <- attr(ipixuna, "parameters")
+
+# restrictions
+L_a <- (parameters$discrimination != 0) * 1
+iter <- 1000
+
+# system.time(
+#   samples <- spifa(
+#     responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#     niter = iter, thin = 1, standardize = FALSE,
+#     constrains = list(A = L_a, W = diag(2), V_sd = 0.3 ^ 0.5),
+#     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
+#                     Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
+#                     accep_prob = 0.234),
+#     sigmas_gp_opt = list(initial = 0.6, prior_mean = 0.6, prior_sd = 0.4),
+#     phi_gp_opt = list(initial = 100, prior_mean = 100, prior_sd = 4))
+#   )
+
+system.time(
+  samples <- spifa(
+    responses = `Item 1`:`Item 10`, pred_formula = ~ x1, coords = coords,
+    data = ipixuna_wide, nfactors = 2,
+    niter = 100, thin = 1, standardize = FALSE,
+    constrains = list(A = L_a, W = diag(2), V_sd = 0.4 ^ 0.5),
+    adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
+                    Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
+                    accep_prob = 0.234),
+    sigmas_gp_opt = list(initial = 0.6, prior_mean = 0.6, prior_sd = 0.4),
+    phi_gp_opt = list(initial = 200, prior_mean = 200, prior_sd = 0.4),
+    execute = TRUE)
+  )
+
+
+attr(samples, "model_info")
+
+# hist(exp(rnorm(50000, log(0.6), 0.4)), 50)
+
+# unclass(attr(samples, "model_info")$distance[1:5, 1:5])
+
+```
+
+## Visualize results
+
+```{r}
+# library(purrr)
+# samples_tib <- as_tibble(samples)
+#
+# # summary(samples_tib)
+# # samples_long <- gather(samples_tib)
+# thin2 <- 1
+#
+# as_tibble(samples, 0, thin2, "c") %>%
+#   gg_trace(alpha = 0.6)
+#
+# as_tibble(samples, 0, thin2, "a") %>%
+#   gg_trace(alpha = 0.6)
+#
+# as_tibble(samples, 0, thin2, "corr") %>%
+#   gg_trace(alpha = 0.6)
+#
+# as_tibble.spifa.list(samples, 0, thin2, "mgp_sd") %>%
+#   gg_trace(alpha = 0.6)
+#
+# as_tibble.spifa.list(samples, 0, thin2, "mgp_phi") %>%
+#   gg_trace(alpha = 0.6)
+#
+```
+

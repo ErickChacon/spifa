@@ -6,18 +6,18 @@
 \alias{spifa-package}
 \title{spifa: Spatial (Geostatistical) Item Factor Analysis}
 \usage{
-spifa(responses, pred_formula = NULL, data = NULL, nfactors,
-  ngp = nfactors, niter = 1000, thin = 10, standardize = TRUE,
-  constrains = list(A = NULL, W = NULL, V_sd = rep(1, nfactors)),
-  adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
-  Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8, accep_prob =
-  0.234), c_opt = list(initial = NULL, prior_mean = NULL, prior_sd =
-  NULL), A_opt = list(initial = NULL, prior_mean = NULL, prior_sd =
-  NULL), R_opt = list(initial = NULL, prior_eta = 1.5),
+spifa(responses, pred_formula = NULL, coords = NULL, data = NULL,
+  nfactors, ngp = nfactors, niter = 1000, thin = 10,
+  standardize = TRUE, constrains = list(A = NULL, W = NULL, V_sd =
+  rep(1, nfactors)), adaptive = list(Sigma = NULL, Sigma_R = NULL,
+  Sigma_gp_sd = NULL, Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
+  accep_prob = 0.234), c_opt = list(initial = NULL, prior_mean = NULL,
+  prior_sd = NULL), A_opt = list(initial = NULL, prior_mean = NULL,
+  prior_sd = NULL), R_opt = list(initial = NULL, prior_eta = 1.5),
   B_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
   sigmas_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd =
   NULL), phi_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd =
-  NULL))
+  NULL), execute = TRUE)
 }
 \arguments{
 \item{par.}{}
@@ -45,5 +45,5 @@ Emanuele Giorgi, \email{e.giorgi@lancaster.ac.uk}
 
 Benjamin M. Taylor, \email{b.taylor1@lancaster.ac.uk}
 
-Erick A. Chacon-Montalvan
+Erick A. Chacón-Montalván
 }
