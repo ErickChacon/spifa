@@ -1,0 +1,65 @@
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(spifa)
+library(purrr)
+
+simdata <- function(n, easiness, discrimination) {
+}
+
+n <- 100
+m <- 3
+q <- 10
+easiness <- matrix((1:q - 5)/10 * 2)
+discrimination <- matrix(runif(q * m, 0, 2), q, m)
+discrimination[abs(discrimination) < 1] <- 0
+
+ability <- matrix(rnorm(n * m), n, m)
+error <- matrix(rnorm(n * q), n, q)
+
+Z <- matrix(easiness, n, q, byrow = TRUE) +
+    ability %*% t(discrimination) + error
+Y <- 1 * (Z > 0)
+
+# plot(as.numeric(easiness), apply(Y, 2, mean))
+# # plot(as.numeric(easiness), apply(Y, 2, mean))
+itemdata <- as_tibble(Y) |>
+    rename_with(~ gsub("V", "y", .x), matches("^V[0-9]+$"))
+```
+
+```{r}
+
+L_a = (discrimination != 0) * 1
+L_a[4,1] = 1
+
+# I should add burnin
+system.time(
+samples <- spifa(
+  responses = y1:y10, data = itemdata, nfactors = 3,
+  niter = 5000, thin = 1, standardize = TRUE,
+  constrains = list(A = L_a))
+)
+mcmc <- as_tibble(samples)
+mcmc <- tidyr::gather(mcmc)
+
+as_tibble(samples, 5000/2, 1, "c") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble(samples, 2000, 10, "c") %>%
+  gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 3)
+  easiness
+
+as_tibble(samples, 2000, 10, "a") %>%
+  gg_density(alpha = 0.5, ridges = TRUE, aes(fill = Parameters), scale = 3)
+discrimination
+
+as_tibble(samples, 2000, select = "a") %>%
+  summary() %>%
+  gg_errorbarh(sorted = FALSE)
+
+
+
+```
+
+
