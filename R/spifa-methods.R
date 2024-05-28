@@ -265,6 +265,10 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
   } else {
     npred1 <- nrow(newcoords)
     newdist <- as.matrix(dist(newcoords))
+      if (inherits(info$coordinates, "sfc")) {
+        info$coordinates <- sf::st_transform(info$coordinates, crs = 3857) %>%
+          sf::st_coordinates()
+      }
     cross_distances <- as.matrix(pdist::pdist(newcoords, as.matrix(info$coordinates)))
   }
 
