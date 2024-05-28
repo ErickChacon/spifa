@@ -18,10 +18,6 @@ return.
 \details{
 details.
 }
-\examples{
-
-
-}
 \author{
 Erick A. Chacon-Montalvan
 }

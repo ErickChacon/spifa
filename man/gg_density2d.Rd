@@ -4,8 +4,16 @@
 \alias{gg_density2d}
 \title{2D Densities of Samples}
 \usage{
-gg_density2d(samples, var1, var2, each = NULL, keys = c("group",
-  "Parameter"), highlight = NULL, ncol = NULL, ...)
+gg_density2d(
+  samples,
+  var1,
+  var2,
+  each = NULL,
+  keys = c("group", "Parameter"),
+  highlight = NULL,
+  ncol = NULL,
+  ...
+)
 }
 \arguments{
 \item{par.}{}

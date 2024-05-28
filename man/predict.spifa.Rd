@@ -4,8 +4,15 @@
 \alias{predict.spifa}
 \title{Prediction Spatial Multidimensional Item Response Model with Predictors}
 \usage{
-\method{predict}{spifa}(object, newdata = NULL, newcoords = NULL,
-  burnin = 0, thin = 1, se.fit = FALSE, ...)
+\method{predict}{spifa}(
+  object,
+  newdata = NULL,
+  newcoords = NULL,
+  burnin = 0,
+  thin = 1,
+  se.fit = FALSE,
+  ...
+)
 }
 \arguments{
 \item{par.}{}
@@ -18,11 +25,6 @@ return.
 }
 \details{
 details.
-}
-\examples{
-
-
-
 }
 \author{
 Erick A. Chacon-Montalvan

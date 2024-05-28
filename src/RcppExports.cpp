@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // adaptive_haario
 Rcpp::List adaptive_haario(arma::vec mean, arma::mat Sigma, int iter);
 RcppExport SEXP _spifa_adaptive_haario(SEXP meanSEXP, SEXP SigmaSEXP, SEXP iterSEXP) {

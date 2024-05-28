@@ -4,8 +4,7 @@
 \alias{as_tibble.spifa.list}
 \title{Convert Samples to Tibble}
 \usage{
-\method{as_tibble}{spifa.list}(samples, burnin = 0, thin = 1,
-  select = names(samples))
+\method{as_tibble}{spifa.list}(samples, burnin = 0, thin = 1, select = names(samples))
 }
 \arguments{
 \item{par.}{}

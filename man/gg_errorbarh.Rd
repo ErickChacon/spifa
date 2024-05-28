@@ -4,8 +4,12 @@
 \alias{gg_errorbarh}
 \title{Horizontal Errorbar Plot of Samples}
 \usage{
-gg_errorbarh(df_summary, sorted = FALSE, colors = c(rgb(1, 0.5, 0.1),
-  "black"), ...)
+gg_errorbarh(
+  df_summary,
+  sorted = FALSE,
+  colors = c(rgb(1, 0.5, 0.1), "black"),
+  ...
+)
 }
 \arguments{
 \item{par.}{}
