@@ -511,6 +511,40 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// predict2_spifa_cpp
+Rcpp::List predict2_spifa_cpp(arma::mat samples_theta, arma::mat samples_corr_chol, arma::mat samples_corr, arma::mat samples_mgp_sd, arma::mat samples_mgp_phi, arma::mat samples_betas, Rcpp::NumericVector response, arma::mat predictors, arma::mat newpredictors, arma::mat distances, arma::mat newdist, arma::mat cross_distances, int nobs, int nitems, int nfactors, int ngp, int npred, int niter, int burnin, int thin, arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd, std::string model_type);
+RcppExport SEXP _spifa_predict2_spifa_cpp(SEXP samples_thetaSEXP, SEXP samples_corr_cholSEXP, SEXP samples_corrSEXP, SEXP samples_mgp_sdSEXP, SEXP samples_mgp_phiSEXP, SEXP samples_betasSEXP, SEXP responseSEXP, SEXP predictorsSEXP, SEXP newpredictorsSEXP, SEXP distancesSEXP, SEXP newdistSEXP, SEXP cross_distancesSEXP, SEXP nobsSEXP, SEXP nitemsSEXP, SEXP nfactorsSEXP, SEXP ngpSEXP, SEXP npredSEXP, SEXP niterSEXP, SEXP burninSEXP, SEXP thinSEXP, SEXP constrain_LSEXP, SEXP constrain_TSEXP, SEXP constrain_V_sdSEXP, SEXP model_typeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type samples_theta(samples_thetaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type samples_corr_chol(samples_corr_cholSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type samples_corr(samples_corrSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type samples_mgp_sd(samples_mgp_sdSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type samples_mgp_phi(samples_mgp_phiSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type samples_betas(samples_betasSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type predictors(predictorsSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type newpredictors(newpredictorsSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type distances(distancesSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type newdist(newdistSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type cross_distances(cross_distancesSEXP);
+    Rcpp::traits::input_parameter< int >::type nobs(nobsSEXP);
+    Rcpp::traits::input_parameter< int >::type nitems(nitemsSEXP);
+    Rcpp::traits::input_parameter< int >::type nfactors(nfactorsSEXP);
+    Rcpp::traits::input_parameter< int >::type ngp(ngpSEXP);
+    Rcpp::traits::input_parameter< int >::type npred(npredSEXP);
+    Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
+    Rcpp::traits::input_parameter< int >::type burnin(burninSEXP);
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type constrain_L(constrain_LSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type constrain_T(constrain_TSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type constrain_V_sd(constrain_V_sdSEXP);
+    Rcpp::traits::input_parameter< std::string >::type model_type(model_typeSEXP);
+    rcpp_result_gen = Rcpp::wrap(predict2_spifa_cpp(samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type));
+    return rcpp_result_gen;
+END_RCPP
+}
 // logit
 double logit(double p);
 RcppExport SEXP _spifa_logit(SEXP pSEXP) {
@@ -971,6 +1005,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_spifa_dic_cpp", (DL_FUNC) &_spifa_dic_cpp, 8},
     {"_spifa_spifa_cpp", (DL_FUNC) &_spifa_spifa_cpp, 36},
     {"_spifa_predict_spifa_cpp", (DL_FUNC) &_spifa_predict_spifa_cpp, 24},
+    {"_spifa_predict2_spifa_cpp", (DL_FUNC) &_spifa_predict2_spifa_cpp, 24},
     {"_spifa_logit", (DL_FUNC) &_spifa_logit, 1},
     {"_spifa_logistic", (DL_FUNC) &_spifa_logistic, 1},
     {"_spifa_ifa_gibbs_nonide", (DL_FUNC) &_spifa_ifa_gibbs_nonide, 5},

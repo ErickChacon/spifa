@@ -79,3 +79,35 @@ Rcpp::List predict_spifa_cpp(arma::mat samples_theta, arma::mat samples_corr_cho
   return output;
 }
 
+// [[Rcpp::export]]
+Rcpp::List predict2_spifa_cpp(arma::mat samples_theta, arma::mat samples_corr_chol,
+    arma::mat samples_corr, arma::mat samples_mgp_sd, arma::mat samples_mgp_phi,
+    arma::mat samples_betas,
+    Rcpp::NumericVector response, arma::mat predictors, arma::mat newpredictors,
+    arma::mat distances, arma::mat newdist, arma::mat cross_distances,
+    int nobs, int nitems, int nfactors, int ngp, int npred,
+    int niter, int burnin, int thin,
+    arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd,
+    std::string model_type
+    ) {
+
+  Ifa model(response, predictors, distances,
+      nobs, nitems, nfactors, ngp,
+      constrain_L, constrain_T, constrain_V_sd,
+      model_type);
+
+  Rcpp::List output = model.predict2(samples_theta, samples_corr_chol, samples_corr,
+      samples_mgp_sd,
+      samples_mgp_phi, samples_betas,
+      newpredictors, newdist, cross_distances,
+      npred, niter, burnin, thin);
+
+  // Rcpp::List output = Rcpp::List::create(
+  //     Rcpp::Named("beta") = 1,
+  //     Rcpp::Named("corr_chol") = 2,
+  //     Rcpp::Named("corr") = 3,
+  //     Rcpp::Named("sigmas") = 5
+  //     );
+  return output;
+}
+

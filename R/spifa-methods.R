@@ -234,7 +234,7 @@ dic.spifa <- function (object) {
 #'
 #' @export
 predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
-                                thin = 1, se.fit = FALSE, ...) {
+                                thin = 1, se.fit = FALSE, what = NULL, ...) {
 
   # if (inherits(object, "spifa")) {
   #   object <- as.list(object)
@@ -314,7 +314,11 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
     )
 
   # Predict calling c++ predict_spifa_cpp
-  prediction <- do.call(predict_spifa_cpp, pred_list)
+  if (is.null(what)) {
+    prediction <- do.call(predict_spifa_cpp, pred_list)
+  } else {
+    prediction <- do.call(predict2_spifa_cpp, pred_list)
+  }
 
   return(prediction)
   # return(pred_list)

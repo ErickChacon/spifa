@@ -104,6 +104,11 @@ public:
       arma::mat newpredictors, arma::mat newdist, arma::mat cross_distances,
       int npred, int niter, int burnin, int thin);
 
+  Rcpp::List predict2(arma::mat samples_theta, arma::mat samples_corr_chol,
+      arma::mat samples_corr,
+      arma::mat samples_mgp_sd, arma::mat samples_mgp_phi, arma::mat samples_betas,
+      arma::mat newpredictors, arma::mat newdist, arma::mat cross_distances,
+      int npred, int niter, int burnin, int thin);
 };
 
 

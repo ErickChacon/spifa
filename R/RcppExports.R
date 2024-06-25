@@ -322,6 +322,10 @@ predict_spifa_cpp <- function(samples_theta, samples_corr_chol, samples_corr, sa
     .Call(`_spifa_predict_spifa_cpp`, samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type)
 }
 
+predict2_spifa_cpp <- function(samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type) {
+    .Call(`_spifa_predict2_spifa_cpp`, samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type)
+}
+
 #' @export
 logit <- function(p) {
     .Call(`_spifa_logit`, p)

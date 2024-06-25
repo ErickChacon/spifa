@@ -550,3 +550,94 @@ Rcpp::List Ifa::predict(arma::mat samples_theta, arma::mat samples_corr_chol,
   return output;
 }
 
+Rcpp::List Ifa::predict2(arma::mat samples_theta, arma::mat samples_corr_chol,
+    arma::mat samples_corr,
+    arma::mat samples_mgp_sd, arma::mat samples_mgp_phi, arma::mat samples_betas,
+    arma::mat newpredictors, arma::mat newdist, arma::mat cross_distances,
+    int npred, int niter, int burnin, int thin)
+{
+
+  // dimensions
+  int nsave = (niter - burnin) / thin;
+  arma::mat prediction(npred * m, nsave);
+
+  int isave = 0;
+
+  if (model_type == "cifa_pred") {
+    for (int i = burnin; i < niter; i += thin) {
+      // compute the mean
+      arma::mat B = vec2mat(samples_betas.col(i), p, m);
+      arma::vec pred_mean = arma::vectorise(newpredictors * B);
+      // build auxiliary cholesky of covariance
+      arma::mat Corr_chol_aux = vec2trimatl(samples_corr_chol.col(i), m);
+      arma::mat pred_cov_chol_aux = Corr_chol_aux;
+      pred_cov_chol_aux.each_col() %= V_sd;
+      // samples prediction
+      prediction.col(isave) =
+        pred_mean + arma::vectorise(arma::randn(npred, m) * pred_cov_chol_aux.t());
+      isave++;
+    }
+  }
+
+  if (model_type == "spifa" || model_type == "spifa_pred") {
+    arma::mat eye_npred = arma::eye(npred, npred);
+    for (int i = burnin; i < niter; i += thin) {
+      // compute means
+      arma::vec obs_mean(n*m, arma::fill::zeros);
+      arma::vec new_mean(npred*m, arma::fill::zeros);
+      if (model_type == "spifa_pred") {
+        arma::mat B = vec2mat(samples_betas.col(i), p, m);
+        obs_mean = arma::vectorise(X * B);
+        // new_mean = arma::vectorise(newpredictors * B);
+      }
+      // compute correlation of residual term
+      arma::mat Cov_aux = vec2trimatl(samples_corr.col(i), m, false);
+      Cov_aux.diag().ones();
+      Cov_aux.each_col() %= V_sd;
+      Cov_aux.each_row() %= V_sd.t();
+      // compute variances and covariances
+      arma::mat obs_mgp_Sigma(n*ngp, n*ngp, arma::fill::zeros);
+      arma::mat new_mgp_Sigma(npred*ngp, npred*ngp, arma::fill::zeros);
+      arma::mat new_mgp_Cov(npred*ngp, n*ngp, arma::fill::zeros);
+      for (int j = 0; j < ngp; ++j) {
+        obs_mgp_Sigma.submat(j*n, j*n, arma::size(n, n)) =
+          exp(- dist / samples_mgp_phi(j,i));
+        new_mgp_Sigma.submat(j*npred, j*npred, arma::size(npred, npred)) =
+          exp(- newdist / samples_mgp_phi(j,i));
+        new_mgp_Cov.submat(j*npred, j*n, arma::size(npred, n)) =
+          exp(- cross_distances / samples_mgp_phi(j,i));
+      }
+      T(T_index) = samples_mgp_sd.col(i);
+      obs_mgp_Sigma = TST(obs_mgp_Sigma, T) + arma::kron(Cov_aux, eye_n);
+      new_mgp_Sigma = TST(new_mgp_Sigma, T);
+      new_mgp_Cov = arma::kron(T, eye_npred) * new_mgp_Cov * arma::kron(T.t(), eye_n);
+      // inv(chol(S_22)) * S_21
+      arma::mat obs_mgp_Sigma_chol_inv =
+        arma::inv(trimatl(arma::chol(obs_mgp_Sigma, "lower")));
+      arma::mat L_inv_S21 = obs_mgp_Sigma_chol_inv * new_mgp_Cov.t();
+      arma::mat L_inv_res = obs_mgp_Sigma_chol_inv * (samples_theta.col(i) - obs_mean);
+      // compute prediction mean and variance
+      arma::vec pred_mean = new_mean + L_inv_S21.t() * L_inv_res;
+      arma::mat pred_var = new_mgp_Sigma - L_inv_S21.t() * L_inv_S21;
+      // sample prediction
+      if (true) {
+        prediction.col(isave) =
+          pred_mean + sqrt(pred_var.diag()) % arma::randn(npred * m);
+      } else {
+        prediction.col(isave) =
+          pred_mean + arma::chol(pred_var, "lower") * arma::randn(npred * m);
+      }
+      isave++;
+    }
+  }
+
+  Rcpp::NumericMatrix prediction_rcpp = Rcpp::wrap(prediction.t());
+  Rcpp::colnames(prediction_rcpp) = name_samples_mat(npred, m, "Theta");
+
+  Rcpp::List output = Rcpp::List::create(
+      Rcpp::Named("theta") = prediction_rcpp
+      );
+
+  return output;
+}
+
