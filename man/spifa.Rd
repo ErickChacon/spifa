@@ -5,43 +5,38 @@
 \title{Fit an (Spatial) Item Factor Analysis Model}
 \usage{
 spifa(
-  responses,
-  pred_formula = NULL,
-  coords = NULL,
-  data = NULL,
+  formula,
+  data,
   nfactors,
   ngp = nfactors,
   niter = 1000,
   thin = 10,
   standardize = TRUE,
-  constrains = list(A = NULL, W = NULL, V_sd = rep(1, nfactors)),
-  adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL, Sigma_gp_phi = NULL,
-    scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
-  c_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-  A_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-  R_opt = list(initial = NULL, prior_eta = 1.5),
-  B_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-  sigmas_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-  phi_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
+  constraints = list(discrimination = NULL, mgp = NULL, resid_sd = rep(1, nfactors)),
+  priors = list(difficulty = list(initial = NULL, mean = NULL, sd = NULL), discrimination
+    = list(initial = NULL, mean = NULL, sd = NULL), effect = list(initial = NULL, mean =
+    NULL, sd = NULL), resid_corr = list(initial = NULL, eta = 1.5), mgp_sd = list(initial
+    = NULL, mean = NULL, sd = NULL), mgp_range = list(initial = NULL, mean = NULL, sd =
+    NULL)),
+  adaptive = list(Sigma = NULL, Sigma_resid_corr = NULL, Sigma_mgp_sd = NULL,
+    Sigma_mgp_range = NULL, scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
   execute = TRUE
 )
 }
 \arguments{
-\item{responses}{Bare (unquoted) column names or a tidy-select range (e.g.
-\code{`Item 1`:`Item 10`}) identifying the binary item columns in
-\code{data}.}
+\item{formula}{A two-sided formula \code{items ~ predictors}. The
+left-hand side must be a single symbol naming a matrix-valued column of
+\code{data} holding the binary item responses (see Details). The
+right-hand side specifies predictors for the latent factors (e.g.
+\code{~ x1 + x2}); use \code{items ~ 1} for no predictors.}
 
-\item{pred_formula}{An optional one-sided formula (e.g. \code{~ x1})
-specifying predictors for the latent factors. If \code{NULL} (default),
-no predictors are included.}
-
-\item{coords}{Bare (unquoted) name of a column in \code{data} holding
-spatial coordinates (either a two-column matrix/data frame or an
-\code{sfc} geometry column). If \code{NULL} (default), no spatial
-structure is included.}
-
-\item{data}{A data frame (or \code{sf} object) containing the item
-responses and, if used, the predictors and coordinates.}
+\item{data}{A data frame containing the item-response matrix column named
+on the left-hand side of \code{formula} and, if used, the predictor
+columns named on its right-hand side. If \code{data} is an
+\code{\link[sf]{sf}} object, its geometry (\code{\link[sf]{st_geometry}})
+is used as the spatial coordinates and a spatial Gaussian process is added
+to the model; pass a plain (non-\code{sf}) data frame — e.g. via
+\code{\link[sf]{st_set_geometry}(data, NULL)} — for a non-spatial model.}
 
 \item{nfactors}{Number of latent factors (dimensions of the ability
 construct).}
@@ -57,44 +52,40 @@ factors. Defaults to \code{nfactors} (one GP per factor).}
 \item{standardize}{Logical; if \code{TRUE} (default), predictors are
 standardized before fitting.}
 
-\item{constrains}{Named list of constrains associated to the factor model. Accepted
-names are `A`, `W`, and `V_sd`. The restrictions in the discrimination paramater should
-be place in the element `A` with same dimensions as the discrimination matrix (nitems x
-nfactors). A value of 0 indicates that link betwen the item and the factor is disabled
-and 1 indicates that it remain active and the coefficient associated will be estimated.
-The restrictions for the gaussian processes should be place in the element `W` with
-dimensions nfactors x ngps, such as a value of 0 indicates a link disconnected between
-the factor and the gp while 1 indicates that it remains active. The restrictions with
-respect to the standard deviation of the error terms inside the latent factors should
-be placed in the element `V_sd`, which should be a vector (length nfactors) providing
-the fixed values for the error standard deviation. If the model includes predictors or
-gaussian processes, it is recomended to be lower than 1.}
+\item{constraints}{Named list of constraints associated to the factor model. Accepted
+names are `discrimination`, `mgp`, and `resid_sd`. The restrictions on the
+discrimination paramater should be placed in the element `discrimination` with same
+dimensions as the discrimination matrix (nitems x nfactors). A value of 0 indicates that
+the link betwen the item and the factor is disabled and 1 indicates that it remains
+active and the coefficient associated will be estimated. The restrictions for the
+multivariate Gaussian process should be placed in the element `mgp` with dimensions
+nfactors x ngp, such as a value of 0 indicates a link disconnected between the factor
+and the (independent) GP while 1 indicates that it remains active. The restrictions with
+respect to the standard deviation of the latent factors' residual term should be placed
+in the element `resid_sd`, which should be a vector (length nfactors) providing the fixed
+values for that standard deviation (paired with `priors$resid_corr`, together they
+parameterize the residual covariance — see `dev/design/scope.md`). If the model includes
+predictors or a Gaussian process, it is recomended to be lower than 1.}
+
+\item{priors}{Named list of initial values and prior hyperparameters, one
+element per parameter block: `difficulty`, `discrimination`, `effect`
+(predictor effect on the latent factors), `resid_corr` (correlation of the
+latent factors' residual term, paired with `constraints$resid_sd`),
+`mgp_sd` (multivariate Gaussian process standard deviations), and
+`mgp_range` (multivariate Gaussian process scale parameters). Each
+element (except `resid_corr`) accepts `initial`, `mean`, and `sd`;
+`resid_corr` accepts `initial` and `eta` (the LKJ prior shape parameter).
+See `dev/design/scope.md` for the mapping between these names and the
+paper's notation (`c`, `a`, `B`, `R`).}
 
 \item{adaptive}{Named list of hyperparameters associated with the adaptive sampling.
 The adaptive sampling is done jointly for the `correlation` parameters, `standard
 deviation of the gps` and `scale parameter of the gps`. The matrix `Sigma` can be
 provided as the full covariance matrix of these parameters for the proposal
 distribution. Otherwise, part of this matrix can be provided by using the elements
-`Sigma`, `Sigma_R`, `Sigma_gp_sd` and `Sigma_gp_phi`. Additional elements are `scale`,
+`Sigma`, `Sigma_resid_corr`, `Sigma_mgp_sd` and `Sigma_mgp_range`. Additional elements are `scale`,
 `C`, `alpha` and `accep_prob` which are hyperparameters of the adaptive sampling
 proposed in Andrieu and Thomas (2008).}
-
-\item{c_opt}{Named list of initial values and hyperparameters for the easiness
-parameters. The initial value is provided in the element `initial`, and the prior meand
-and standard deviation are provided in the elements `prior_mean` and `prior_sd`
-respectively.}
-
-\item{A_opt}{Same as c_opt but for the discrimination parameters.}
-
-\item{R_opt}{Same as c_opt but for the correlation parameters. This list only accepts
-`initial` value and `prior_eta` associated to the LKJ prior.}
-
-\item{B_opt}{Same as c_opt but for the regression parameters.}
-
-\item{sigmas_gp_opt}{Same as c_opt but for the standard deviation of the gaussian
-processes.}
-
-\item{phi_gp_opt}{Same as c_opt but for the scale parameter of the gaussian processes.}
 
 \item{execute}{Logical value to run sampler or not. TRUE by default.}
 }
@@ -118,13 +109,26 @@ with adaptive Metropolis-Hastings updates for the spatial range and
 correlation parameters.
 }
 \details{
-The type of model fitted is determined automatically from the arguments
-supplied: no \code{coords} and no \code{pred_formula} with unrestricted
-\code{constrains$A} gives exploratory IFA (EIFA); no \code{coords} and no
-\code{pred_formula} with a restricted \code{constrains$A} gives
-confirmatory IFA (CIFA); adding \code{pred_formula} gives CIFA with
-predictors; adding \code{coords} gives spatial IFA (SPIFA), with or
-without predictors.
+The type of model fitted is determined automatically from \code{formula}
+and the class of \code{data}: a one-sided right-hand side (\code{items ~
+1}) with unrestricted \code{constraints$discrimination} gives exploratory
+IFA (EIFA); the same with a restricted \code{constraints$discrimination}
+gives confirmatory IFA (CIFA); adding predictors to the right-hand side
+(e.g. \code{items ~ x1}) gives CIFA with predictors; \code{data} being an
+\code{\link[sf]{sf}} object adds a spatial Gaussian process on the latent
+factors, giving spatial IFA (SPIFA), with or without predictors.
+
+The left-hand side of \code{formula} must be a single symbol naming a
+matrix-valued column of \code{data} (\code{nobs x nitems}, one row per
+respondent, one column per binary item) — the same mechanism base R uses
+for multivariate \code{\link[stats]{lm}}. Build it with \code{\link{I}}
+(or ordinary \code{$<-} assignment) so it survives as a matrix column
+rather than being flattened into separate columns, e.g.:
+\preformatted{
+items <- as.matrix(dplyr::select(data, `Item 1`:`Item 10`))
+data$items <- items
+spifa(items ~ x1, data = data, nfactors = 2)
+}
 }
 \examples{
 data(ipixuna)
@@ -134,10 +138,11 @@ parameters <- attr(ipixuna_wide, "parameters")
 L_a <- (parameters$discrimination != 0) * 1
 
 # confirmatory item factor analysis (small niter for a fast example)
+ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 samples <- spifa(
-  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  items ~ 1, data = ipixuna_wide, nfactors = 2,
   niter = 20, thin = 1, standardize = FALSE,
-  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+  constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 summary(samples)
 
 }

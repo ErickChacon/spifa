@@ -1,4 +1,47 @@
 
+#' @title Print a spifa.list Object
+#'
+#' @description
+#' Concise summary of a fitted \code{spifa.list} object (the raw output of
+#' \code{\link{spifa}}): model type, data dimensions, MCMC settings, and the
+#' stored parameter blocks — rather than dumping every raw MCMC sample
+#' matrix to the console. Convert to a tidy tibble with
+#' \code{\link{as_tibble.spifa.list}} for further inspection.
+#'
+#' @param x An object of class \code{spifa.list}, as returned by
+#' \code{\link{spifa}}.
+#' @param ... Further arguments passed to methods (currently unused).
+#'
+#' @return Invisibly returns \code{x}.
+#'
+#' @author Erick A. Chacón-Montalván
+#'
+#' @examples
+#' data(ipixuna)
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+#' samples <- spifa(items ~ 1, data = ipixuna_wide, nfactors = 2, niter = 20, thin = 1)
+#' samples
+#'
+#' @export
+print.spifa.list <- function (x, ...) {
+
+  info <- attr(x, "model_info")
+  cat("<spifa model fit>\n")
+  cat("Model type: ", info$model_type, "\n", sep = "")
+  cat(info$nobs, " respondents, ", info$nitems, " items, ", info$nfactors,
+      " factors\n", sep = "")
+  if (length(x) == 0) {
+    cat(info$niter, " iterations requested (thin = ", info$thin,
+        "); not executed (`execute = FALSE`)\n", sep = "")
+  } else {
+    cat(info$niter, " iterations, thinned by ", info$thin, " (", nrow(x[[1]]),
+        " stored)\n", sep = "")
+    cat("Parameter blocks: ", paste(names(x), collapse = ", "), "\n", sep = "")
+  }
+  cat("Use as_tibble() for a tidy tibble, summary() for posterior summaries.\n")
+  invisible(x)
+}
+
 #' @title Convert MCMC Samples to a Wide Tibble
 #'
 #' @description
@@ -26,10 +69,11 @@
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' samples_tib <- as_tibble(samples)
 #' samples_tib
 #' }
@@ -96,10 +140,11 @@ as_list <- function (x, ...) {
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' samples_tib <- as_tibble(samples)
 #' samples_list <- as_list(samples_tib)
 #' names(samples_list)
@@ -161,10 +206,11 @@ as_list.spifa <- function (x, ...) {
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' wide <- as_tibble(samples, select = "c")
 #' long <- gather.spifa(wide)
 #' long
@@ -225,10 +271,11 @@ gather.spifa <- function (samples_wide, each = NULL,
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' samples_tib <- as_tibble(samples, select = "c")
 #' summary(samples_tib)
 #' }
@@ -236,12 +283,11 @@ gather.spifa <- function (samples_wide, each = NULL,
 #' @export
 summary.spifa <- function (object, select = names(object), ...) {
 
-  df <- object
+  df <- object[select]
   df_names <- names(df)
-  df <- df %>%
-    purrr::map(function (x) quantile(x, c(0.025, 0.1, 0.5, 0.9, 0.975), na.rm = TRUE)) %>%
-    purrr::reduce(rbind) %>%
-    tibble::as_tibble() %>%
+  quantiles <- vapply(df, quantile, numeric(5),
+                       probs = c(0.025, 0.1, 0.5, 0.9, 0.975), na.rm = TRUE)
+  df <- tibble::as_tibble(t(quantiles)) %>%
     dplyr::mutate(Parameters = factor(df_names, df_names))
   df <- df[c(ncol(df), 1:(ncol(df)-1))]
   return(df)
@@ -285,10 +331,11 @@ dic <- function (x, ...) {
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' samples_tib <- as_tibble(samples)
 #' dic(samples_tib)
 #' }
@@ -329,8 +376,8 @@ dic.spifa <- function (x, ...) {
 #'
 #' @param object A wide \code{spifa} samples tibble, e.g. from
 #' \code{\link{as_tibble.spifa.list}}.
-#' @param newdata New values of the predictors used in
-#' \code{pred_formula} when the model was fitted (only needed for models
+#' @param newdata New values of the predictors used on the right-hand side
+#' of \code{formula} when the model was fitted (only needed for models
 #' with predictors).
 #' @param newcoords New spatial coordinates to predict at (only needed for
 #' spatial, i.e. \code{spifa}/\code{spifa_pred}, models).
@@ -352,10 +399,12 @@ dic.spifa <- function (x, ...) {
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_sf <- sf::st_as_sf(ipixuna_wide)
+#' ipixuna_sf$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, coords = coords, data = ipixuna_wide,
+#'   items ~ 1, data = ipixuna_sf,
 #'   nfactors = 2, niter = 5, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' samples_tib <- as_tibble(samples)
 #' newcoords <- sf::st_coordinates(ipixuna_wide$coords)[1:5, , drop = FALSE]
 #' predict(samples_tib, newcoords = newcoords)

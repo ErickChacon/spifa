@@ -37,10 +37,11 @@ row per parameter), using the output of \code{\link{summary.spifa}}.
 data(ipixuna)
 parameters <- attr(ipixuna_wide, "parameters")
 L_a <- (parameters$discrimination != 0) * 1
+ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 samples <- spifa(
-  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  items ~ 1, data = ipixuna_wide, nfactors = 2,
   niter = 20, thin = 1, standardize = FALSE,
-  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+  constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 samples_tib <- as_tibble(samples, select = "c")
 gg_errorbarh(summary(samples_tib))
 }

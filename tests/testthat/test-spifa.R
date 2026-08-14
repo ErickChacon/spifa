@@ -2,11 +2,12 @@ test_that("spifa() fits a confirmatory (non-spatial) model end-to-end", {
   data(ipixuna, package = "spifa")
   parameters <- attr(ipixuna_wide, "parameters")
   L_a <- (parameters$discrimination != 0) * 1
+  ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 
   samples <- spifa(
-    responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+    items ~ 1, data = ipixuna_wide, nfactors = 2,
     niter = 5, thin = 1, standardize = FALSE,
-    constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+    constraints = list(discrimination = L_a, gp_loadings = diag(2), resid_sd = rep(0.5, 2)))
 
   expect_s3_class(samples, "spifa.list")
   expect_setequal(names(samples),
@@ -29,13 +30,15 @@ test_that("spifa() fits a spatial model with predictors and predicts at new loca
   data(ipixuna, package = "spifa")
   parameters <- attr(ipixuna_wide, "parameters")
   L_a <- (parameters$discrimination != 0) * 1
+  ipixuna_sf <- sf::st_as_sf(ipixuna_wide)
+  ipixuna_sf$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 
   samples <- spifa(
-    responses = `Item 1`:`Item 10`, pred_formula = ~ x1, coords = coords,
-    data = ipixuna_wide, nfactors = 2, niter = 5, thin = 1, standardize = FALSE,
-    constrains = list(A = L_a, W = diag(2), V_sd = rep(0.4^0.5, 2)),
-    sigmas_gp_opt = list(initial = 0.6, prior_mean = 0.6, prior_sd = 0.4),
-    phi_gp_opt = list(initial = 200, prior_mean = 200, prior_sd = 0.4))
+    items ~ x1, data = ipixuna_sf, nfactors = 2, niter = 5, thin = 1, standardize = FALSE,
+    constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.4^0.5, 2)),
+    priors = list(
+      mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
+      mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
 
   expect_s3_class(samples, "spifa.list")
 

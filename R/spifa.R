@@ -1,4 +1,3 @@
-
 #' @title Fit an (Spatial) Item Factor Analysis Model
 #'
 #' @description
@@ -13,26 +12,39 @@
 #' correlation parameters.
 #'
 #' @details
-#' The type of model fitted is determined automatically from the arguments
-#' supplied: no \code{coords} and no \code{pred_formula} with unrestricted
-#' \code{constrains$A} gives exploratory IFA (EIFA); no \code{coords} and no
-#' \code{pred_formula} with a restricted \code{constrains$A} gives
-#' confirmatory IFA (CIFA); adding \code{pred_formula} gives CIFA with
-#' predictors; adding \code{coords} gives spatial IFA (SPIFA), with or
-#' without predictors.
+#' The type of model fitted is determined automatically from \code{formula}
+#' and the class of \code{data}: a one-sided right-hand side (\code{items ~
+#' 1}) with unrestricted \code{constraints$discrimination} gives exploratory
+#' IFA (EIFA); the same with a restricted \code{constraints$discrimination}
+#' gives confirmatory IFA (CIFA); adding predictors to the right-hand side
+#' (e.g. \code{items ~ x1}) gives CIFA with predictors; \code{data} being an
+#' \code{\link[sf]{sf}} object adds a spatial Gaussian process on the latent
+#' factors, giving spatial IFA (SPIFA), with or without predictors.
 #'
-#' @param responses Bare (unquoted) column names or a tidy-select range (e.g.
-#' \code{`Item 1`:`Item 10`}) identifying the binary item columns in
-#' \code{data}.
-#' @param pred_formula An optional one-sided formula (e.g. \code{~ x1})
-#' specifying predictors for the latent factors. If \code{NULL} (default),
-#' no predictors are included.
-#' @param coords Bare (unquoted) name of a column in \code{data} holding
-#' spatial coordinates (either a two-column matrix/data frame or an
-#' \code{sfc} geometry column). If \code{NULL} (default), no spatial
-#' structure is included.
-#' @param data A data frame (or \code{sf} object) containing the item
-#' responses and, if used, the predictors and coordinates.
+#' The left-hand side of \code{formula} must be a single symbol naming a
+#' matrix-valued column of \code{data} (\code{nobs x nitems}, one row per
+#' respondent, one column per binary item) — the same mechanism base R uses
+#' for multivariate \code{\link[stats]{lm}}. Build it with \code{\link{I}}
+#' (or ordinary \code{$<-} assignment) so it survives as a matrix column
+#' rather than being flattened into separate columns, e.g.:
+#' \preformatted{
+#' items <- as.matrix(dplyr::select(data, `Item 1`:`Item 10`))
+#' data$items <- items
+#' spifa(items ~ x1, data = data, nfactors = 2)
+#' }
+#'
+#' @param formula A two-sided formula \code{items ~ predictors}. The
+#' left-hand side must be a single symbol naming a matrix-valued column of
+#' \code{data} holding the binary item responses (see Details). The
+#' right-hand side specifies predictors for the latent factors (e.g.
+#' \code{~ x1 + x2}); use \code{items ~ 1} for no predictors.
+#' @param data A data frame containing the item-response matrix column named
+#' on the left-hand side of \code{formula} and, if used, the predictor
+#' columns named on its right-hand side. If \code{data} is an
+#' \code{\link[sf]{sf}} object, its geometry (\code{\link[sf]{st_geometry}})
+#' is used as the spatial coordinates and a spatial Gaussian process is added
+#' to the model; pass a plain (non-\code{sf}) data frame — e.g. via
+#' \code{\link[sf]{st_set_geometry}(data, NULL)} — for a non-spatial model.
 #' @param nfactors Number of latent factors (dimensions of the ability
 #' construct).
 #' @param ngp Number of independent Gaussian processes used to build the
@@ -42,44 +54,40 @@
 #' @param thin Thinning interval for the stored MCMC samples.
 #' @param standardize Logical; if \code{TRUE} (default), predictors are
 #' standardized before fitting.
-#' @param constrains Named list of constrains associated to the factor model. Accepted
-#' names are `A`, `W`, and `V_sd`. The restrictions in the discrimination paramater should
-#' be place in the element `A` with same dimensions as the discrimination matrix (nitems x
-#' nfactors). A value of 0 indicates that link betwen the item and the factor is disabled
-#' and 1 indicates that it remain active and the coefficient associated will be estimated.
-#' The restrictions for the gaussian processes should be place in the element `W` with
-#' dimensions nfactors x ngps, such as a value of 0 indicates a link disconnected between
-#' the factor and the gp while 1 indicates that it remains active. The restrictions with
-#' respect to the standard deviation of the error terms inside the latent factors should
-#' be placed in the element `V_sd`, which should be a vector (length nfactors) providing
-#' the fixed values for the error standard deviation. If the model includes predictors or
-#' gaussian processes, it is recomended to be lower than 1.
+#' @param constraints Named list of constraints associated to the factor model. Accepted
+#' names are `discrimination`, `mgp`, and `resid_sd`. The restrictions on the
+#' discrimination paramater should be placed in the element `discrimination` with same
+#' dimensions as the discrimination matrix (nitems x nfactors). A value of 0 indicates that
+#' the link betwen the item and the factor is disabled and 1 indicates that it remains
+#' active and the coefficient associated will be estimated. The restrictions for the
+#' multivariate Gaussian process should be placed in the element `mgp` with dimensions
+#' nfactors x ngp, such as a value of 0 indicates a link disconnected between the factor
+#' and the (independent) GP while 1 indicates that it remains active. The restrictions with
+#' respect to the standard deviation of the latent factors' residual term should be placed
+#' in the element `resid_sd`, which should be a vector (length nfactors) providing the fixed
+#' values for that standard deviation (paired with `priors$resid_corr`, together they
+#' parameterize the residual covariance — see `dev/design/scope.md`). If the model includes
+#' predictors or a Gaussian process, it is recomended to be lower than 1.
+#'
+#' @param priors Named list of initial values and prior hyperparameters, one
+#' element per parameter block: `difficulty`, `discrimination`, `effect`
+#' (predictor effect on the latent factors), `resid_corr` (correlation of the
+#' latent factors' residual term, paired with `constraints$resid_sd`),
+#' `mgp_sd` (multivariate Gaussian process standard deviations), and
+#' `mgp_range` (multivariate Gaussian process scale parameters). Each
+#' element (except `resid_corr`) accepts `initial`, `mean`, and `sd`;
+#' `resid_corr` accepts `initial` and `eta` (the LKJ prior shape parameter).
+#' See `dev/design/scope.md` for the mapping between these names and the
+#' paper's notation (`c`, `a`, `B`, `R`).
 #'
 #' @param adaptive Named list of hyperparameters associated with the adaptive sampling.
 #' The adaptive sampling is done jointly for the `correlation` parameters, `standard
 #' deviation of the gps` and `scale parameter of the gps`. The matrix `Sigma` can be
 #' provided as the full covariance matrix of these parameters for the proposal
 #' distribution. Otherwise, part of this matrix can be provided by using the elements
-#' `Sigma`, `Sigma_R`, `Sigma_gp_sd` and `Sigma_gp_phi`. Additional elements are `scale`,
+#' `Sigma`, `Sigma_resid_corr`, `Sigma_mgp_sd` and `Sigma_mgp_range`. Additional elements are `scale`,
 #' `C`, `alpha` and `accep_prob` which are hyperparameters of the adaptive sampling
 #' proposed in Andrieu and Thomas (2008).
-#'
-#' @param c_opt Named list of initial values and hyperparameters for the easiness
-#' parameters. The initial value is provided in the element `initial`, and the prior meand
-#' and standard deviation are provided in the elements `prior_mean` and `prior_sd`
-#' respectively.
-#'
-#' @param A_opt Same as c_opt but for the discrimination parameters.
-#'
-#' @param R_opt Same as c_opt but for the correlation parameters. This list only accepts
-#' `initial` value and `prior_eta` associated to the LKJ prior.
-#'
-#' @param B_opt Same as c_opt but for the regression parameters.
-#'
-#' @param sigmas_gp_opt Same as c_opt but for the standard deviation of the gaussian
-#' processes.
-#'
-#' @param phi_gp_opt Same as c_opt but for the scale parameter of the gaussian processes.
 #'
 #' @param execute Logical value to run sampler or not. TRUE by default.
 #'
@@ -101,66 +109,58 @@
 #' L_a <- (parameters$discrimination != 0) * 1
 #'
 #' # confirmatory item factor analysis (small niter for a fast example)
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' summary(samples)
 #'
 #' @export
-spifa <- function (responses, pred_formula = NULL, coords = NULL, data = NULL,
-    nfactors, ngp = nfactors, niter = 1000, thin = 10, standardize = TRUE,
-    constrains = list(A = NULL, W = NULL, V_sd = rep(1, nfactors)),
-    adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL, Sigma_gp_phi = NULL,
+spifa <- function(formula, data, nfactors, ngp = nfactors,
+    niter = 1000, thin = 10, standardize = TRUE,
+    constraints = list(discrimination = NULL, mgp = NULL, resid_sd = rep(1, nfactors)),
+    priors = list(
+      difficulty = list(initial = NULL, mean = NULL, sd = NULL),
+      discrimination = list(initial = NULL, mean = NULL, sd = NULL),
+      effect = list(initial = NULL, mean = NULL, sd = NULL),
+      resid_corr = list(initial = NULL, eta = 1.5),
+      mgp_sd = list(initial = NULL, mean = NULL, sd = NULL),
+      mgp_range = list(initial = NULL, mean = NULL, sd = NULL)),
+    adaptive = list(Sigma = NULL, Sigma_resid_corr = NULL, Sigma_mgp_sd = NULL, Sigma_mgp_range = NULL,
                     scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
-    c_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-    A_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-    R_opt = list(initial = NULL, prior_eta = 1.5),
-    B_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-    sigmas_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
-    phi_gp_opt = list(initial = NULL, prior_mean = NULL, prior_sd = NULL),
     execute = TRUE) {
 
-  # Names to substitute and variables of data
-  responses <- substitute(responses)
-  coords <- substitute(coords)
-  vars <- setNames(as.list(seq_along(data)), names(data))
-  vars_sfc <- sapply(data, function (x) inherits(x, "sfc"))
-
-  # Coordinates
-  if (!is.null(coords)) {
-    coords_pos <- eval(coords, vars, parent.frame())
-    if (sum(vars_sfc) > 0 && length(coords_pos) == 1) {
-      coordinates <- data[[coords_pos]]
-    } else {
-      coordinates <- data[, coords_pos, drop = FALSE]
-    }
-  } else {
-    coordinates <- NULL
+  # Responses (left-hand side of formula, must be a matrix-valued column of
+  # data) and predictors (right-hand side, if any)
+  mf <- model.frame(formula, data)
+  response <- model.response(mf)
+  if (!is.matrix(response)) {
+    stop("the left-hand side of 'formula' must be a matrix-valued column ",
+         "of 'data' holding the item responses (see ?spifa)")
   }
-
-  # Responses
-  responses_pos <- eval(responses, vars, parent.frame())
-  response <- data[, responses_pos, drop = FALSE]
-  if (inherits(response, "sf")) response <- sf::st_set_geometry(response, NULL)
-  response <- as.matrix(response)
   nobs <- nrow(response)
   nitems <- ncol(response)
   response <- as.numeric(response)
 
-  # Predictors
-  if (is.null(pred_formula)) {
+  if (length(attr(terms(mf), "term.labels")) == 0) {
     predictors <- NULL
   } else {
-    pred_formula <- update(pred_formula,  ~ . - 1)
-    predictors <- model.matrix(pred_formula, data)
+    predictors_terms <- delete.response(terms(mf))
+    attr(predictors_terms, "intercept") <- 0
+    predictors <- model.matrix(predictors_terms, mf)
   }
 
-  # Restrictions for discrimination parameters (A) and Gaussian processes (W)
+  # Coordinates: spatial structure is inferred from class(data). Pass a
+  # plain (non-sf) data frame, e.g. via sf::st_set_geometry(data, NULL), for
+  # a non-spatial model.
+  coordinates <- if (inherits(data, "sf")) sf::st_geometry(data) else NULL
+
+  # Restrictions for discrimination parameters and Gaussian process loadings
   constrain_L_explo <- matrix(NA, nitems, nfactors)
   constrain_L_explo <- lower.tri(constrain_L_explo, diag = TRUE) * 1
-  constrain_L <- check_param_mat(constrains, "A", c(nitems, nfactors), constrain_L_explo)
-  constrain_T <- check_param_mat(constrains, "W", c(nfactors, ngp), diag(1, nfactors, ngp))
+  constrain_L <- check_param_mat(constraints, "discrimination", c(nitems, nfactors), constrain_L_explo)
+  constrain_T <- check_param_mat(constraints, "mgp", c(nfactors, ngp), diag(1, nfactors, ngp))
 
   # Sizes
   nsigmas <- sum(constrain_T)
@@ -170,42 +170,42 @@ spifa <- function (responses, pred_formula = NULL, coords = NULL, data = NULL,
   if (!is.null(coordinates)) {
     if (!is.null(predictors)) {
       model_type = "spifa_pred"
-      constrain_V_sd <- check_param_vec(constrains, "V_sd", nfactors, 0.2)
+      constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 0.2)
     } else {
       model_type = "spifa"
-      constrain_V_sd <- check_param_vec(constrains, "V_sd", nfactors, 0.2)
+      constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 0.2)
     }
   } else if (!is.null(predictors)) {
     model_type = "cifa_pred"
-    constrain_V_sd <- check_param_vec(constrains, "V_sd", nfactors, 0.3)
+    constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 0.3)
   } else if (all(constrain_L == constrain_L_explo)) {
     model_type = "eifa"
-    constrain_V_sd <- check_param_vec(constrains, "V_sd", nfactors, 1)
+    constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 1)
   } else {
     model_type = "cifa"
-    constrain_V_sd <- check_param_vec(constrains, "V_sd", nfactors, 1)
+    constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 1)
   }
 
   # Optional arguments for difficulty parameters (c)
-  c_prior_mean <- check_param_vec(c_opt, "prior_mean", nitems, 0)
-  c_prior_sd <- check_param_vec(c_opt, "prior_sd", nitems, 1)
-  c_initial <- check_param_vec(c_opt, "initial", nitems,
+  c_prior_mean <- check_param_vec(priors$difficulty, "mean", nitems, 0)
+  c_prior_sd <- check_param_vec(priors$difficulty, "sd", nitems, 1)
+  c_initial <- check_param_vec(priors$difficulty, "initial", nitems,
                                rnorm(nitems, c_prior_mean, c_prior_sd))
 
   # Optional arguments for discrimination parameters (A)
   A_prior_mean <-
-    check_param_mat2(A_opt, "prior_mean", c(nitems, nfactors), diag(1, nitems, nfactors))
+    check_param_mat2(priors$discrimination, "mean", c(nitems, nfactors), diag(1, nitems, nfactors))
   A_prior_sd <-
-    check_param_mat2(A_opt, "prior_sd", c(nitems, nfactors), 1-diag(0.55, nitems, nfactors))
+    check_param_mat2(priors$discrimination, "sd", c(nitems, nfactors), 1-diag(0.55, nitems, nfactors))
   A_initial <-
-    check_param_mat2(A_opt, "initial", c(nitems, nfactors), A_prior_mean)
+    check_param_mat2(priors$discrimination, "initial", c(nitems, nfactors), A_prior_mean)
 
   # Adaptive Metropolis-Hastings arguments for proposed covariance matrix
-  adap_Sigma_R <- check_param_matdiag(adaptive, "Sigma_R", n_corr, diag(n_corr) * 0.001)
+  adap_Sigma_R <- check_param_matdiag(adaptive, "Sigma_resid_corr", n_corr, diag(n_corr) * 0.001)
   adap_Sigma_gp_sd <-
-    check_param_matdiag(adaptive, "Sigma_gp_sd", nsigmas, diag(nsigmas) * 0.001)
+    check_param_matdiag(adaptive, "Sigma_mgp_sd", nsigmas, diag(nsigmas) * 0.001)
   adap_Sigma_gp_phi <-
-    check_param_matdiag(adaptive, "Sigma_gp_phi", ngp, diag(ngp) * 0.001)
+    check_param_matdiag(adaptive, "Sigma_mgp_range", ngp, diag(ngp) * 0.001)
   adap_scale <- ifelse(is.null(adaptive$scale), 1, adaptive$scale)
   adap_C <- ifelse(is.null(adaptive$C), 0.7, adaptive$C)
   adap_alpha <- ifelse(is.null(adaptive$alpha), 0.8, adaptive$alpha)
@@ -230,20 +230,20 @@ spifa <- function (responses, pred_formula = NULL, coords = NULL, data = NULL,
   }
 
   # Optional arguments for parameter of residual correlation R
-  if (is.null(R_opt$initial)) {
+  if (is.null(priors$resid_corr$initial)) {
     R_initial <- diag(nfactors)
-  } else if (sum(dim(R_opt$initial) == c(nfactors, nfactors)) == 2) {
-    if (all(diag(R_opt$initial) == 1)) {
-      R_initial <- R_opt$initial
+  } else if (sum(dim(priors$resid_corr$initial) == c(nfactors, nfactors)) == 2) {
+    if (all(diag(priors$resid_corr$initial) == 1)) {
+      R_initial <- priors$resid_corr$initial
     } else {
-      stop("element 'initial' of 'R_opt' argument is not a correlation matrix")
+      stop("element 'initial' of 'priors$resid_corr' argument is not a correlation matrix")
     }
   } else {
-    stop("element 'initial' of 'R_opt' argument must be of dimension ",
+    stop("element 'initial' of 'priors$resid_corr' argument must be of dimension ",
          sprintf("c(%i, %i)", nfactors, nfactors))
   }
 
-  R_prior_eta <- ifelse(is.null(R_opt$prior_eta), 1, R_opt$prior_eta)
+  R_prior_eta <- ifelse(is.null(priors$resid_corr$eta), 1, priors$resid_corr$eta)
 
   # Optional arguments for parameter of fixed effects (Beta)
   if (is.null(predictors)) {
@@ -252,9 +252,9 @@ spifa <- function (responses, pred_formula = NULL, coords = NULL, data = NULL,
     B_initial <- matrix(NA, 1, nfactors)
   } else {
     npred <- ncol(predictors)
-    B_prior_mean <- check_param_mat2(B_opt, "prior_mean", c(npred, nfactors), 0)
-    B_prior_sd <- check_param_mat2(B_opt, "prior_sd", c(npred, nfactors), 1)
-    B_initial <- check_param_mat2(B_opt, "initial", c(npred, nfactors), B_prior_mean)
+    B_prior_mean <- check_param_mat2(priors$effect, "mean", c(npred, nfactors), 0)
+    B_prior_sd <- check_param_mat2(priors$effect, "sd", c(npred, nfactors), 1)
+    B_initial <- check_param_mat2(priors$effect, "initial", c(npred, nfactors), B_prior_mean)
   }
 
   # Optional arguments for GP standard deviations and  scale parameters
@@ -266,27 +266,23 @@ spifa <- function (responses, pred_formula = NULL, coords = NULL, data = NULL,
     phi_gp_sd <- rep(NA_real_, ngp)
     phi_gp_initial <- rep(NA_real_, ngp)
   } else {
-    sigmas_gp_mean <- check_param_vec(sigmas_gp_opt, "prior_mean", nsigmas, 0.6)
-    sigmas_gp_sd <- check_param_vec(sigmas_gp_opt, "prior_sd", nsigmas, 0.2)
-    sigmas_gp_initial <- check_param_vec(sigmas_gp_opt, "initial", nsigmas, sigmas_gp_mean)
-    phi_gp_mean <- check_param_vec(phi_gp_opt, "prior_mean", ngp, 0.05)
-    phi_gp_sd <- check_param_vec(phi_gp_opt, "prior_sd", ngp, 0.2)
-    phi_gp_initial <- check_param_vec(phi_gp_opt, "initial", ngp, phi_gp_mean)
+    sigmas_gp_mean <- check_param_vec(priors$mgp_sd, "mean", nsigmas, 0.6)
+    sigmas_gp_sd <- check_param_vec(priors$mgp_sd, "sd", nsigmas, 0.2)
+    sigmas_gp_initial <- check_param_vec(priors$mgp_sd, "initial", nsigmas, sigmas_gp_mean)
+    phi_gp_mean <- check_param_vec(priors$mgp_range, "mean", ngp, 0.05)
+    phi_gp_sd <- check_param_vec(priors$mgp_range, "sd", ngp, 0.2)
+    phi_gp_initial <- check_param_vec(priors$mgp_range, "initial", ngp, phi_gp_mean)
   }
 
   # Compute predictors and distances as matrices
   if (is.null(predictors))  predictors <- matrix(NA)
   if (is.null(coordinates)) {
     distances <- matrix(NA)
-  } else if (inherits(coordinates, "sfc")) {
+  } else {
     distances <- sf::st_transform(coordinates, crs = 3857) %>%
       sf::st_coordinates()  %>%
       dist()  %>%
       as.matrix()
-    # distances <- unclass(sf::st_distance(coordinates))
-    # distances <- (distances + t(distances)) / 2
-  } else {
-    distances <- as.matrix(dist(coordinates))
   }
 
   # List of options to call c++ spifa function
@@ -320,8 +316,88 @@ spifa <- function (responses, pred_formula = NULL, coords = NULL, data = NULL,
     samples <- list()
   }
 
-  # Add model_info to MCMC samples
+  # Add model_info to MCMC samples. The executed path already gets class
+  # "spifa.list" from spifa_cpp(); set it explicitly here too so it's not
+  # silently missing on the `execute = FALSE` (samples <- list()) path.
   attr(samples, "model_info") <- model_info
+  class(samples) <- unique(c("spifa.list", class(samples)))
 
   return(samples)
+}
+
+# Internal validators used throughout spifa() to fill in defaults and check
+# dimensions for the many optional prior/initial-value arguments.
+
+check_param_vec <- function (param_list, element, dimension, default) {
+  argument <- deparse(substitute(param_list))
+  if (is.null(param_list[[element]])) {
+    if (length(default) == 1) {
+      output <- rep(default, dimension)
+    } else {
+      output <- default
+    }
+  } else if (length(param_list[[element]]) == 1) {
+    output <- rep(param_list[[element]], dimension)
+  } else if (length(param_list[[element]]) == dimension) {
+    output <- param_list[[element]]
+  } else {
+    stop(sprintf("element '%s' of '%s' must be of length 1 or %i",
+                 element, argument, dimension))
+  }
+  return(output)
+}
+
+
+check_param_mat <- function (param_list, element, dimensions, default) {
+  # It only accepts matrices
+  argument <- deparse(substitute(param_list))
+  if (is.null(param_list[[element]])) {
+    output <- default
+  } else if (sum(dim(param_list[[element]]) == dimensions) == 2) {
+    output <- param_list[[element]]
+  } else {
+    stop(sprintf("element '%s' of '%s' must be of dimension c(%i, %i)",
+                 element, argument, dimensions[[1]], dimensions[[2]]))
+  }
+  return(output)
+}
+
+
+check_param_mat2 <- function (param_list, element, dimensions, default) {
+  # It accepts matrices and scalar
+  argument <- deparse(substitute(param_list))
+  if (is.null(param_list[[element]])) {
+    if (length(default) == 1) {
+      output <- matrix(default, dimensions[1], dimensions[2])
+    } else {
+      output <- default
+    }
+  } else if (length(param_list[[element]]) == 1) {
+      output <- matrix(param_list[[element]], dimensions[1], dimensions[2])
+  } else if (sum(dim(param_list[[element]]) == dimensions) == 2) {
+    output <- param_list[[element]]
+  } else {
+    stop(sprintf("element '%s' of '%s' must be of length 1 or dimension c(%i, %i)",
+                 element, argument, dimensions[[1]], dimensions[[2]]))
+  }
+  return(output)
+}
+
+
+check_param_matdiag <- function (param_list, element, dimension, default) {
+  # It accepts matrices, vectors and scalar: only for square matrices
+  argument <- deparse(substitute(param_list))
+  if (is.null(param_list[[element]])) {
+    output <- default
+  } else if (length(param_list[[element]]) == 1) {
+    output <- diag(as.numeric(param_list[[element]]), dimension, dimension)
+  } else if (length(param_list[[element]]) == dimension) {
+    output <- diag(as.numeric(param_list[[element]]))
+  } else if (sum(dim(param_list[[element]]) == rep(dimension, 2)) == 2) {
+    output <- param_list[[element]]
+  } else {
+    stop(sprintf("element '%s' of argument '%s' must be of length ", element, argument),
+         sprintf("1 or %i, or dimension c(%i, %i)", dimension, dimension, dimension))
+  }
+  return(output)
 }

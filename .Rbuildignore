@@ -7,3 +7,4 @@
 ^Dockerfile\.dev$
 ^CLAUDE\.md$
 ^dev$
+^Rplots\.pdf$

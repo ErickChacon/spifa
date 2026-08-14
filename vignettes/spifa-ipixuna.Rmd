@@ -80,14 +80,17 @@ and check convergence (see `?gg_trace`).
 ```{r}
 L_a <- (parameters$discrimination != 0) * 1
 
+ipixuna_sf <- sf::st_as_sf(ipixuna_wide)
+ipixuna_sf$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+
 system.time(
   samples <- spifa(
-    responses = `Item 1`:`Item 10`, pred_formula = ~ x1, coords = coords,
-    data = ipixuna_wide, nfactors = 2,
+    items ~ x1, data = ipixuna_sf, nfactors = 2,
     niter = 200, thin = 1, standardize = FALSE,
-    constrains = list(A = L_a, W = diag(2), V_sd = rep(0.4^0.5, 2)),
-    sigmas_gp_opt = list(initial = 0.6, prior_mean = 0.6, prior_sd = 0.4),
-    phi_gp_opt = list(initial = 200, prior_mean = 200, prior_sd = 0.4))
+    constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.4^0.5, 2)),
+    priors = list(
+      mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
+      mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
   )
 
 attr(samples, "model_info")$model_type

@@ -399,7 +399,6 @@ Rcpp::List Ifa::sample(
   if (standardize && model_type != "eifa" && model_type != "cifa") {
     arma::vec theta_samples_sd(m, arma::fill::zeros);
     arma::umat T_sub = arma::ind2sub(size(T), T_index); // indices to row-column index
-    Rcpp::Rcout << "Standardixing" << std::endl;
     for (int i = 0; i < m; ++i) {
       // get variance of the latent abilities
       arma::vec sds =

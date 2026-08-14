@@ -44,3 +44,7 @@ inst/doc
 # Compiled objects
 *.so
 *.o
+
+# Stray plotting device output / dev/simulated/ run artifacts
+/Rplots.pdf
+dev/simulated/*.png

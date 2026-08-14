@@ -18,8 +18,8 @@
 \item{object}{A wide \code{spifa} samples tibble, e.g. from
 \code{\link{as_tibble.spifa.list}}.}
 
-\item{newdata}{New values of the predictors used in
-\code{pred_formula} when the model was fitted (only needed for models
+\item{newdata}{New values of the predictors used on the right-hand side
+of \code{formula} when the model was fitted (only needed for models
 with predictors).}
 
 \item{newcoords}{New spatial coordinates to predict at (only needed for
@@ -59,10 +59,12 @@ for the new locations and/or predictor values is delegated to the
 data(ipixuna)
 parameters <- attr(ipixuna_wide, "parameters")
 L_a <- (parameters$discrimination != 0) * 1
+ipixuna_sf <- sf::st_as_sf(ipixuna_wide)
+ipixuna_sf$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 samples <- spifa(
-  responses = `Item 1`:`Item 10`, coords = coords, data = ipixuna_wide,
+  items ~ 1, data = ipixuna_sf,
   nfactors = 2, niter = 5, thin = 1, standardize = FALSE,
-  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+  constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 samples_tib <- as_tibble(samples)
 newcoords <- sf::st_coordinates(ipixuna_wide$coords)[1:5, , drop = FALSE]
 predict(samples_tib, newcoords = newcoords)

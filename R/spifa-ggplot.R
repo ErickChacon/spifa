@@ -22,10 +22,11 @@
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' as_tibble(samples, select = "c") %>% gg_trace(wrap = TRUE, alpha = 0.6)
 #' }
 #'
@@ -70,10 +71,11 @@ gg_trace <- function (df, wrap = FALSE, legend = "bottom", ...) {
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' as_tibble(samples, select = "c") %>% gg_density()
 #' }
 #'
@@ -135,10 +137,11 @@ gg_density <- function (df, ..., ridges = FALSE) {
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' samples_tib <- as_tibble(samples)
 #' gg_density2d(samples_tib, `c[1]`, `c[2]`)
 #' }
@@ -216,10 +219,11 @@ gg_density2d <- function (samples, var1, var2, each = NULL,
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' samples_tib <- as_tibble(samples)
 #' gg_scatter(samples_tib, `c[1]`, `c[2]`)
 #' }
@@ -288,10 +292,11 @@ gg_scatter <- function (samples, var1, var2, each = NULL,
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' samples_tib <- as_tibble(samples, select = "c")
 #' gg_errorbarh(summary(samples_tib))
 #' }
@@ -345,10 +350,11 @@ gg_errorbarh <- function (df_summary, sorted = FALSE,
 #' data(ipixuna)
 #' parameters <- attr(ipixuna_wide, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
 #' samples <- spifa(
-#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
 #' samples_tib <- as_tibble(samples, select = "c")
 #' gg_errorbar(summary(samples_tib), sorted = FALSE)
 #' }
