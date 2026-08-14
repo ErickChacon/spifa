@@ -18,11 +18,11 @@ options(width = 100)
 
 ## Introduction
 
-In this vignette, we show how to use the **spifa** package to fit a
-multidimensional 2 parameter logistic model used in item response theory. Let
-$Y_{ij}$ be the response for item
-$j$ in the individual $i$. The model can be defined by using an auxiliary variable
-$Z_{ij}$ such as
+In this vignette, we show how to use the **spifa** package to fit a spatial
+multidimensional 2 parameter logistic model, as used in item response
+theory. Let $Y_{ij}$ be the binary response for item $j$ in individual $i$.
+The model can be defined using an auxiliary variable $Z_{ij}$ such that
+
 \begin{align}
   {Y}_{ij}  & =
   \left\lbrace
@@ -32,11 +32,12 @@ $Z_{ij}$ such as
   \end{array}
   \right.\\
   {Z}_{ij} & = c_j + a_j^\intercal\theta_i + \epsilon_{ij},
-  ~~ \epsilon_{ij} \sim {N}(0, 1)\\
-  {\theta}_i & \sim {N}({0}, {I}_m)\\
-  c_j & \sim {N}(0, \sigma_c^2)\\
-  {a}_j & \sim {N}(0, \sigma_a^2{I}_m)\\
+  ~~ \epsilon_{ij} \sim {N}(0, 1)
 \end{align}
+
+where the latent abilities $\theta_i$ are, in the spatial case, explained by
+a multivariate Gaussian process rather than assumed independent across
+individuals.
 
 ## Load required packages and data
 
@@ -44,95 +45,94 @@ $Z_{ij}$ such as
 library(dplyr)
 library(ggplot2)
 library(spifa)
+library(sf)
 
 data(ipixuna)
-# ipixuna_wide <- ipixuna_wide %>%
-#   sf::st_sf()
-#   dplyr::select(-coords)
-# ipixuna_wide[c("lon", "lat")] <- list(rnorm(200), rnorm(200))
 ```
 
+`ipixuna_wide` has one row per (simulated) household, with ten binary food
+insecurity items, a covariate `x1`, and a spatial coordinate `coords`:
+
 ```{r}
-knitr::kable(head(ipixuna, 10))
+ipixuna_wide %>%
+  dplyr::select(-coords) %>%
+  head(10) %>%
+  knitr::kable(digits = 2)
 ```
 
+The true generating parameters used to simulate the data (including the
+discrimination structure) are stored as an attribute, which is convenient
+both for setting sensible restrictions and for checking recovery below:
+
 ```{r}
-knitr::kable(head(ipixuna_wide, 10))
+parameters <- attr(ipixuna_wide, "parameters")
+str(parameters)
 ```
 
-## Fit a spifa model for Ipixuna data
+## Fit a SPIFA model for the Ipixuna data
+
+We restrict the discrimination matrix to the structure used to simulate the
+data, and let the two latent factors follow independent Gaussian processes
+(`W = diag(2)`) over the household coordinates. `niter` is kept small here
+so the vignette builds quickly; in practice use a few thousand iterations
+and check convergence (see `?gg_trace`).
 
 ```{r}
-# data(ipixuna)
-# ipixuna_wide <- sf::st_sf(ipixuna_wide)
-
-
-# parameters used for simulation
-parameters <- attr(ipixuna, "parameters")
-
-# restrictions
 L_a <- (parameters$discrimination != 0) * 1
-iter <- 1000
-
-# system.time(
-#   samples <- spifa(
-#     responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
-#     niter = iter, thin = 1, standardize = FALSE,
-#     constrains = list(A = L_a, W = diag(2), V_sd = 0.3 ^ 0.5),
-#     adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
-#                     Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
-#                     accep_prob = 0.234),
-#     sigmas_gp_opt = list(initial = 0.6, prior_mean = 0.6, prior_sd = 0.4),
-#     phi_gp_opt = list(initial = 100, prior_mean = 100, prior_sd = 4))
-#   )
 
 system.time(
   samples <- spifa(
     responses = `Item 1`:`Item 10`, pred_formula = ~ x1, coords = coords,
     data = ipixuna_wide, nfactors = 2,
-    niter = 100, thin = 1, standardize = FALSE,
-    constrains = list(A = L_a, W = diag(2), V_sd = 0.4 ^ 0.5),
-    adaptive = list(Sigma = NULL, Sigma_R = NULL, Sigma_gp_sd = NULL,
-                    Sigma_gp_phi = NULL, scale = 1, C = 0.7, alpha = 0.8,
-                    accep_prob = 0.234),
+    niter = 200, thin = 1, standardize = FALSE,
+    constrains = list(A = L_a, W = diag(2), V_sd = rep(0.4^0.5, 2)),
     sigmas_gp_opt = list(initial = 0.6, prior_mean = 0.6, prior_sd = 0.4),
-    phi_gp_opt = list(initial = 200, prior_mean = 200, prior_sd = 0.4),
-    execute = TRUE)
+    phi_gp_opt = list(initial = 200, prior_mean = 200, prior_sd = 0.4))
   )
 
+attr(samples, "model_info")$model_type
+```
 
-attr(samples, "model_info")
+## Convert samples to a tibble and summarise
 
-# hist(exp(rnorm(50000, log(0.6), 0.4)), 50)
-
-# unclass(attr(samples, "model_info")$distance[1:5, 1:5])
-
+```{r}
+samples_tib <- as_tibble(samples, burnin = 100)
+summary(as_tibble(samples_tib, select = "c"))
 ```
 
 ## Visualize results
 
-```{r}
-# library(purrr)
-# samples_tib <- as_tibble(samples)
-#
-# # summary(samples_tib)
-# # samples_long <- gather(samples_tib)
-# thin2 <- 1
-#
-# as_tibble(samples, 0, thin2, "c") %>%
-#   gg_trace(alpha = 0.6)
-#
-# as_tibble(samples, 0, thin2, "a") %>%
-#   gg_trace(alpha = 0.6)
-#
-# as_tibble(samples, 0, thin2, "corr") %>%
-#   gg_trace(alpha = 0.6)
-#
-# as_tibble.spifa.list(samples, 0, thin2, "mgp_sd") %>%
-#   gg_trace(alpha = 0.6)
-#
-# as_tibble.spifa.list(samples, 0, thin2, "mgp_phi") %>%
-#   gg_trace(alpha = 0.6)
-#
+Traceplots of the easiness (`c`) and discrimination (`a`) parameters:
+
+```{r, fig.height = 6}
+as_tibble(samples, select = "c") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble(samples, select = "a") %>%
+  gg_trace(alpha = 0.6)
 ```
 
+Traceplots of the residual correlation and of the Gaussian process
+hyperparameters (standard deviation and range):
+
+```{r, fig.height = 6}
+as_tibble(samples, select = "corr") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble(samples, select = "mgp_sd") %>%
+  gg_trace(alpha = 0.6)
+
+as_tibble(samples, select = "mgp_phi") %>%
+  gg_trace(alpha = 0.6)
+```
+
+Credible intervals for the discrimination parameters, against the true
+simulated values:
+
+```{r, fig.height = 5}
+as_tibble(samples, burnin = 100, select = "a") %>%
+  summary() %>%
+  mutate(param = as.numeric(parameters$discrimination)) %>%
+  gg_errorbarh(sorted = FALSE) +
+  geom_point(aes(x = param), col = 3)
+```
