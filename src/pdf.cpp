@@ -9,29 +9,6 @@
 // functionality available in packages such as mvtnorm, and are not part of
 // the package's public API.
 
-double dmvnorm(arma::mat X, arma::mat Mean, arma::mat Sigma, bool logpdf = true) {
-  const int q = X.n_rows;
-  const int n = X.n_cols;
-  const double pi = M_PI;
-  arma::mat L = arma::chol(Sigma, "lower");
-  arma::mat kern_sq_root = arma::solve(arma::trimatl(L), X - Mean);
-  double log_pdf = - 0.5 * n * q * log(2.0 * pi);
-  log_pdf -= n * arma::accu(log(L.diag()));
-  log_pdf -= 0.5 * arma::accu(square(kern_sq_root));
-  return (logpdf) ? log_pdf: exp(log_pdf);
-}
-
-double dmvnorm_chol(arma::mat X, arma::mat Mean, arma::mat L, bool logpdf = true) {
-  const int q = X.n_rows;
-  const int n = X.n_cols;
-  const double pi = M_PI;
-  arma::mat kern_sq_root = arma::solve(arma::trimatl(L), X - Mean);
-  double log_pdf = - 0.5 * n * q * log(2.0 * pi);
-  log_pdf -= n * arma::accu(log(L.diag()));
-  log_pdf -= 0.5 * arma::accu(square(kern_sq_root));
-  return (logpdf) ? log_pdf: exp(log_pdf);
-}
-
 double dmvnorm_cholinv(arma::mat X, arma::mat Mean, arma::mat L_inv,
     bool logpdf = true) {
   const int q = X.n_rows;
@@ -44,58 +21,12 @@ double dmvnorm_cholinv(arma::mat X, arma::mat Mean, arma::mat L_inv,
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
 
-double dmvnorm_prec(arma::vec x, arma::vec mean, arma::mat sigma_inv) {
-  const int n = x.n_elem;
-  const double pi = M_PI;
-  double val;
-  double sign;
-  arma::log_det(val, sign, sigma_inv);
-  double kern = arma::as_scalar((x - mean).t() * sigma_inv * (x - mean));
-  double log_pdf = - 0.5 * n * log(2.0 * pi);
-  log_pdf += + 0.5 * val;
-  log_pdf += - 0.5 * kern;
-  return log_pdf;
-}
-
-double dinvwish(double v, arma::mat X, arma::mat S, bool logpdf = true) {
-  const int p = X.n_cols;
-  const double pi = M_PI;
-  arma::mat S_chol = arma::chol(S, "lower");
-  double log_pdf = v * arma::accu(log(S_chol.diag()));
-  arma::mat X_chol = arma::trimatl(arma::chol(X, "lower"));
-  log_pdf -= (v + p + 1) * arma::accu(log(X_chol.diag()));
-  arma::mat X_chol_inv = X_chol.i();
-  arma::mat X_inv = X_chol_inv.t() * X_chol_inv;
-  log_pdf -= 0.5 * arma::accu(S % X_inv);
-  log_pdf -=  0.5 * v * p * log(2);
-  double loggamma = arma::accu(arma::lgamma((v + 1 - arma::linspace(1, p, p)) / 2));
-  log_pdf -= loggamma + 0.25 * p * (p - 1) * log(pi);
-  return (logpdf) ? log_pdf: exp(log_pdf);
-}
-
-double dlkj_corr(arma::mat R, double eta, bool logpdf = true) {
-  const int K = R.n_rows;
-  arma::mat L = arma::chol(R);
-  double log_pdf = 2 * (eta - 1) * arma::accu(log(L.diag()));
-  return (logpdf) ? log_pdf: exp(log_pdf);
-}
-
 double dlkj_corr_chol(arma::mat L, double eta, bool logpdf = true) {
   const int K = L.n_rows;
   double log_pdf = 0;
   for (int i = 1; i < K; ++i) {
     log_pdf += (K - i-1 + 2*eta-2) * log(L(i, i));
   }
-  return (logpdf) ? log_pdf: exp(log_pdf);
-}
-
-double dlkj_corr_free(arma::vec x, int K, double eta, bool logpdf = true) {
-  // There is problems when some element on x is equal to zero
-  arma::mat L = vec2trimatl(tanh(x), K, false);
-  arma::mat L_chol = vec2chol_corr(x, K);
-  double log_pdf = dlkj_corr_chol(L_chol, eta, true);
-  log_pdf -= 2 * arma::accu(log(cosh(x)));
-  log_pdf += arma::accu(log(trimatl2vec(L_chol / L, false)));
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
 

@@ -1,8 +1,6 @@
 ^\.travis\.yml$
 ^\.lintr$
-^demos$
-^no-vignettes$
-^attic$
+^arxiv$
 ^plan\.md$
 ^cran-comments\.md$
 ^\.github$
