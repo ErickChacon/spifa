@@ -1,22 +1,36 @@
 #' @title Traceplot of Samples
 #'
 #' @description
-#' \code{function} description.
+#' Draws MCMC traceplots (iteration vs. value, one line per parameter) from
+#' a long-format samples tibble, as produced by \code{\link{gather.spifa}}.
 #'
-#' @details
-#' details.
+#' @param df A wide \code{spifa} samples tibble (e.g. from
+#' \code{\link{as_tibble.spifa.list}}), or a subset of its columns selected
+#' via \code{select} in \code{\link{as_tibble.spifa.list}}.
+#' @param wrap Logical; if \code{TRUE}, draw one facet per parameter instead
+#' of overlaying them on a single panel.
+#' @param legend Legend position passed to
+#' \code{\link[ggplot2]{theme}(legend.position = ...)}.
+#' @param ... Further arguments passed to \code{\link[ggplot2]{geom_path}}.
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return A \code{ggplot} object.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' as_tibble(samples, select = "c") %>% gg_trace(wrap = TRUE, alpha = 0.6)
+#' }
 #'
-#' as_tibble(samples, "beta") %>% gg_trace(wrap = TRUE, alpha = 0.6)
-#' as_tibble(samples, "corr_chol") %>% gg_trace(alpha = 0.6)
-#'
+#' @import ggplot2
+#' @import dplyr
 #'
 #' @export
 gg_trace <- function (df, wrap = FALSE, legend = "bottom", ...) {
@@ -36,21 +50,32 @@ gg_trace <- function (df, wrap = FALSE, legend = "bottom", ...) {
 #' @title Densities of Samples
 #'
 #' @description
-#' \code{function} description.
+#' Draws posterior density plots, one per parameter, from a samples tibble.
+#' Densities can be overlaid as facets (default) or stacked as ridge plots
+#' (\code{ridges = TRUE}, requires the \pkg{ggridges} package).
 #'
-#' @details
-#' details.
+#' @param df A wide \code{spifa} samples tibble (e.g. from
+#' \code{\link{as_tibble.spifa.list}}).
+#' @param ... Further arguments passed to \code{\link[ggplot2]{geom_density}}
+#' (or to \code{ggridges::geom_density_ridges} when \code{ridges = TRUE}).
+#' @param ridges Logical; if \code{TRUE}, draw ridge (stacked) densities
+#' instead of faceted densities.
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return A \code{ggplot} object.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
-#' as_tibble(samples, "corr_chol") %>%
-#'   gg_density_ridges(aes(fill = Parameters), scale = 2, alpha = 0.5)
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' as_tibble(samples, select = "c") %>% gg_density()
+#' }
 #'
 #' @export
 gg_density <- function (df, ..., ridges = FALSE) {
@@ -59,6 +84,10 @@ gg_density <- function (df, ..., ridges = FALSE) {
     group_by(Parameters) %>%
     mutate(median = quantile(Value, 0.5))
   if (ridges) {
+    if (!requireNamespace("ggridges", quietly = TRUE)) {
+      stop("Package 'ggridges' is required for ridges = TRUE. ",
+           "Install it with install.packages('ggridges').")
+    }
     gg <- df %>%
       ggplot(aes(Value, Parameters, group = Parameters)) +
         ggridges::geom_density_ridges(...)
@@ -76,21 +105,43 @@ gg_density <- function (df, ..., ridges = FALSE) {
 #' @title 2D Densities of Samples
 #'
 #' @description
-#' \code{function} description.
+#' Draws a 2D contour density plot of two parameters (e.g. two components
+#' of a bivariate latent factor) from a samples tibble, optionally faceted
+#' by group and/or highlighting a reference point (e.g. the true simulated
+#' value).
 #'
-#' @details
-#' details.
+#' @param samples A samples tibble containing the columns \code{var1} and
+#' \code{var2} (a wide samples tibble, or the output of
+#' \code{\link{gather.spifa}} when \code{each} is used).
+#' @param var1,var2 Bare (unquoted) names of the two columns in
+#' \code{samples} to plot on the x and y axes.
+#' @param each If not \code{NULL}, the number of columns making up each
+#' group of parameters, passed to \code{\link{gather.spifa}} to facet the
+#' plot by group.
+#' @param keys Column names used for the group/parameter split, passed to
+#' \code{\link{gather.spifa}} when \code{each} is supplied.
+#' @param highlight An optional reference row (e.g. true parameter values)
+#' to overlay as a point.
+#' @param ncol Number of facet columns to use when \code{each} is supplied.
+#' @param ... Further arguments passed to
+#' \code{\link[ggplot2]{stat_density_2d}}.
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return A \code{ggplot} object.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
-#' as_tibble(samples, "corr_chol") %>%
-#'   gg_density_ridges(aes(fill = Parameters), scale = 2, alpha = 0.5)
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' samples_tib <- as_tibble(samples)
+#' gg_density2d(samples_tib, `c[1]`, `c[2]`)
+#' }
 #'
 #' @export
 gg_density2d <- function (samples, var1, var2, each = NULL,
@@ -107,8 +158,8 @@ gg_density2d <- function (samples, var1, var2, each = NULL,
     aux_samples <- gather.spifa(aux_samples, each, keys)
   }
 
-  gg <- ggplot(samples, aes_(substitute(var1), substitute(var2))) +
-    stat_density2d(aes(fill = log(..level..)),
+  gg <- ggplot(samples, aes(!!substitute(var1), !!substitute(var2))) +
+    stat_density2d(aes(fill = log(after_stat(level))),
                    geom = 'polygon', col = "black", ...) +
     # scale_fill_continuous(low="green",high="red") +
     guides(alpha="none")
@@ -136,19 +187,42 @@ gg_density2d <- function (samples, var1, var2, each = NULL,
 #' @title 2D Scatterplot of Samples
 #'
 #' @description
-#' \code{function} description.
+#' Draws a 2D scatter/path plot of two parameters (e.g. two components of a
+#' bivariate latent factor) from a samples tibble, optionally faceted by
+#' group and/or highlighting a reference point (e.g. the true simulated
+#' value).
 #'
-#' @details
-#' details.
+#' @param samples A samples tibble containing the columns \code{var1} and
+#' \code{var2} (a wide samples tibble, or the output of
+#' \code{\link{gather.spifa}} when \code{each} is used).
+#' @param var1,var2 Bare (unquoted) names of the two columns in
+#' \code{samples} to plot on the x and y axes.
+#' @param each If not \code{NULL}, the number of columns making up each
+#' group of parameters, passed to \code{\link{gather.spifa}} to facet the
+#' plot by group.
+#' @param keys Column names used for the group/parameter split, passed to
+#' \code{\link{gather.spifa}} when \code{each} is supplied.
+#' @param highlight An optional reference row (e.g. true parameter values)
+#' to overlay as a point.
+#' @param ncol Number of facet columns to use when \code{each} is supplied.
+#' @param points_alpha Alpha (transparency) used for the scatter points.
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return A \code{ggplot} object.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' samples_tib <- as_tibble(samples)
+#' gg_scatter(samples_tib, `c[1]`, `c[2]`)
+#' }
 #'
 #' @export
 gg_scatter <- function (samples, var1, var2, each = NULL,
@@ -165,7 +239,7 @@ gg_scatter <- function (samples, var1, var2, each = NULL,
     aux_samples <- gather.spifa(aux_samples, each, keys)
   }
 
-  gg <- ggplot(samples, aes_(substitute(var1), substitute(var2))) +
+  gg <- ggplot(samples, aes(!!substitute(var1), !!substitute(var2))) +
     geom_point(alpha = points_alpha) +
     geom_path(alpha = 0.4, linetype = 2)
 
@@ -192,23 +266,35 @@ gg_scatter <- function (samples, var1, var2, each = NULL,
 #' @title Horizontal Errorbar Plot of Samples
 #'
 #' @description
-#' \code{function} description.
+#' Plots posterior medians with 80\%/95\% credible interval errorbars (one
+#' row per parameter), using the output of \code{\link{summary.spifa}}.
 #'
-#' @details
-#' details.
+#' @param df_summary A summary tibble from \code{\link{summary.spifa}}, with
+#' columns \code{Parameters}, \code{2.5\%}, \code{10\%}, \code{50\%},
+#' \code{90\%}, \code{97.5\%}.
+#' @param sorted Logical; if \code{TRUE}, plot against the posterior median
+#' on both axes (for use with faceting/sorting upstream) instead of against
+#' \code{Parameters}.
+#' @param colors Colors used for the 95\% and 80\% credible interval bars.
+#' @param ... Further arguments passed to
+#' \code{\link[ggplot2]{geom_errorbarh}}.
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return A \code{ggplot} object.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
-#' summary(samples, "corr_chol") %>%
-#'   mutate(param = corr_chol) %>%
-#'   gg_errorbarh() +
-#'   geom_point(aes(param, Parameters), col = 3)
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' samples_tib <- as_tibble(samples, select = "c")
+#' gg_errorbarh(summary(samples_tib))
+#' }
 #'
 #' @export
 gg_errorbarh <- function (df_summary, sorted = FALSE,
@@ -223,7 +309,7 @@ gg_errorbarh <- function (df_summary, sorted = FALSE,
   gg <- gg +
     geom_errorbarh(aes(xmin = `2.5%`, xmax = `97.5%`, col = "95%"),
                    height = 0, ...) +
-    geom_errorbarh(aes(xmin = `10%`, xmax = `90%`, col = "80%"), size = 2,
+    geom_errorbarh(aes(xmin = `10%`, xmax = `90%`, col = "80%"), linewidth = 2,
                    height = 0, ...) +
     geom_point(size = 2)
   # colors
@@ -238,23 +324,34 @@ gg_errorbarh <- function (df_summary, sorted = FALSE,
 #' @title Errorbar Plot of Samples
 #'
 #' @description
-#' \code{function} description.
+#' Plots posterior medians with 80\%/95\% credible interval errorbars (one
+#' column per parameter), using the output of \code{\link{summary.spifa}}.
 #'
-#' @details
-#' details.
+#' @param df_summary A summary tibble from \code{\link{summary.spifa}}, with
+#' columns \code{Parameters}, \code{2.5\%}, \code{10\%}, \code{50\%},
+#' \code{90\%}, \code{97.5\%}.
+#' @param sorted Logical; if \code{TRUE} (default), plot against the
+#' posterior median on both axes (for use with faceting/sorting upstream)
+#' instead of against \code{Parameters}.
+#' @param colors Colors used for the 95\% and 80\% credible interval bars.
+#' @param ... Further arguments passed to \code{\link[ggplot2]{geom_errorbar}}.
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return A \code{ggplot} object.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
-#' summary(samples, "corr_chol") %>%
-#'   mutate(param = corr_chol) %>%
-#'   gg_errorbar() +
-#'   geom_point(aes(Parameters, param), col = 3)
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' samples_tib <- as_tibble(samples, select = "c")
+#' gg_errorbar(summary(samples_tib), sorted = FALSE)
+#' }
 #'
 #' @export
 gg_errorbar <- function (df_summary, sorted = TRUE,
@@ -269,7 +366,7 @@ gg_errorbar <- function (df_summary, sorted = TRUE,
   gg <- gg +
     geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`, col = "95%"),
                    width = 0, ...) +
-    geom_errorbar(aes(ymin = `10%`, ymax = `90%`, col = "80%"), size = 2,
+    geom_errorbar(aes(ymin = `10%`, ymax = `90%`, col = "80%"), linewidth = 2,
                    width = 0, ...) +
     geom_point(size = 2)
   # colors

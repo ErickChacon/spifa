@@ -12,23 +12,37 @@ gg_errorbar(
 )
 }
 \arguments{
-\item{par.}{}
+\item{df_summary}{A summary tibble from \code{\link{summary.spifa}}, with
+columns \code{Parameters}, \code{2.5\%}, \code{10\%}, \code{50\%},
+\code{90\%}, \code{97.5\%}.}
+
+\item{sorted}{Logical; if \code{TRUE} (default), plot against the
+posterior median on both axes (for use with faceting/sorting upstream)
+instead of against \code{Parameters}.}
+
+\item{colors}{Colors used for the 95\% and 80\% credible interval bars.}
+
+\item{...}{Further arguments passed to \code{\link[ggplot2]{geom_errorbar}}.}
 }
 \value{
-return.
+A \code{ggplot} object.
 }
 \description{
-\code{function} description.
-}
-\details{
-details.
+Plots posterior medians with 80\%/95\% credible interval errorbars (one
+column per parameter), using the output of \code{\link{summary.spifa}}.
 }
 \examples{
-
-summary(samples, "corr_chol") \%>\%
-  mutate(param = corr_chol) \%>\%
-  gg_errorbar() +
-  geom_point(aes(Parameters, param), col = 3)
+\donttest{
+data(ipixuna)
+parameters <- attr(ipixuna_wide, "parameters")
+L_a <- (parameters$discrimination != 0) * 1
+samples <- spifa(
+  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  niter = 20, thin = 1, standardize = FALSE,
+  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+samples_tib <- as_tibble(samples, select = "c")
+gg_errorbar(summary(samples_tib), sorted = FALSE)
+}
 
 }
 \author{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/spifa-methods.R
 \name{predict.spifa}
 \alias{predict.spifa}
-\title{Prediction Spatial Multidimensional Item Response Model with Predictors}
+\title{Predict from a Fitted spifa Model}
 \usage{
 \method{predict}{spifa}(
   object,
@@ -15,16 +15,59 @@
 )
 }
 \arguments{
-\item{par.}{}
+\item{object}{A wide \code{spifa} samples tibble, e.g. from
+\code{\link{as_tibble.spifa.list}}.}
+
+\item{newdata}{New values of the predictors used in
+\code{pred_formula} when the model was fitted (only needed for models
+with predictors).}
+
+\item{newcoords}{New spatial coordinates to predict at (only needed for
+spatial, i.e. \code{spifa}/\code{spifa_pred}, models).}
+
+\item{burnin}{Number of initial (post-fitting) iterations to discard
+before using the posterior samples for prediction.}
+
+\item{thin}{Thinning interval applied to the posterior samples used for
+prediction.}
+
+\item{se.fit}{Currently unused; reserved for returning prediction
+standard errors.}
+
+\item{...}{Further arguments (currently unused).}
 }
 \value{
-return.
+A list of posterior predictive samples/summaries for the
+requested new locations and/or predictor values.
 }
 \description{
-\code{function} description.
+Predicts the latent factors (and, for spatial models, the underlying
+spatial process) at new locations and/or for new predictor values, using
+the posterior samples from a fitted \code{\link{spifa}} model.
 }
 \details{
-details.
+If the fitted model has no spatial or predictor structure (\code{eifa} or
+\code{cifa}), or if neither \code{newcoords} nor \code{newdata} is
+supplied for a model that has one, there is nothing to predict beyond the
+posterior means of the latent abilities already available from the fitted
+samples, and the function currently returns early. Otherwise, prediction
+for the new locations and/or predictor values is delegated to the
+\code{C++} sampler.
+}
+\examples{
+\donttest{
+data(ipixuna)
+parameters <- attr(ipixuna_wide, "parameters")
+L_a <- (parameters$discrimination != 0) * 1
+samples <- spifa(
+  responses = `Item 1`:`Item 10`, coords = coords, data = ipixuna_wide,
+  nfactors = 2, niter = 5, thin = 1, standardize = FALSE,
+  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+samples_tib <- as_tibble(samples)
+newcoords <- sf::st_coordinates(ipixuna_wide$coords)[1:5, , drop = FALSE]
+predict(samples_tib, newcoords = newcoords)
+}
+
 }
 \author{
 Erick A. Chacon-Montalvan

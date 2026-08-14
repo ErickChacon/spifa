@@ -2,25 +2,38 @@
 % Please edit documentation in R/spifa-methods.R
 \name{dic.spifa}
 \alias{dic.spifa}
-\title{Deviance Information Criterio for the Spifa Model}
+\title{Deviance Information Criterion for a spifa Model}
 \usage{
-\method{dic}{spifa}(object)
+\method{dic}{spifa}(x, ...)
 }
 \arguments{
-\item{par.}{}
+\item{x}{A wide \code{spifa} samples tibble, e.g. from
+\code{\link{as_tibble.spifa.list}}.}
+
+\item{...}{Further arguments passed to methods (currently unused).}
 }
 \value{
-return.
+A list with elements \code{average_of_deviance},
+\code{n_effec_params} (effective number of parameters), and \code{dic}.
 }
 \description{
-\code{function} description.
-}
-\details{
-details.
+Computes the Deviance Information Criterion (DIC) for a fitted
+\code{spifa} model, useful for comparing candidate models (e.g. different
+numbers of factors or different restriction structures) fitted to the
+same data.
 }
 \examples{
-
-summary(samples)
+\donttest{
+data(ipixuna)
+parameters <- attr(ipixuna_wide, "parameters")
+L_a <- (parameters$discrimination != 0) * 1
+samples <- spifa(
+  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  niter = 20, thin = 1, standardize = FALSE,
+  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+samples_tib <- as_tibble(samples)
+dic(samples_tib)
+}
 
 }
 \author{

@@ -16,16 +16,49 @@ gg_scatter(
 )
 }
 \arguments{
-\item{par.}{}
+\item{samples}{A samples tibble containing the columns \code{var1} and
+\code{var2} (a wide samples tibble, or the output of
+\code{\link{gather.spifa}} when \code{each} is used).}
+
+\item{var1, var2}{Bare (unquoted) names of the two columns in
+\code{samples} to plot on the x and y axes.}
+
+\item{each}{If not \code{NULL}, the number of columns making up each
+group of parameters, passed to \code{\link{gather.spifa}} to facet the
+plot by group.}
+
+\item{keys}{Column names used for the group/parameter split, passed to
+\code{\link{gather.spifa}} when \code{each} is supplied.}
+
+\item{highlight}{An optional reference row (e.g. true parameter values)
+to overlay as a point.}
+
+\item{ncol}{Number of facet columns to use when \code{each} is supplied.}
+
+\item{points_alpha}{Alpha (transparency) used for the scatter points.}
 }
 \value{
-return.
+A \code{ggplot} object.
 }
 \description{
-\code{function} description.
+Draws a 2D scatter/path plot of two parameters (e.g. two components of a
+bivariate latent factor) from a samples tibble, optionally faceted by
+group and/or highlighting a reference point (e.g. the true simulated
+value).
 }
-\details{
-details.
+\examples{
+\donttest{
+data(ipixuna)
+parameters <- attr(ipixuna_wide, "parameters")
+L_a <- (parameters$discrimination != 0) * 1
+samples <- spifa(
+  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  niter = 20, thin = 1, standardize = FALSE,
+  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+samples_tib <- as_tibble(samples)
+gg_scatter(samples_tib, `c[1]`, `c[2]`)
+}
+
 }
 \author{
 Erick A. Chacon-Montalvan

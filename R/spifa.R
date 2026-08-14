@@ -1,12 +1,47 @@
 
-#' @title Spatial Multidimensional Item Response Model with Predictors
+#' @title Fit an (Spatial) Item Factor Analysis Model
 #'
 #' @description
-#' \code{function} description.
+#' Fits exploratory, confirmatory, and spatial item factor analysis (IFA)
+#' models for binary responses using full Bayesian inference. The model
+#' represents each binary response as a thresholded continuous auxiliary
+#' variable explained by \code{nfactors} latent abilities, optionally
+#' extended with linear predictors and/or a multivariate Gaussian process to
+#' capture spatial dependence in the latent factors (see the "spifa-ipixuna"
+#' vignette for a full worked example). Inference is done via Gibbs sampling
+#' with adaptive Metropolis-Hastings updates for the spatial range and
+#' correlation parameters.
 #'
 #' @details
-#' details.
+#' The type of model fitted is determined automatically from the arguments
+#' supplied: no \code{coords} and no \code{pred_formula} with unrestricted
+#' \code{constrains$A} gives exploratory IFA (EIFA); no \code{coords} and no
+#' \code{pred_formula} with a restricted \code{constrains$A} gives
+#' confirmatory IFA (CIFA); adding \code{pred_formula} gives CIFA with
+#' predictors; adding \code{coords} gives spatial IFA (SPIFA), with or
+#' without predictors.
 #'
+#' @param responses Bare (unquoted) column names or a tidy-select range (e.g.
+#' \code{`Item 1`:`Item 10`}) identifying the binary item columns in
+#' \code{data}.
+#' @param pred_formula An optional one-sided formula (e.g. \code{~ x1})
+#' specifying predictors for the latent factors. If \code{NULL} (default),
+#' no predictors are included.
+#' @param coords Bare (unquoted) name of a column in \code{data} holding
+#' spatial coordinates (either a two-column matrix/data frame or an
+#' \code{sfc} geometry column). If \code{NULL} (default), no spatial
+#' structure is included.
+#' @param data A data frame (or \code{sf} object) containing the item
+#' responses and, if used, the predictors and coordinates.
+#' @param nfactors Number of latent factors (dimensions of the ability
+#' construct).
+#' @param ngp Number of independent Gaussian processes used to build the
+#' (possibly restricted) multivariate Gaussian process for the latent
+#' factors. Defaults to \code{nfactors} (one GP per factor).
+#' @param niter Number of MCMC iterations to run.
+#' @param thin Thinning interval for the stored MCMC samples.
+#' @param standardize Logical; if \code{TRUE} (default), predictors are
+#' standardized before fitting.
 #' @param constrains Named list of constrains associated to the factor model. Accepted
 #' names are `A`, `W`, and `V_sd`. The restrictions in the discrimination paramater should
 #' be place in the element `A` with same dimensions as the discrimination matrix (nitems x
@@ -29,32 +64,48 @@
 #' `C`, `alpha` and `accep_prob` which are hyperparameters of the adaptive sampling
 #' proposed in Andrieu and Thomas (2008).
 #'
-#' @param C_opt Named list of initial values and hyperparameters for the easiness
+#' @param c_opt Named list of initial values and hyperparameters for the easiness
 #' parameters. The initial value is provided in the element `initial`, and the prior meand
 #' and standard deviation are provided in the elements `prior_mean` and `prior_sd`
 #' respectively.
 #'
-#' @param A_opt Same as C_opt but for the discrimination parameters.
+#' @param A_opt Same as c_opt but for the discrimination parameters.
 #'
-#' @param R_opt Same as C_opt but for the correlation parameters. This list only accepts
+#' @param R_opt Same as c_opt but for the correlation parameters. This list only accepts
 #' `initial` value and `prior_eta` associated to the LKJ prior.
 #'
-#' @param B_opt Same as C_opt but for the regression parameters.
+#' @param B_opt Same as c_opt but for the regression parameters.
 #'
-#' @param sigmas_gp_opt Same as C_opt but for the standard deviation of the gaussian
+#' @param sigmas_gp_opt Same as c_opt but for the standard deviation of the gaussian
 #' processes.
 #'
-#' @param phi_gp_opt Same as C_opt but for the scale parameter of the gaussian processes.
+#' @param phi_gp_opt Same as c_opt but for the scale parameter of the gaussian processes.
 #'
 #' @param execute Logical value to run sampler or not. TRUE by default.
 #'
-#' @return return.
+#' @return
+#' An object of (informal) class \code{spifa.list}: a named list of MCMC
+#' sample matrices (one entry per parameter block, e.g. \code{c}, \code{a},
+#' \code{theta}, \code{corr}, \code{betas}, ...), with an attribute
+#' \code{"model_info"} recording the data and options used to fit the model
+#' (needed by \code{\link{predict.spifa}} and \code{\link{dic}}). Convert it
+#' to a tidy \code{\link[tibble]{tibble}} with \code{\link{as_tibble.spifa.list}}.
 #'
 #' @author Erick A. Chacón-Montalván
 #'
 #' @examples
+#' data(ipixuna)
 #'
-#' bla
+#' # true discrimination structure used to simulate ipixuna_wide
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#'
+#' # confirmatory item factor analysis (small niter for a fast example)
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' summary(samples)
 #'
 #' @export
 spifa <- function (responses, pred_formula = NULL, coords = NULL, data = NULL,
@@ -208,12 +259,12 @@ spifa <- function (responses, pred_formula = NULL, coords = NULL, data = NULL,
 
   # Optional arguments for GP standard deviations and  scale parameters
   if (is.null(coordinates)) {
-    sigmas_gp_mean <- rep(NA, nsigmas)
-    sigmas_gp_sd <- rep(NA, nsigmas)
-    sigmas_gp_initial <- rep(NA, nsigmas)
-    phi_gp_mean <- rep(NA, ngp)
-    phi_gp_sd <- rep(NA, ngp)
-    phi_gp_initial <- rep(NA, ngp)
+    sigmas_gp_mean <- rep(NA_real_, nsigmas)
+    sigmas_gp_sd <- rep(NA_real_, nsigmas)
+    sigmas_gp_initial <- rep(NA_real_, nsigmas)
+    phi_gp_mean <- rep(NA_real_, ngp)
+    phi_gp_sd <- rep(NA_real_, ngp)
+    phi_gp_initial <- rep(NA_real_, ngp)
   } else {
     sigmas_gp_mean <- check_param_vec(sigmas_gp_opt, "prior_mean", nsigmas, 0.6)
     sigmas_gp_sd <- check_param_vec(sigmas_gp_opt, "prior_sd", nsigmas, 0.2)

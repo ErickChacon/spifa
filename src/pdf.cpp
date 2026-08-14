@@ -3,8 +3,12 @@
 #include "correlation.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 
-//' @export
-// [[Rcpp::export]]
+// Internal density functions used by the Ifa sampler (src/ifa.cpp) for its
+// Gibbs/Metropolis-Hastings updates (multivariate normal, inverse-Wishart,
+// and LKJ correlation priors). Not exported to R: they duplicate
+// functionality available in packages such as mvtnorm, and are not part of
+// the package's public API.
+
 double dmvnorm(arma::mat X, arma::mat Mean, arma::mat Sigma, bool logpdf = true) {
   const int q = X.n_rows;
   const int n = X.n_cols;
@@ -17,8 +21,6 @@ double dmvnorm(arma::mat X, arma::mat Mean, arma::mat Sigma, bool logpdf = true)
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
 
-//' @export
-// [[Rcpp::export]]
 double dmvnorm_chol(arma::mat X, arma::mat Mean, arma::mat L, bool logpdf = true) {
   const int q = X.n_rows;
   const int n = X.n_cols;
@@ -30,8 +32,6 @@ double dmvnorm_chol(arma::mat X, arma::mat Mean, arma::mat L, bool logpdf = true
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
 
-//' @export
-// [[Rcpp::export]]
 double dmvnorm_cholinv(arma::mat X, arma::mat Mean, arma::mat L_inv,
     bool logpdf = true) {
   const int q = X.n_rows;
@@ -44,8 +44,6 @@ double dmvnorm_cholinv(arma::mat X, arma::mat Mean, arma::mat L_inv,
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
 
-//' @export
-// [[Rcpp::export]]
 double dmvnorm_prec(arma::vec x, arma::vec mean, arma::mat sigma_inv) {
   const int n = x.n_elem;
   const double pi = M_PI;
@@ -59,8 +57,6 @@ double dmvnorm_prec(arma::vec x, arma::vec mean, arma::mat sigma_inv) {
   return log_pdf;
 }
 
-//' @export
-// [[Rcpp::export]]
 double dinvwish(double v, arma::mat X, arma::mat S, bool logpdf = true) {
   const int p = X.n_cols;
   const double pi = M_PI;
@@ -77,8 +73,6 @@ double dinvwish(double v, arma::mat X, arma::mat S, bool logpdf = true) {
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
 
-//' @export
-// [[Rcpp::export]]
 double dlkj_corr(arma::mat R, double eta, bool logpdf = true) {
   const int K = R.n_rows;
   arma::mat L = arma::chol(R);
@@ -86,8 +80,6 @@ double dlkj_corr(arma::mat R, double eta, bool logpdf = true) {
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
 
-//' @export
-// [[Rcpp::export]]
 double dlkj_corr_chol(arma::mat L, double eta, bool logpdf = true) {
   const int K = L.n_rows;
   double log_pdf = 0;
@@ -97,8 +89,6 @@ double dlkj_corr_chol(arma::mat L, double eta, bool logpdf = true) {
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
 
-//' @export
-// [[Rcpp::export]]
 double dlkj_corr_free(arma::vec x, int K, double eta, bool logpdf = true) {
   // There is problems when some element on x is equal to zero
   arma::mat L = vec2trimatl(tanh(x), K, false);
@@ -109,8 +99,6 @@ double dlkj_corr_free(arma::vec x, int K, double eta, bool logpdf = true) {
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
 
-//' @export
-// [[Rcpp::export]]
 double dlkj_corr_free2(arma::vec x, int K, double eta, bool logpdf = true) {
   arma::mat L = vec2trimatl(tanh(x), K, false);
   Rcpp::List aux = vec2chol_corr2(x, K);
@@ -121,43 +109,3 @@ double dlkj_corr_free2(arma::vec x, int K, double eta, bool logpdf = true) {
   log_pdf += arma::accu(log(trimatl2vec(L_grad, false)));
   return (logpdf) ? log_pdf: exp(log_pdf);
 }
-
-
-//' @export
-// [[Rcpp::export]]
-arma::mat test1(arma::vec A, arma::mat B) {
-  B.each_col() %= A;
-  // B.each_col() %= A;
-  return B;
-}
-
-//' @export
-// [[Rcpp::export]]
-Rcpp::List testing(arma::mat X, arma::vec y) {
-  X(1,1) = 1000;
-  y(1) = 1000;
-  arma::vec di = log(X.diag());
-  double plop = arma::accu(y);
-  arma::vec plop2 = square(y);
-  arma::mat Sigma_proposal(2,2, arma::fill::zeros);
-  Sigma_proposal(0,0) = 0.1;
-  Sigma_proposal(1,1) = 0.1;
-  // bool a = arma::as_scalar(arma::randu<arma::vec>(1)) > 0.5;
-  bool a = R::runif(0,1) > 0.5;
-  arma::vec scal = y(1) * y;
-
-  // arma::mat L = arma::trimatl(A);
-  //
-  return Rcpp::List::create(
-      Rcpp::Named("y") = y,
-      Rcpp::Named("X") = X,
-      Rcpp::Named("di") = di,
-      Rcpp::Named("plop") = plop,
-      Rcpp::Named("plop2") = plop2,
-      Rcpp::Named("Sigma_proposal") = Sigma_proposal,
-      Rcpp::Named("a") = a,
-      Rcpp::Named("scal") = scal
-      );
-}
-
-

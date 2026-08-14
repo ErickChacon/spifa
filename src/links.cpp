@@ -1,17 +1,13 @@
 
 #include <RcppArmadillo.h>
 
-//' @export
-// [[Rcpp::export]]
+// Internal link-function helpers used by src/ifa-dic.cpp. Not exported to R:
+// not part of the package's public API.
+
 double logit(double p) {
   return log(p/(1-p));
 }
-// double logit(double p) {
-//   return log(p/(1-p));
-// }
 
-//' @export
-// [[Rcpp::export]]
 double logistic(double x) {
   return 1.0 / (1.0 + exp(-x));
 }

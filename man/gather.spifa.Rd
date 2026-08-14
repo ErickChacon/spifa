@@ -7,22 +7,42 @@
 gather.spifa(samples_wide, each = NULL, keys = c("group", "Parameter"))
 }
 \arguments{
-\item{par.}{}
+\item{samples_wide}{A wide samples tibble, e.g. from
+\code{\link{as_tibble.spifa.list}}.}
+
+\item{each}{If not \code{NULL}, the number of columns that make up each
+group of parameters (e.g. the number of items), used to additionally
+split the gathered \code{Parameters} column into \code{group}/
+\code{Parameter} columns.}
+
+\item{keys}{Names to use for the group/parameter columns when \code{each}
+is supplied.}
 }
 \value{
-return.
+A long-format \code{\link[tibble]{tibble}} with columns
+\code{iteration}, \code{Parameters}, and \code{Value} (plus \code{group}/
+the second \code{keys} element when \code{each} is supplied).
 }
 \description{
-\code{function} description.
-}
-\details{
-details.
+Reshapes a wide \code{spifa} samples tibble (one column per parameter, as
+produced by \code{\link{as_tibble.spifa.list}}) into long format (one row
+per iteration/parameter pair), which is the shape expected by the
+\code{\link{gg_trace}}/\code{\link{gg_density}} family of plotting
+helpers.
 }
 \examples{
-
-wide <- as_tibble(samples, "beta")
-(long <- gather(wide))
-class(long)
+\donttest{
+data(ipixuna)
+parameters <- attr(ipixuna_wide, "parameters")
+L_a <- (parameters$discrimination != 0) * 1
+samples <- spifa(
+  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  niter = 20, thin = 1, standardize = FALSE,
+  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+wide <- as_tibble(samples, select = "c")
+long <- gather.spifa(wide)
+long
+}
 
 }
 \author{

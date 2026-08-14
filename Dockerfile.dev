@@ -1,0 +1,29 @@
+# Development/CI image for building and checking the spifa package.
+# Not part of the CRAN package source (see .Rbuildignore).
+#
+# Build:  docker build -f Dockerfile.dev -t spifa-dev .
+# Check:  docker run --rm -v "$PWD":/pkg -w /pkg spifa-dev \
+#           Rscript -e 'devtools::document(); devtools::check()'
+
+FROM rocker/geospatial:latest
+
+RUN install2.r -e -s \
+    Rcpp \
+    RcppArmadillo \
+    RcppTN \
+    magrittr \
+    tibble \
+    dplyr \
+    tidyr \
+    purrr \
+    pdist \
+    ggplot2 \
+    ggridges \
+    knitr \
+    rmarkdown \
+    testthat \
+    devtools \
+    roxygen2 \
+    rcmdcheck
+
+WORKDIR /pkg

@@ -2,26 +2,41 @@
 % Please edit documentation in R/spifa-methods.R
 \name{as_list.spifa}
 \alias{as_list.spifa}
-\title{Convert Tibble to spifa.list}
+\title{Convert a Wide Samples Tibble Back to a spifa.list}
 \usage{
-\method{as_list}{spifa}(samples_tib)
+\method{as_list}{spifa}(x, ...)
 }
 \arguments{
-\item{par.}{}
+\item{x}{An object of class \code{spifa}, as returned by
+\code{\link{as_tibble.spifa.list}}.}
+
+\item{...}{Further arguments passed to methods (currently unused).}
 }
 \value{
-return.
+An object of class \code{spifa.list}: a named list of matrices,
+one per parameter block, with the \code{"model_info"} attribute carried
+over from \code{samples_tib}.
 }
 \description{
-\code{function} description.
-}
-\details{
-details.
+Inverse of \code{\link{as_tibble.spifa.list}}: splits a wide
+\code{spifa} tibble (one column per scalar parameter) back into a named
+list of matrices, one per parameter block (e.g. \code{c}, \code{a},
+\code{theta}, ...). Used internally by \code{\link{predict.spifa}} and
+\code{\link{dic.spifa}}.
 }
 \examples{
-
-as_tibble(samples)
-as_tibble(samples, "beta")
+\donttest{
+data(ipixuna)
+parameters <- attr(ipixuna_wide, "parameters")
+L_a <- (parameters$discrimination != 0) * 1
+samples <- spifa(
+  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  niter = 20, thin = 1, standardize = FALSE,
+  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+samples_tib <- as_tibble(samples)
+samples_list <- as_list(samples_tib)
+names(samples_list)
+}
 
 }
 \author{

@@ -7,21 +7,34 @@
 gg_density(df, ..., ridges = FALSE)
 }
 \arguments{
-\item{par.}{}
+\item{df}{A wide \code{spifa} samples tibble (e.g. from
+\code{\link{as_tibble.spifa.list}}).}
+
+\item{...}{Further arguments passed to \code{\link[ggplot2]{geom_density}}
+(or to \code{ggridges::geom_density_ridges} when \code{ridges = TRUE}).}
+
+\item{ridges}{Logical; if \code{TRUE}, draw ridge (stacked) densities
+instead of faceted densities.}
 }
 \value{
-return.
+A \code{ggplot} object.
 }
 \description{
-\code{function} description.
-}
-\details{
-details.
+Draws posterior density plots, one per parameter, from a samples tibble.
+Densities can be overlaid as facets (default) or stacked as ridge plots
+(\code{ridges = TRUE}, requires the \pkg{ggridges} package).
 }
 \examples{
-
-as_tibble(samples, "corr_chol") \%>\%
-  gg_density_ridges(aes(fill = Parameters), scale = 2, alpha = 0.5)
+\donttest{
+data(ipixuna)
+parameters <- attr(ipixuna_wide, "parameters")
+L_a <- (parameters$discrimination != 0) * 1
+samples <- spifa(
+  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  niter = 20, thin = 1, standardize = FALSE,
+  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+as_tibble(samples, select = "c") \%>\% gg_density()
+}
 
 }
 \author{

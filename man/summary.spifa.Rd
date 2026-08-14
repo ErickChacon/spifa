@@ -2,25 +2,41 @@
 % Please edit documentation in R/spifa-methods.R
 \name{summary.spifa}
 \alias{summary.spifa}
-\title{Summary of Samples}
+\title{Posterior Summary of MCMC Samples}
 \usage{
-\method{summary}{spifa}(samples, select = names(samples))
+\method{summary}{spifa}(object, select = names(object), ...)
 }
 \arguments{
-\item{par.}{}
+\item{object}{A wide \code{spifa} samples tibble, e.g. from
+\code{\link{as_tibble.spifa.list}}.}
+
+\item{select}{Character vector of column names to summarise (defaults to
+all of them).}
+
+\item{...}{Further arguments passed to methods (currently unused).}
 }
 \value{
-return.
+A \code{\link[tibble]{tibble}} with one row per parameter and
+columns \code{Parameters}, \code{2.5\%}, \code{10\%}, \code{50\%},
+\code{90\%}, \code{97.5\%}.
 }
 \description{
-\code{function} description.
-}
-\details{
-details.
+Computes the posterior median and 80\%/95\% credible intervals (10th,
+2.5th, 50th, 90th, and 97.5th percentiles) for every parameter in a
+\code{spifa} samples tibble.
 }
 \examples{
-
-summary(samples)
+\donttest{
+data(ipixuna)
+parameters <- attr(ipixuna_wide, "parameters")
+L_a <- (parameters$discrimination != 0) * 1
+samples <- spifa(
+  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  niter = 20, thin = 1, standardize = FALSE,
+  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+samples_tib <- as_tibble(samples, select = "c")
+summary(samples_tib)
+}
 
 }
 \author{

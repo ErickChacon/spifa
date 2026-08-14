@@ -1,2 +1,11 @@
 ^\.travis\.yml$
 ^\.lintr$
+^demos$
+^no-vignettes$
+^attic$
+^plan\.md$
+^cran-comments\.md$
+^\.github$
+^Dockerfile\.dev$
+^CLAUDE\.md$
+^dev$

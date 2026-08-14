@@ -7,22 +7,36 @@
 gg_trace(df, wrap = FALSE, legend = "bottom", ...)
 }
 \arguments{
-\item{par.}{}
+\item{df}{A wide \code{spifa} samples tibble (e.g. from
+\code{\link{as_tibble.spifa.list}}), or a subset of its columns selected
+via \code{select} in \code{\link{as_tibble.spifa.list}}.}
+
+\item{wrap}{Logical; if \code{TRUE}, draw one facet per parameter instead
+of overlaying them on a single panel.}
+
+\item{legend}{Legend position passed to
+\code{\link[ggplot2]{theme}(legend.position = ...)}.}
+
+\item{...}{Further arguments passed to \code{\link[ggplot2]{geom_path}}.}
 }
 \value{
-return.
+A \code{ggplot} object.
 }
 \description{
-\code{function} description.
-}
-\details{
-details.
+Draws MCMC traceplots (iteration vs. value, one line per parameter) from
+a long-format samples tibble, as produced by \code{\link{gather.spifa}}.
 }
 \examples{
-
-as_tibble(samples, "beta") \%>\% gg_trace(wrap = TRUE, alpha = 0.6)
-as_tibble(samples, "corr_chol") \%>\% gg_trace(alpha = 0.6)
-
+\donttest{
+data(ipixuna)
+parameters <- attr(ipixuna_wide, "parameters")
+L_a <- (parameters$discrimination != 0) * 1
+samples <- spifa(
+  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  niter = 20, thin = 1, standardize = FALSE,
+  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+as_tibble(samples, select = "c") \%>\% gg_trace(wrap = TRUE, alpha = 0.6)
+}
 
 }
 \author{

@@ -1,0 +1,27 @@
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+name: R-CMD-check
+
+jobs:
+  R-CMD-check:
+    runs-on: ubuntu-latest
+    container: rocker/geospatial:latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install R package dependencies
+        run: |
+          install2.r -e -s remotes rcmdcheck
+          Rscript -e 'remotes::install_deps(dependencies = TRUE)'
+
+      - name: Check
+        run: |
+          Rscript -e 'rcmdcheck::rcmdcheck(args = c("--no-manual"), error_on = "warning")'

@@ -24,7 +24,7 @@ double deviance(arma::vec y, arma::vec c, arma::vec a, arma::vec theta, arma::ma
   return deviance;
 }
 
-//' @export
+// Not exported to R users: called internally by dic.spifa() (R/spifa-methods.R).
 // [[Rcpp::export]]
 Rcpp::List dic_cpp(arma::vec y, arma::mat c, arma::mat a, arma::mat theta,
     int n, int q, int m, arma::mat L) {

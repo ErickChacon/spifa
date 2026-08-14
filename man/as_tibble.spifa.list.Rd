@@ -2,26 +2,46 @@
 % Please edit documentation in R/spifa-methods.R
 \name{as_tibble.spifa.list}
 \alias{as_tibble.spifa.list}
-\title{Convert Samples to Tibble}
+\title{Convert MCMC Samples to a Wide Tibble}
 \usage{
-\method{as_tibble}{spifa.list}(samples, burnin = 0, thin = 1, select = names(samples))
+\method{as_tibble}{spifa.list}(x, burnin = 0, thin = 1, select = names(x), ...)
 }
 \arguments{
-\item{par.}{}
+\item{x}{An object of class \code{spifa.list}, as returned by
+\code{\link{spifa}}.}
+
+\item{burnin}{Number of initial iterations to discard.}
+
+\item{thin}{Thinning interval applied after discarding burn-in.}
+
+\item{select}{Character vector of parameter blocks to keep (defaults to
+all of them, i.e. \code{names(x)}).}
+
+\item{...}{Further arguments passed to methods (currently unused; present
+for consistency with the \code{\link[tibble]{as_tibble}} generic).}
 }
 \value{
-return.
+A wide \code{\link[tibble]{tibble}} of class \code{spifa}, with
+the \code{"model_info"} attribute carried over from \code{x}.
 }
 \description{
-\code{function} description.
-}
-\details{
-details.
+Converts the list of MCMC sample matrices returned by \code{\link{spifa}}
+(class \code{spifa.list}) into a single wide \code{\link[tibble]{tibble}}
+(class \code{spifa}), with one column per parameter and one row per
+(thinned, post-burnin) MCMC iteration.
 }
 \examples{
-
-as_tibble(samples)
-as_tibble(samples, "beta")
+\donttest{
+data(ipixuna)
+parameters <- attr(ipixuna_wide, "parameters")
+L_a <- (parameters$discrimination != 0) * 1
+samples <- spifa(
+  responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+  niter = 20, thin = 1, standardize = FALSE,
+  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+samples_tib <- as_tibble(samples)
+samples_tib
+}
 
 }
 \author{

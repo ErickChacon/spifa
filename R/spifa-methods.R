@@ -1,29 +1,46 @@
 
-#' @title Convert Samples to Tibble
+#' @title Convert MCMC Samples to a Wide Tibble
 #'
 #' @description
-#' \code{function} description.
+#' Converts the list of MCMC sample matrices returned by \code{\link{spifa}}
+#' (class \code{spifa.list}) into a single wide \code{\link[tibble]{tibble}}
+#' (class \code{spifa}), with one column per parameter and one row per
+#' (thinned, post-burnin) MCMC iteration.
 #'
-#' @details
-#' details.
+#' @param x An object of class \code{spifa.list}, as returned by
+#' \code{\link{spifa}}.
+#' @param burnin Number of initial iterations to discard.
+#' @param thin Thinning interval applied after discarding burn-in.
+#' @param select Character vector of parameter blocks to keep (defaults to
+#' all of them, i.e. \code{names(x)}).
+#' @param ... Further arguments passed to methods (currently unused; present
+#' for consistency with the \code{\link[tibble]{as_tibble}} generic).
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return A wide \code{\link[tibble]{tibble}} of class \code{spifa}, with
+#' the \code{"model_info"} attribute carried over from \code{x}.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
-#' as_tibble(samples)
-#' as_tibble(samples, "beta")
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' samples_tib <- as_tibble(samples)
+#' samples_tib
+#' }
 #'
 #' @importFrom tibble as_tibble
 #'
 #' @export
-as_tibble.spifa.list <- function (samples, burnin = 0, thin = 1,
-                              select = names(samples)) {
+as_tibble.spifa.list <- function (x, burnin = 0, thin = 1,
+                              select = names(x), ...) {
 
+  samples <- x
   # save model information
   model_info <- attr(samples, "model_info")
   # select, convert to tibble and subset
@@ -40,34 +57,60 @@ as_tibble.spifa.list <- function (samples, burnin = 0, thin = 1,
   return(samples)
 }
 
+#' @title Convert Samples to a spifa.list
+#'
+#' @description
+#' Generic function converting posterior samples back into the
+#' \code{spifa.list} representation (one matrix per parameter block). See
+#' \code{\link{as_list.spifa}} for the \code{spifa} method.
+#'
+#' @param x An object to convert.
+#' @param ... Further arguments passed to methods.
+#'
+#' @export
 as_list <- function (x, ...) {
   UseMethod("as_list", x)
 }
 
-#' @title Convert Tibble to spifa.list
+#' @title Convert a Wide Samples Tibble Back to a spifa.list
 #'
 #' @description
-#' \code{function} description.
+#' Inverse of \code{\link{as_tibble.spifa.list}}: splits a wide
+#' \code{spifa} tibble (one column per scalar parameter) back into a named
+#' list of matrices, one per parameter block (e.g. \code{c}, \code{a},
+#' \code{theta}, ...). Used internally by \code{\link{predict.spifa}} and
+#' \code{\link{dic.spifa}}.
 #'
-#' @details
-#' details.
+#' @param x An object of class \code{spifa}, as returned by
+#' \code{\link{as_tibble.spifa.list}}.
+#' @param ... Further arguments passed to methods (currently unused).
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return An object of class \code{spifa.list}: a named list of matrices,
+#' one per parameter block, with the \code{"model_info"} attribute carried
+#' over from \code{samples_tib}.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
-#' as_tibble(samples)
-#' as_tibble(samples, "beta")
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' samples_tib <- as_tibble(samples)
+#' samples_list <- as_list(samples_tib)
+#' names(samples_list)
+#' }
 #'
 #' @importFrom tibble as_tibble
 #'
 #' @export
-as_list.spifa <- function (samples_tib) {
+as_list.spifa <- function (x, ...) {
 
+  samples_tib <- x
   model_info <- attr(samples_tib, "model_info")
   pars <- c("c", "a", "theta", "z", "corr_chol", "corr", "mgp_sd", "mgp_phi", "betas")
   names(pars) <- c("c", "A", "Theta", "Z", "Corr_chol", "Corr", "T", "mgp_phi", "B")
@@ -92,22 +135,40 @@ as_list.spifa <- function (samples_tib) {
 #' @title Gather Parameters into a Long Format Tibble
 #'
 #' @description
-#' \code{function} description.
+#' Reshapes a wide \code{spifa} samples tibble (one column per parameter, as
+#' produced by \code{\link{as_tibble.spifa.list}}) into long format (one row
+#' per iteration/parameter pair), which is the shape expected by the
+#' \code{\link{gg_trace}}/\code{\link{gg_density}} family of plotting
+#' helpers.
 #'
-#' @details
-#' details.
+#' @param samples_wide A wide samples tibble, e.g. from
+#' \code{\link{as_tibble.spifa.list}}.
+#' @param each If not \code{NULL}, the number of columns that make up each
+#' group of parameters (e.g. the number of items), used to additionally
+#' split the gathered \code{Parameters} column into \code{group}/
+#' \code{Parameter} columns.
+#' @param keys Names to use for the group/parameter columns when \code{each}
+#' is supplied.
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return A long-format \code{\link[tibble]{tibble}} with columns
+#' \code{iteration}, \code{Parameters}, and \code{Value} (plus \code{group}/
+#' the second \code{keys} element when \code{each} is supplied).
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
-#' wide <- as_tibble(samples, "beta")
-#' (long <- gather(wide))
-#' class(long)
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' wide <- as_tibble(samples, select = "c")
+#' long <- gather.spifa(wide)
+#' long
+#' }
 #'
 #' @export
 gather.spifa <- function (samples_wide, each = NULL,
@@ -116,7 +177,7 @@ gather.spifa <- function (samples_wide, each = NULL,
   # Convert to long format
   samples_long <- samples_wide %>%
     tibble::as_tibble() %>%
-    dplyr::mutate(iteration = 1:n()) %>%
+    dplyr::mutate(iteration = 1:dplyr::n()) %>%
     tidyr::gather(Parameters, Value, -iteration, factor_key = TRUE)
 
   if (!is.null(each)) {
@@ -140,66 +201,102 @@ gather.spifa <- function (samples_wide, each = NULL,
 }
 
 
-#' @title Summary of Samples
+#' @title Posterior Summary of MCMC Samples
 #'
 #' @description
-#' \code{function} description.
+#' Computes the posterior median and 80\%/95\% credible intervals (10th,
+#' 2.5th, 50th, 90th, and 97.5th percentiles) for every parameter in a
+#' \code{spifa} samples tibble.
 #'
-#' @details
-#' details.
+#' @param object A wide \code{spifa} samples tibble, e.g. from
+#' \code{\link{as_tibble.spifa.list}}.
+#' @param select Character vector of column names to summarise (defaults to
+#' all of them).
+#' @param ... Further arguments passed to methods (currently unused).
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return A \code{\link[tibble]{tibble}} with one row per parameter and
+#' columns \code{Parameters}, \code{2.5\%}, \code{10\%}, \code{50\%},
+#' \code{90\%}, \code{97.5\%}.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
-#' summary(samples)
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' samples_tib <- as_tibble(samples, select = "c")
+#' summary(samples_tib)
+#' }
 #'
 #' @export
-summary.spifa <- function (samples, select = names(samples)) {
+summary.spifa <- function (object, select = names(object), ...) {
 
-  # df <- as_tibble.spifa(samples, select = select)
-  df <- samples
+  df <- object
   df_names <- names(df)
   df <- df %>%
-    map(function (x) quantile(x, c(0.025, 0.1, 0.5, 0.9, 0.975))) %>%
-    reduce(rbind) %>%
-    as_tibble() %>%
-    mutate(Parameters = factor(df_names, df_names))
+    purrr::map(function (x) quantile(x, c(0.025, 0.1, 0.5, 0.9, 0.975), na.rm = TRUE)) %>%
+    purrr::reduce(rbind) %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(Parameters = factor(df_names, df_names))
   df <- df[c(ncol(df), 1:(ncol(df)-1))]
   return(df)
 }
 
+#' @title Deviance Information Criterion
+#'
+#' @description
+#' Generic function for the Deviance Information Criterion (DIC), a
+#' Bayesian measure of model fit that penalises complexity. See
+#' \code{\link{dic.spifa}} for the \code{spifa} method.
+#'
+#' @param x A fitted model object.
+#' @param ... Further arguments passed to methods.
+#'
 #' @export
 dic <- function (x, ...) {
   UseMethod("dic", x)
 }
 
 
-#' @title Deviance Information Criterio for the Spifa Model
+#' @title Deviance Information Criterion for a spifa Model
 #'
 #' @description
-#' \code{function} description.
+#' Computes the Deviance Information Criterion (DIC) for a fitted
+#' \code{spifa} model, useful for comparing candidate models (e.g. different
+#' numbers of factors or different restriction structures) fitted to the
+#' same data.
 #'
-#' @details
-#' details.
+#' @param x A wide \code{spifa} samples tibble, e.g. from
+#' \code{\link{as_tibble.spifa.list}}.
+#' @param ... Further arguments passed to methods (currently unused).
 #'
-#' @param par.
-#'
-#' @return return.
+#' @return A list with elements \code{average_of_deviance},
+#' \code{n_effec_params} (effective number of parameters), and \code{dic}.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
-#' summary(samples)
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, data = ipixuna_wide, nfactors = 2,
+#'   niter = 20, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' samples_tib <- as_tibble(samples)
+#' dic(samples_tib)
+#' }
 #'
 #' @export
-dic.spifa <- function (object) {
+dic.spifa <- function (x, ...) {
 
+  object <- x
   # convert to spifa.list
   samples <- as_list(object)
 
@@ -214,27 +311,59 @@ dic.spifa <- function (object) {
   return(dic)
 }
 
-#' @title Prediction Spatial Multidimensional Item Response Model with Predictors
+#' @title Predict from a Fitted spifa Model
 #'
 #' @description
-#' \code{function} description.
+#' Predicts the latent factors (and, for spatial models, the underlying
+#' spatial process) at new locations and/or for new predictor values, using
+#' the posterior samples from a fitted \code{\link{spifa}} model.
 #'
 #' @details
-#' details.
+#' If the fitted model has no spatial or predictor structure (\code{eifa} or
+#' \code{cifa}), or if neither \code{newcoords} nor \code{newdata} is
+#' supplied for a model that has one, there is nothing to predict beyond the
+#' posterior means of the latent abilities already available from the fitted
+#' samples, and the function currently returns early. Otherwise, prediction
+#' for the new locations and/or predictor values is delegated to the
+#' \code{C++} sampler.
 #'
-#' @param par.
+#' @param object A wide \code{spifa} samples tibble, e.g. from
+#' \code{\link{as_tibble.spifa.list}}.
+#' @param newdata New values of the predictors used in
+#' \code{pred_formula} when the model was fitted (only needed for models
+#' with predictors).
+#' @param newcoords New spatial coordinates to predict at (only needed for
+#' spatial, i.e. \code{spifa}/\code{spifa_pred}, models).
+#' @param burnin Number of initial (post-fitting) iterations to discard
+#' before using the posterior samples for prediction.
+#' @param thin Thinning interval applied to the posterior samples used for
+#' prediction.
+#' @param se.fit Currently unused; reserved for returning prediction
+#' standard errors.
+#' @param ... Further arguments (currently unused).
 #'
-#' @return return.
+#' @return A list of posterior predictive samples/summaries for the
+#' requested new locations and/or predictor values.
 #'
 #' @author Erick A. Chacon-Montalvan
 #'
 #' @examples
-#'
-#' 
+#' \donttest{
+#' data(ipixuna)
+#' parameters <- attr(ipixuna_wide, "parameters")
+#' L_a <- (parameters$discrimination != 0) * 1
+#' samples <- spifa(
+#'   responses = `Item 1`:`Item 10`, coords = coords, data = ipixuna_wide,
+#'   nfactors = 2, niter = 5, thin = 1, standardize = FALSE,
+#'   constrains = list(A = L_a, W = diag(2), V_sd = rep(0.5, 2)))
+#' samples_tib <- as_tibble(samples)
+#' newcoords <- sf::st_coordinates(ipixuna_wide$coords)[1:5, , drop = FALSE]
+#' predict(samples_tib, newcoords = newcoords)
+#' }
 #'
 #' @export
 predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
-                                thin = 1, se.fit = FALSE, what = NULL, ...) {
+                                thin = 1, se.fit = FALSE, ...) {
 
   # if (inherits(object, "spifa")) {
   #   object <- as.list(object)
@@ -274,14 +403,13 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
 
   # New data about predictors
   if (is.null(newdata)) {
-    newpredictors <- matrix(NA)
+    npred2 <- NULL
   } else {
     npred2 <- nrow(newdata)
-    newpredictors <- newdata
   }
 
   # Obtain number of subjects or locations to predict
-  if (exists("npred1") & exists("npred2")) {
+  if (!is.null(npred2) && exists("npred1")) {
     if (npred1 == npred2) {
       npred = npred1
     } else {
@@ -290,8 +418,21 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
     }
   } else if (exists("npred1")) {
     npred = npred1
-  } else if (exists("npred2")) {
+  } else if (!is.null(npred2)) {
     npred = npred2
+  }
+
+  # Build predictors for the new locations/subjects. If the model has
+  # predictors but newdata was not supplied (e.g. predicting the spatial
+  # component only), fall back to zeros so the predictor contribution is
+  # held at its reference level instead of crashing with mismatched
+  # dimensions.
+  if (!is.null(newdata)) {
+    newpredictors <- newdata
+  } else if (info$model_type %in% c("cifa_pred", "spifa_pred")) {
+    newpredictors <- matrix(0, npred, ncol(info$predictors))
+  } else {
+    newpredictors <- matrix(NA)
   }
 
   # Information about number of posterior samples to use
@@ -314,11 +455,7 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
     )
 
   # Predict calling c++ predict_spifa_cpp
-  if (is.null(what)) {
-    prediction <- do.call(predict_spifa_cpp, pred_list)
-  } else {
-    prediction <- do.call(predict2_spifa_cpp, pred_list)
-  }
+  prediction <- do.call(predict_spifa_cpp, pred_list)
 
   return(prediction)
   # return(pred_list)

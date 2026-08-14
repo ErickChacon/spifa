@@ -1,26 +1,40 @@
 Package: spifa
 Type: Package
 Title: Spatial Item Factor Analysis
-Version: 1.0
-Date: 2017-11-30
+Version: 0.1.0
 Encoding: UTF-8
-Authors@R: person("Erick A.", "Chacon-Montalvan", email = "eral.th07@gmail.com",
-        role = c("aut", "cre"))
-Maintainer: Erick A. Chacon-Montalvan <eral.th07@gmail.com>
-Description: Fits spatial item factor analysis using Bayesian
-        inference  with conjugates priors and using auxiliary variables with probit
-        link function.
-License: GPL (>= 2) | file LICENSE
+Authors@R: c(
+    person(c("Erick", "A."), "Chacón-Montalván", , "erick.chaconmontalvan@wur.nl",
+        role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8068-1034")),
+    person("Emanuele", "Giorgi", email = "e.giorgi@lancaster.ac.uk", role = "ctb"),
+    person("Benjamin M.", "Taylor", email = "b.taylor1@lancaster.ac.uk", role = "ctb"))
+Description: Fits item factor analysis models for binary responses using full
+    Bayesian inference via Gibbs sampling and auxiliary variables with a
+    probit link function. In addition to standard exploratory and
+    confirmatory item factor analysis, the latent factors can be modelled as
+    a multivariate Gaussian process to capture spatial dependence, allowing
+    users to fit and predict spatially-referenced constructs such as
+    ideological positions or socio-economic indices.
+License: GPL-3
+URL: https://github.com/ErickChacon/spifa
+BugReports: https://github.com/ErickChacon/spifa/issues
 Imports: Rcpp (>= 0.12.13),
-         RcppArmadillo,
          RcppTN,
          magrittr,
-         tibble
+         tibble,
+         dplyr,
+         tidyr,
+         purrr,
+         sf,
+         pdist,
+         ggplot2
 LinkingTo: Rcpp,
            RcppArmadillo,
            RcppTN
-RoxygenNote: 7.3.1
 Suggests: knitr,
-    rmarkdown
+    rmarkdown,
+    ggridges,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
-SystemRequirements: C++11
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

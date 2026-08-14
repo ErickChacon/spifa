@@ -2,6 +2,10 @@
 #include <Rcpp.h>
 #include <string>
 
+// Internal helpers used by the Ifa sampler (src/ifa.cpp) to name MCMC output
+// columns (e.g. "a[1,2]"). Not exported to R: not part of the package's
+// public API.
+
 // There was a problem with std::tostring because it requires a more updated compiler
 // and I am not sure how to do that with Rcpp
 // https://stackoverflow.com/questions/19122574/to-string-isnt-a-member-of-std
@@ -13,8 +17,6 @@ std::string ToString(T val)
     return stream.str();
 }
 
-//' @export
-// [[Rcpp::export]]
 Rcpp::StringVector name_samples_vec(int n_elem, std::string name) {
   Rcpp::StringVector param_names(n_elem);
   for (int i = 0; i < param_names.size(); ++i) {
@@ -24,8 +26,6 @@ Rcpp::StringVector name_samples_vec(int n_elem, std::string name) {
   return param_names;
 }
 
-//' @export
-// [[Rcpp::export]]
 Rcpp::StringVector name_samples_mat(int nrow, int ncol, std::string name) {
 
   // determine the length of the output
@@ -47,8 +47,6 @@ Rcpp::StringVector name_samples_mat(int nrow, int ncol, std::string name) {
   return param_names;
 }
 
-//' @export
-// [[Rcpp::export]]
 Rcpp::StringVector name_samples_lower(int nrow, int ncol, std::string name,
     bool diag = true) {
 
