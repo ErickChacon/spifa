@@ -13,12 +13,12 @@ gg_errorbar(
 }
 \arguments{
 \item{df_summary}{A summary tibble from \code{\link{summary.spifa}}, with
-columns \code{Parameters}, \code{2.5\%}, \code{10\%}, \code{50\%},
-\code{90\%}, \code{97.5\%}.}
+columns \code{variable}, \code{q2.5}, \code{q10}, \code{median},
+\code{q90}, \code{q97.5}.}
 
 \item{sorted}{Logical; if \code{TRUE} (default), plot against the
 posterior median on both axes (for use with faceting/sorting upstream)
-instead of against \code{Parameters}.}
+instead of against \code{variable}.}
 
 \item{colors}{Colors used for the 95\% and 80\% credible interval bars.}
 
@@ -41,8 +41,7 @@ samples <- spifa(
   items ~ 1, data = ipixuna_wide, nfactors = 2,
   niter = 20, thin = 1, standardize = FALSE,
   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-samples_tib <- as_tibble(samples, select = "c")
-gg_errorbar(summary(samples_tib), sorted = FALSE)
+gg_errorbar(summary(samples, select = "c"), sorted = FALSE)
 }
 
 }

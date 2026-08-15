@@ -5,8 +5,8 @@
 #' a long-format samples tibble, as produced by \code{\link{gather.spifa}}.
 #'
 #' @param df A wide \code{spifa} samples tibble (e.g. from
-#' \code{\link{as_tibble.spifa.list}}), or a subset of its columns selected
-#' via \code{select} in \code{\link{as_tibble.spifa.list}}.
+#' \code{\link{as_tibble.spifa}}), or a subset of its columns selected
+#' via \code{select} in \code{\link{as_tibble.spifa}}.
 #' @param wrap Logical; if \code{TRUE}, draw one facet per parameter instead
 #' of overlaying them on a single panel.
 #' @param legend Legend position passed to
@@ -56,7 +56,7 @@ gg_trace <- function (df, wrap = FALSE, legend = "bottom", ...) {
 #' (\code{ridges = TRUE}, requires the \pkg{ggridges} package).
 #'
 #' @param df A wide \code{spifa} samples tibble (e.g. from
-#' \code{\link{as_tibble.spifa.list}}).
+#' \code{\link{as_tibble.spifa}}).
 #' @param ... Further arguments passed to \code{\link[ggplot2]{geom_density}}
 #' (or to \code{ggridges::geom_density_ridges} when \code{ridges = TRUE}).
 #' @param ridges Logical; if \code{TRUE}, draw ridge (stacked) densities
@@ -297,8 +297,7 @@ gg_scatter <- function (samples, var1, var2, each = NULL,
 #'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
 #'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-#' samples_tib <- as_tibble(samples, select = "c")
-#' gg_errorbarh(summary(samples_tib))
+#' gg_errorbarh(summary(samples, select = "c"))
 #' }
 #'
 #' @export
@@ -306,15 +305,15 @@ gg_errorbarh <- function (df_summary, sorted = FALSE,
                           colors = c(rgb(1,0.5,0.1), "black"), ...) {
 
   if (sorted) {
-    gg <- df_summary %>% ggplot(., aes(`50%`, `50%`))
+    gg <- df_summary %>% ggplot(., aes(median, median))
   } else {
-    gg <- df_summary %>% ggplot(., aes(`50%`, Parameters))
+    gg <- df_summary %>% ggplot(., aes(median, variable))
   }
 
   gg <- gg +
-    geom_errorbarh(aes(xmin = `2.5%`, xmax = `97.5%`, col = "95%"),
+    geom_errorbarh(aes(xmin = q2.5, xmax = q97.5, col = "95%"),
                    height = 0, ...) +
-    geom_errorbarh(aes(xmin = `10%`, xmax = `90%`, col = "80%"), linewidth = 2,
+    geom_errorbarh(aes(xmin = q10, xmax = q90, col = "80%"), linewidth = 2,
                    height = 0, ...) +
     geom_point(size = 2)
   # colors
@@ -333,11 +332,11 @@ gg_errorbarh <- function (df_summary, sorted = FALSE,
 #' column per parameter), using the output of \code{\link{summary.spifa}}.
 #'
 #' @param df_summary A summary tibble from \code{\link{summary.spifa}}, with
-#' columns \code{Parameters}, \code{2.5\%}, \code{10\%}, \code{50\%},
-#' \code{90\%}, \code{97.5\%}.
+#' columns \code{variable}, \code{q2.5}, \code{q10}, \code{median},
+#' \code{q90}, \code{q97.5}.
 #' @param sorted Logical; if \code{TRUE} (default), plot against the
 #' posterior median on both axes (for use with faceting/sorting upstream)
-#' instead of against \code{Parameters}.
+#' instead of against \code{variable}.
 #' @param colors Colors used for the 95\% and 80\% credible interval bars.
 #' @param ... Further arguments passed to \code{\link[ggplot2]{geom_errorbar}}.
 #'
@@ -355,8 +354,7 @@ gg_errorbarh <- function (df_summary, sorted = FALSE,
 #'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
 #'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-#' samples_tib <- as_tibble(samples, select = "c")
-#' gg_errorbar(summary(samples_tib), sorted = FALSE)
+#' gg_errorbar(summary(samples, select = "c"), sorted = FALSE)
 #' }
 #'
 #' @export
@@ -364,15 +362,15 @@ gg_errorbar <- function (df_summary, sorted = TRUE,
                          colors = c(rgb(1,0.5,0.1), "black"), ...) {
 
   if (sorted) {
-    gg <- df_summary %>% ggplot(., aes(`50%`, `50%`))
+    gg <- df_summary %>% ggplot(., aes(median, median))
   } else {
-    gg <- df_summary %>% ggplot(., aes(Parameters, `50%`))
+    gg <- df_summary %>% ggplot(., aes(variable, median))
   }
 
   gg <- gg +
-    geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`, col = "95%"),
+    geom_errorbar(aes(ymin = q2.5, ymax = q97.5, col = "95%"),
                    width = 0, ...) +
-    geom_errorbar(aes(ymin = `10%`, ymax = `90%`, col = "80%"), linewidth = 2,
+    geom_errorbar(aes(ymin = q10, ymax = q90, col = "80%"), linewidth = 2,
                    width = 0, ...) +
     geom_point(size = 2)
   # colors

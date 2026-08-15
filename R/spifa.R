@@ -49,7 +49,10 @@
 #' construct).
 #' @param ngp Number of independent Gaussian processes used to build the
 #' (possibly restricted) multivariate Gaussian process for the latent
-#' factors. Defaults to \code{nfactors} (one GP per factor).
+#' factors. Defaults to \code{nfactors} (one GP per factor). Only relevant
+#' when \code{data} is an \code{sf} object; set to \code{0} to fit a
+#' non-spatial model even when \code{data} has a geometry column (the
+#' geometry and \code{ngp} are otherwise ignored in that case).
 #' @param niter Number of MCMC iterations to run.
 #' @param thin Thinning interval for the stored MCMC samples.
 #' @param standardize Logical; if \code{TRUE} (default), predictors are
@@ -97,7 +100,7 @@
 #' \code{theta}, \code{corr}, \code{betas}, ...), with an attribute
 #' \code{"model_info"} recording the data and options used to fit the model
 #' (needed by \code{\link{predict.spifa}} and \code{\link{dic}}). Convert it
-#' to a tidy \code{\link[tibble]{tibble}} with \code{\link{as_tibble.spifa.list}}.
+#' to a tidy \code{\link[tibble]{tibble}} with \code{\link{as_tibble.spifa}}.
 #'
 #' @author Erick A. Chacón-Montalván
 #'
@@ -114,7 +117,7 @@
 #'   items ~ 1, data = ipixuna_wide, nfactors = 2,
 #'   niter = 20, thin = 1, standardize = FALSE,
 #'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-#' summary(samples)
+#' summary(samples, select = c("c", "a"))
 #'
 #' @export
 spifa <- function(formula, data, nfactors, ngp = nfactors,
@@ -131,14 +134,10 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
                     scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
     execute = TRUE) {
 
-  # Responses (left-hand side of formula, must be a matrix-valued column of
-  # data) and predictors (right-hand side, if any)
+  # Determine dimensions, items and predictors
   mf <- model.frame(formula, data)
   response <- model.response(mf)
-  if (!is.matrix(response)) {
-    stop("the left-hand side of 'formula' must be a matrix-valued column ",
-         "of 'data' holding the item responses (see ?spifa)")
-  }
+  if (!is.matrix(response)) stop("The left-hand side of 'formula' must be a matrix")
   nobs <- nrow(response)
   nitems <- ncol(response)
   response <- as.numeric(response)
@@ -152,9 +151,10 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   }
 
   # Coordinates: spatial structure is inferred from class(data). Pass a
-  # plain (non-sf) data frame, e.g. via sf::st_set_geometry(data, NULL), for
-  # a non-spatial model.
+  # plain (non-sf) data frame, e.g. via sf::st_set_geometry(data, NULL), or
+  # ngp = 0, for a non-spatial model.
   coordinates <- if (inherits(data, "sf")) sf::st_geometry(data) else NULL
+  has_gp <- !is.null(coordinates) && ngp > 0
 
   # Restrictions for discrimination parameters and Gaussian process loadings
   constrain_L_explo <- matrix(NA, nitems, nfactors)
@@ -167,7 +167,7 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   n_corr <- nfactors * (nfactors - 1) / 2
 
   # Detect type of model to be fitted: EIFA, CIFA, CIFA_PRED, SPIFA, SPIFA_PRED
-  if (!is.null(coordinates)) {
+  if (has_gp) {
     if (!is.null(predictors)) {
       model_type = "spifa_pred"
       constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 0.2)
@@ -212,7 +212,7 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   adap_accep_prob <- ifelse(is.null(adaptive$accep_prob), 0.234, adaptive$accep_prob)
 
   # Create general sigma proposal in order: gp_sd, gp_phi, corr_free
-  if (is.null(coordinates)) {
+  if (!has_gp) {
     if (is.null(adaptive$Sigma)) {
       adap_Sigma <- adap_Sigma_R
     } else if (sum(dim(adaptive$Sigma) == c(n_corr, n_corr)) == 2) {
@@ -221,9 +221,9 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   } else {
     if (is.null(adaptive$Sigma)) {
       adap_Sigma <- matrix(0, nsigmas + ngp + n_corr, nsigmas + ngp + n_corr)
-      adap_Sigma[1:nsigmas, 1:nsigmas] <- adap_Sigma_gp_sd
-      adap_Sigma[nsigmas + 1:ngp, nsigmas + 1:ngp] <- adap_Sigma_gp_phi
-      adap_Sigma[nsigmas + ngp + 1:n_corr, nsigmas + ngp + 1:n_corr] <- adap_Sigma_R
+      adap_Sigma[seq_len(nsigmas), seq_len(nsigmas)] <- adap_Sigma_gp_sd
+      adap_Sigma[nsigmas + seq_len(ngp), nsigmas + seq_len(ngp)] <- adap_Sigma_gp_phi
+      adap_Sigma[nsigmas + ngp + seq_len(n_corr), nsigmas + ngp + seq_len(n_corr)] <- adap_Sigma_R
     } else if (sum(dim(adaptive$Sigma) == rep(nsigmas + ngp + n_corr, 2)) == 2) {
       adap_Sigma <- adaptive$Sigma
     }
@@ -258,7 +258,7 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   }
 
   # Optional arguments for GP standard deviations and  scale parameters
-  if (is.null(coordinates)) {
+  if (!has_gp) {
     sigmas_gp_mean <- rep(NA_real_, nsigmas)
     sigmas_gp_sd <- rep(NA_real_, nsigmas)
     sigmas_gp_initial <- rep(NA_real_, nsigmas)
@@ -276,7 +276,7 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
 
   # Compute predictors and distances as matrices
   if (is.null(predictors))  predictors <- matrix(NA)
-  if (is.null(coordinates)) {
+  if (!has_gp) {
     distances <- matrix(NA)
   } else {
     distances <- sf::st_transform(coordinates, crs = 3857) %>%
@@ -312,15 +312,38 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
     attr(samples, "V_sd") <- NULL
     model_info$constrain_V_sd <- constrain_V_sd
     model_info <- append(model_info, list(coordinates = coordinates), 2)
+
+    # src/ifa.cpp always returns all 9 blocks (c, a, theta, z, corr_chol,
+    # corr, mgp_sd, mgp_phi, betas), NA-filled for blocks that aren't part
+    # of this model_type (e.g. betas for eifa/cifa, mgp_sd/mgp_phi for
+    # anything non-spatial) -- those parameters were never actually sampled,
+    # so drop them here rather than shipping structural NAs. This also lets
+    # `bayesplot`, which errors on any NA, work on the returned draws_array
+    # directly without further filtering.
+    has_predictors <- model_type %in% c("cifa_pred", "spifa_pred")
+    has_coordinates <- model_type %in% c("spifa", "spifa_pred")
+    blocks_drop <- c(
+      if (!has_predictors) "betas",
+      if (!has_coordinates) c("mgp_sd", "mgp_phi"))
+    samples <- samples[!names(samples) %in% blocks_drop]
+
+    # Flatten the named list of per-block sample matrices (each block's own
+    # column names, e.g. "c[1]", "A[1,1]", already set in src/ifa.cpp) into
+    # a single posterior::draws_array. "spifa" is prepended to the class so
+    # package methods (print/summary/as_list) dispatch first, while every
+    # posterior/bayesplot function that works on class "draws_array" keeps
+    # working directly on this object with no conversion call.
+    flat <- do.call(cbind, samples)
+    arr <- array(flat, dim = c(nrow(flat), 1, ncol(flat)),
+                 dimnames = list(NULL, NULL, colnames(flat)))
+    samples <- posterior::as_draws_array(arr)
   } else {
     samples <- list()
   }
 
-  # Add model_info to MCMC samples. The executed path already gets class
-  # "spifa.list" from spifa_cpp(); set it explicitly here too so it's not
-  # silently missing on the `execute = FALSE` (samples <- list()) path.
+  # Add model_info to the fitted object.
   attr(samples, "model_info") <- model_info
-  class(samples) <- unique(c("spifa.list", class(samples)))
+  class(samples) <- unique(c("spifa", class(samples)))
 
   return(samples)
 }

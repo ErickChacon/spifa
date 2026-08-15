@@ -4,26 +4,31 @@
 \alias{summary.spifa}
 \title{Posterior Summary of MCMC Samples}
 \usage{
-\method{summary}{spifa}(object, select = names(object), ...)
+\method{summary}{spifa}(object, burnin = 0, thin = 1, select = NULL, ...)
 }
 \arguments{
-\item{object}{A wide \code{spifa} samples tibble, e.g. from
-\code{\link{as_tibble.spifa.list}}.}
+\item{object}{A fitted \code{spifa} object, as returned by
+\code{\link{spifa}}.}
 
-\item{select}{Character vector of column names to summarise (defaults to
-all of them).}
+\item{burnin}{Number of initial iterations to discard.}
+
+\item{thin}{Thinning interval applied after discarding burn-in.}
+
+\item{select}{Character vector of parameter blocks to summarise (defaults
+to all of them).}
 
 \item{...}{Further arguments passed to methods (currently unused).}
 }
 \value{
-A \code{\link[tibble]{tibble}} with one row per parameter and
-columns \code{Parameters}, \code{2.5\%}, \code{10\%}, \code{50\%},
-\code{90\%}, \code{97.5\%}.
+A \code{\link[tibble]{tibble}} with one row per parameter; see
+\code{\link[posterior]{summarise_draws}} for column details.
 }
 \description{
-Computes the posterior median and 80\%/95\% credible intervals (10th,
-2.5th, 50th, 90th, and 97.5th percentiles) for every parameter in a
-\code{spifa} samples tibble.
+Computes posterior summary statistics for every parameter in a fitted
+\code{spifa} object, via \code{\link[posterior]{summarise_draws}}: mean,
+median, sd, mad, the 2.5\%/10\%/50\%/90\%/97.5\% quantiles, and effective
+sample size (bulk and tail). \code{rhat} is not included since
+\code{\link{spifa}} only ever fits a single chain.
 }
 \examples{
 \donttest{
@@ -35,11 +40,10 @@ samples <- spifa(
   items ~ 1, data = ipixuna_wide, nfactors = 2,
   niter = 20, thin = 1, standardize = FALSE,
   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-samples_tib <- as_tibble(samples, select = "c")
-summary(samples_tib)
+summary(samples, select = "c")
 }
 
 }
 \author{
-Erick A. Chacon-Montalvan
+Erick A. Chacón-Montalván
 }

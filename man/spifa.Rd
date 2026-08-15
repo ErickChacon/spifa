@@ -95,7 +95,7 @@ sample matrices (one entry per parameter block, e.g. \code{c}, \code{a},
 \code{theta}, \code{corr}, \code{betas}, ...), with an attribute
 \code{"model_info"} recording the data and options used to fit the model
 (needed by \code{\link{predict.spifa}} and \code{\link{dic}}). Convert it
-to a tidy \code{\link[tibble]{tibble}} with \code{\link{as_tibble.spifa.list}}.
+to a tidy \code{\link[tibble]{tibble}} with \code{\link{as_tibble.spifa}}.
 }
 \description{
 Fits exploratory, confirmatory, and spatial item factor analysis (IFA)
@@ -143,7 +143,7 @@ samples <- spifa(
   items ~ 1, data = ipixuna_wide, nfactors = 2,
   niter = 20, thin = 1, standardize = FALSE,
   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-summary(samples)
+summary(samples, select = c("c", "a"))
 
 }
 \author{

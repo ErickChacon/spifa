@@ -8,7 +8,7 @@ gg_density(df, ..., ridges = FALSE)
 }
 \arguments{
 \item{df}{A wide \code{spifa} samples tibble (e.g. from
-\code{\link{as_tibble.spifa.list}}).}
+\code{\link{as_tibble.spifa}}).}
 
 \item{...}{Further arguments passed to \code{\link[ggplot2]{geom_density}}
 (or to \code{ggridges::geom_density_ridges} when \code{ridges = TRUE}).}

@@ -96,11 +96,10 @@ system.time(
 attr(samples, "model_info")$model_type
 ```
 
-## Convert samples to a tibble and summarise
+## Summarise samples
 
 ```{r}
-samples_tib <- as_tibble(samples, burnin = 100)
-summary(as_tibble(samples_tib, select = "c"))
+summary(samples, burnin = 100, select = "c")
 ```
 
 ## Visualize results
@@ -133,8 +132,7 @@ Credible intervals for the discrimination parameters, against the true
 simulated values:
 
 ```{r, fig.height = 5}
-as_tibble(samples, burnin = 100, select = "a") %>%
-  summary() %>%
+summary(samples, burnin = 100, select = "a") %>%
   mutate(param = as.numeric(parameters$discrimination)) %>%
   gg_errorbarh(sorted = FALSE) +
   geom_point(aes(x = param), col = 3)

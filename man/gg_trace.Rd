@@ -8,8 +8,8 @@ gg_trace(df, wrap = FALSE, legend = "bottom", ...)
 }
 \arguments{
 \item{df}{A wide \code{spifa} samples tibble (e.g. from
-\code{\link{as_tibble.spifa.list}}), or a subset of its columns selected
-via \code{select} in \code{\link{as_tibble.spifa.list}}.}
+\code{\link{as_tibble.spifa}}), or a subset of its columns selected
+via \code{select} in \code{\link{as_tibble.spifa}}.}
 
 \item{wrap}{Logical; if \code{TRUE}, draw one facet per parameter instead
 of overlaying them on a single panel.}

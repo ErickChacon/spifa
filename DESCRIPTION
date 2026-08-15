@@ -24,10 +24,10 @@ Imports: Rcpp (>= 0.12.13),
          tibble,
          dplyr,
          tidyr,
-         purrr,
          sf,
          pdist,
-         ggplot2
+         ggplot2,
+         posterior
 LinkingTo: Rcpp,
            RcppArmadillo,
            RcppTN

@@ -15,8 +15,8 @@
 )
 }
 \arguments{
-\item{object}{A wide \code{spifa} samples tibble, e.g. from
-\code{\link{as_tibble.spifa.list}}.}
+\item{object}{A fitted \code{spifa} object, as returned by
+\code{\link{spifa}}.}
 
 \item{newdata}{New values of the predictors used on the right-hand side
 of \code{formula} when the model was fitted (only needed for models
@@ -65,12 +65,11 @@ samples <- spifa(
   items ~ 1, data = ipixuna_sf,
   nfactors = 2, niter = 5, thin = 1, standardize = FALSE,
   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-samples_tib <- as_tibble(samples)
 newcoords <- sf::st_coordinates(ipixuna_wide$coords)[1:5, , drop = FALSE]
-predict(samples_tib, newcoords = newcoords)
+predict(samples, newcoords = newcoords)
 }
 
 }
 \author{
-Erick A. Chacon-Montalvan
+Erick A. Chacón-Montalván
 }

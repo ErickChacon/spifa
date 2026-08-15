@@ -8,7 +8,7 @@ gather.spifa(samples_wide, each = NULL, keys = c("group", "Parameter"))
 }
 \arguments{
 \item{samples_wide}{A wide samples tibble, e.g. from
-\code{\link{as_tibble.spifa.list}}.}
+\code{\link{as_tibble.spifa}}.}
 
 \item{each}{If not \code{NULL}, the number of columns that make up each
 group of parameters (e.g. the number of items), used to additionally
@@ -24,9 +24,9 @@ A long-format \code{\link[tibble]{tibble}} with columns
 the second \code{keys} element when \code{each} is supplied).
 }
 \description{
-Reshapes a wide \code{spifa} samples tibble (one column per parameter, as
-produced by \code{\link{as_tibble.spifa.list}}) into long format (one row
-per iteration/parameter pair), which is the shape expected by the
+Reshapes a wide samples tibble (one column per parameter, as produced by
+\code{\link{as_tibble.spifa}}) into long format (one row per
+iteration/parameter pair), which is the shape expected by the
 \code{\link{gg_trace}}/\code{\link{gg_density}} family of plotting
 helpers.
 }
@@ -47,5 +47,5 @@ long
 
 }
 \author{
-Erick A. Chacon-Montalvan
+Erick A. Chacón-Montalván
 }

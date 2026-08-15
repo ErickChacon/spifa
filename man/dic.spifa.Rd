@@ -7,8 +7,7 @@
 \method{dic}{spifa}(x, ...)
 }
 \arguments{
-\item{x}{A wide \code{spifa} samples tibble, e.g. from
-\code{\link{as_tibble.spifa.list}}.}
+\item{x}{A fitted \code{spifa} object, as returned by \code{\link{spifa}}.}
 
 \item{...}{Further arguments passed to methods (currently unused).}
 }
@@ -32,11 +31,10 @@ samples <- spifa(
   items ~ 1, data = ipixuna_wide, nfactors = 2,
   niter = 20, thin = 1, standardize = FALSE,
   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-samples_tib <- as_tibble(samples)
-dic(samples_tib)
+dic(samples)
 }
 
 }
 \author{
-Erick A. Chacon-Montalvan
+Erick A. Chacón-Montalván
 }

@@ -42,8 +42,7 @@ samples <- spifa(
   items ~ 1, data = ipixuna_wide, nfactors = 2,
   niter = 20, thin = 1, standardize = FALSE,
   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-samples_tib <- as_tibble(samples, select = "c")
-gg_errorbarh(summary(samples_tib))
+gg_errorbarh(summary(samples, select = "c"))
 }
 
 }

@@ -2,27 +2,26 @@
 % Please edit documentation in R/spifa-methods.R
 \name{as_list.spifa}
 \alias{as_list.spifa}
-\title{Convert a Wide Samples Tibble Back to a spifa.list}
+\title{Convert a Fitted spifa Model to a spifa.list}
 \usage{
 \method{as_list}{spifa}(x, ...)
 }
 \arguments{
 \item{x}{An object of class \code{spifa}, as returned by
-\code{\link{as_tibble.spifa.list}}.}
+\code{\link{spifa}}.}
 
 \item{...}{Further arguments passed to methods (currently unused).}
 }
 \value{
 An object of class \code{spifa.list}: a named list of matrices,
 one per parameter block, with the \code{"model_info"} attribute carried
-over from \code{samples_tib}.
+over from \code{x}.
 }
 \description{
-Inverse of \code{\link{as_tibble.spifa.list}}: splits a wide
-\code{spifa} tibble (one column per scalar parameter) back into a named
-list of matrices, one per parameter block (e.g. \code{c}, \code{a},
-\code{theta}, ...). Used internally by \code{\link{predict.spifa}} and
-\code{\link{dic.spifa}}.
+Splits a fitted \code{spifa} object back into a named list of matrices,
+one per parameter block (e.g. \code{c}, \code{a}, \code{theta}, ...).
+Used internally by \code{\link{predict.spifa}} and \code{\link{dic.spifa}},
+which need matrix-shaped samples to pass to their C++ counterparts.
 }
 \examples{
 \donttest{
@@ -34,12 +33,11 @@ samples <- spifa(
   items ~ 1, data = ipixuna_wide, nfactors = 2,
   niter = 20, thin = 1, standardize = FALSE,
   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-samples_tib <- as_tibble(samples)
-samples_list <- as_list(samples_tib)
+samples_list <- as_list(samples)
 names(samples_list)
 }
 
 }
 \author{
-Erick A. Chacon-Montalvan
+Erick A. Chacón-Montalván
 }

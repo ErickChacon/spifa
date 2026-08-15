@@ -97,7 +97,7 @@ NULL
 ## variables used in NSE contexts
 utils::globalVariables(c(
   ".", "Parameters", "Value", "iteration", "level",
-  "2.5%", "10%", "50%", "90%", "97.5%"
+  "variable", "median", "q2.5", "q10", "q90", "q97.5"
   ))
 
 #' @importFrom magrittr %>%
