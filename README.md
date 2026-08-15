@@ -34,14 +34,18 @@ data(ipixuna)
 parameters <- attr(ipixuna_wide, "parameters")
 L_a <- (parameters$discrimination != 0) * 1
 
+# data must be an sf object (its geometry becomes the spatial coordinates)
+# for a spatial Gaussian process to be added to the latent factors
+ipixuna_sf <- sf::st_as_sf(ipixuna_wide)
+ipixuna_sf$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+
 samples <- spifa(
-  responses = `Item 1`:`Item 10`, pred_formula = ~ x1, coords = coords,
-  data = ipixuna_wide, nfactors = 2,
+  items ~ x1, data = ipixuna_sf, nfactors = 2,
   niter = 1000, thin = 1, standardize = FALSE,
-  constrains = list(A = L_a, W = diag(2), V_sd = rep(0.4^0.5, 2)))
+  constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.4^0.5, 2)))
 
 samples_tib <- as_tibble(samples, burnin = 500)
-summary(as_tibble(samples_tib, select = "c"))
+summary(samples, burnin = 500, select = "c")
 ```
 
 See `vignette("spifa-ipixuna")` for a full worked example.
