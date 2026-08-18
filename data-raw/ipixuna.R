@@ -36,7 +36,7 @@ effect <- c(-0.5, 0.5, 0.3)
 wealth_effect <- outer(wealth, effect)
 
 # Non-spatial term
-resid_params <- list(sd = sqrt(c(0.20, 0.30, 0.10)), corr = c(-0.4, 0.2, -0.15))
+resid_params <- list(sd = sqrt(c(0.2, 0.3, 0.15)), corr = c(-0.4, 0.2, -0.15))
 
 nsp_corr <- diag(nfactors)
 nsp_corr[lower.tri(nsp_corr)] <- resid_params$corr
@@ -46,12 +46,18 @@ nsp_chol <- chol(nsp_cov)
 nonspatial <- matrix(rnorm(n * nfactors), n) %*% nsp_chol
 
 # Spatial term
-mgp_params <- list(sd = c(0.7, 0.6, 0.4), phi = c(300, 150, 250))
+mgp_params <- list(sd = sqrt(c(0.7, 0.6, 0.5)), phi = c(100, 150, 250))
 
-coords <- c(xmin = -71.70038, ymin = -7.06058, xmax = -71.68109, ymax = -7.03724) |>
-    st_bbox(crs = 4326) |>
-    st_sample(n)
+bbox <- c(xmin = -71.70038, ymin = -7.06058, xmax = -71.68109, ymax = -7.03724)
+# households are concentrated towards the town centre rather than uniform
+# across the bounding box
+coords <- data.frame(
+    lon = bbox["xmin"] + rbeta(n, 4, 4) * (bbox["xmax"] - bbox["xmin"]),
+    lat = bbox["ymin"] + rbeta(n, 4, 4) * (bbox["ymax"] - bbox["ymin"])) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
+  st_geometry()
 distances <- st_distance(coords) |> units::drop_units()
+
 spatial <- sapply(seq_len(ngp), function (k) {
   gp_cov <- mgp_params$sd[k]^2 * exp(-distances / mgp_params$phi[k])
   as.numeric(chol(gp_cov) %*% rnorm(n))
@@ -68,7 +74,9 @@ items <- (z > 0) * 1
 
 ## Ipixuna dataset
 ipixuna <- st_sf(id = seq_len(n), wealth = wealth, items = I(items), geometry = coords)
-attr(ipixuna, "parameters") <- list(easiness = easiness, discrimination = discrimination,
-    abilities = abilities, effect = effect, resid_params = resid_params, mgp_params = mgp_params)
+attr(ipixuna, "parameters") <- list(
+    easiness = easiness, discrimination = discrimination, abilities = abilities,
+    effect = effect, resid_params = resid_params, mgp_params = mgp_params
+)
 
 save(ipixuna, file = "data/ipixuna.RData")
