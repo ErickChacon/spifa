@@ -31,18 +31,15 @@ remotes::install_github("ErickChacon/spifa")
 library(spifa)
 
 data(ipixuna)
-parameters <- attr(ipixuna_wide, "parameters")
+parameters <- attr(ipixuna, "parameters")
 L_a <- (parameters$discrimination != 0) * 1
-
-# data must be an sf object (its geometry becomes the spatial coordinates)
-# for a spatial Gaussian process to be added to the latent factors
-ipixuna_sf <- sf::st_as_sf(ipixuna_wide)
-ipixuna_sf$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+nfactors <- ncol(parameters$discrimination)
 
 samples <- spifa(
-  items ~ x1, data = ipixuna_sf, nfactors = 2,
+  items ~ wealth, data = ipixuna, nfactors = nfactors,
   niter = 1000, thin = 1, standardize = FALSE,
-  constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.4^0.5, 2)))
+  constraints = list(discrimination = L_a, mgp = diag(nfactors),
+    resid_sd = parameters$resid_params$sd))
 
 samples_tib <- as_tibble(samples, burnin = 500)
 summary(samples, burnin = 500, select = "c")

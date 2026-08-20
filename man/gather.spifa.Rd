@@ -33,13 +33,13 @@ helpers.
 \examples{
 \donttest{
 data(ipixuna)
-parameters <- attr(ipixuna_wide, "parameters")
+parameters <- attr(ipixuna, "parameters")
 L_a <- (parameters$discrimination != 0) * 1
-ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+nfactors <- ncol(parameters$discrimination)
 samples <- spifa(
-  items ~ 1, data = ipixuna_wide, nfactors = 2,
+  items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
   niter = 20, thin = 1, standardize = FALSE,
-  constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
+  constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
 wide <- as_tibble(samples, select = "c")
 long <- gather.spifa(wide)
 long

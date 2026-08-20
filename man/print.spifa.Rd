@@ -24,8 +24,7 @@ further inspection.
 }
 \examples{
 data(ipixuna)
-ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
-samples <- spifa(items ~ 1, data = ipixuna_wide, nfactors = 2, niter = 20, thin = 1)
+samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 20, thin = 1)
 samples
 
 }

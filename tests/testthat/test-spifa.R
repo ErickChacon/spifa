@@ -1,13 +1,13 @@
 test_that("spifa() fits a confirmatory (non-spatial) model end-to-end", {
   data(ipixuna, package = "spifa")
-  parameters <- attr(ipixuna_wide, "parameters")
+  parameters <- attr(ipixuna, "parameters")
   L_a <- (parameters$discrimination != 0) * 1
-  ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+  nfactors <- ncol(parameters$discrimination)
 
   samples <- spifa(
-    items ~ 1, data = ipixuna_wide, nfactors = 2,
+    items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
     niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
+    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
 
   expect_s3_class(samples, "spifa")
   expect_s3_class(samples, "draws_array")
@@ -32,14 +32,13 @@ test_that("spifa() fits a confirmatory (non-spatial) model end-to-end", {
 
 test_that("spifa() fits a spatial model with predictors and predicts at new locations", {
   data(ipixuna, package = "spifa")
-  parameters <- attr(ipixuna_wide, "parameters")
+  parameters <- attr(ipixuna, "parameters")
   L_a <- (parameters$discrimination != 0) * 1
-  ipixuna_sf <- sf::st_as_sf(ipixuna_wide)
-  ipixuna_sf$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+  nfactors <- ncol(parameters$discrimination)
 
   samples <- spifa(
-    items ~ x1, data = ipixuna_sf, nfactors = 2, niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.4^0.5, 2)),
+    items ~ wealth, data = ipixuna, nfactors = nfactors, niter = 5, thin = 1, standardize = FALSE,
+    constraints = list(discrimination = L_a, mgp = diag(nfactors), resid_sd = parameters$resid_params$sd),
     priors = list(
       mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
       mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
@@ -50,8 +49,8 @@ test_that("spifa() fits a spatial model with predictors and predicts at new loca
   expect_setequal(unique(.spifa_var_blocks(dimnames(samples)[[3]])),
     c("c", "a", "theta", "z", "corr_chol", "corr", "mgp_sd", "mgp_phi", "betas"))
 
-  newcoords <- sf::st_coordinates(ipixuna_wide$coords)[1:5, , drop = FALSE]
+  newcoords <- sf::st_coordinates(ipixuna$geometry)[1:5, , drop = FALSE]
   pr <- predict(samples, newcoords = newcoords)
   expect_type(pr, "list")
-  expect_equal(dim(pr$theta), c(5, 5 * 2))
+  expect_equal(dim(pr$theta), c(5, 5 * nfactors))
 })

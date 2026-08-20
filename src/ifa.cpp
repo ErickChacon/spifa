@@ -345,7 +345,7 @@ void Ifa::update_cov_params(
 }
 
 Rcpp::List Ifa::sample(
-    int niter, int thin, bool standardize,
+    int niter, int thin, int burnin, bool standardize,
     arma::vec c_prior_mean, arma::vec c_prior_sd,
     arma::mat A_prior_mean, arma::mat A_prior_sd,
     double R_prior_eta,
@@ -355,7 +355,11 @@ Rcpp::List Ifa::sample(
     double C, double alpha, double target)
 {
 
-  int nsave = niter / thin;
+  // Ceiling division: a draw is saved at the start of every thin-sized
+  // block of post-burnin iterations (offset 0, thin, 2*thin, ...), so a
+  // trailing partial block (when niter isn't a multiple of thin) still
+  // contributes one saved draw.
+  int nsave = (niter + thin - 1) / thin;
 
   // Transformation of prior parameters
   arma::vec a_prior_mean = arma::vectorise(A_prior_mean.t());
@@ -372,7 +376,7 @@ Rcpp::List Ifa::sample(
   arma::mat mgp_phi_samples(ngp, nsave);
   arma::mat betas_samples(p*m, nsave);
 
-  for (int i = 0; i < niter; ++i) {
+  for (int i = 0; i < burnin + niter; ++i) {
     // Update parameters
     update_theta();
     update_c(c_prior_mean, c_prior_sd);
@@ -382,17 +386,19 @@ Rcpp::List Ifa::sample(
     update_cov_params(sigmas_gp_mean, sigmas_gp_sd, phi_gp_mean, phi_gp_sd,
         R_prior_eta, C, alpha, target, i);
 
-    // Save samples
-    if (niter % thin == 0) {
-      theta_samples.col(i/thin) = theta;
-      c_samples.col(i/thin) = c;
-      a_samples.col(i/thin) = arma::vectorise(LA);
-      z_samples.col(i/thin) = z;
-      corr_chol_samples.col(i/thin) = trimatl2vec(Corr_chol, true);
-      corr_samples.col(i/thin) = trimatl2vec(Corr_chol * Corr_chol.t(), false);
-      mgp_sd_samples.col(i/thin) = mgp_sd;
-      mgp_phi_samples.col(i/thin) = mgp_phi;
-      betas_samples.col(i/thin) = arma::vectorise(B);
+    // Save samples (skip the burnin iterations; keep the adaptive-MH
+    // schedule running continuously across burnin and niter via `i`)
+    if (i >= burnin && (i - burnin) % thin == 0) {
+      int j = (i - burnin) / thin;
+      theta_samples.col(j) = theta;
+      c_samples.col(j) = c;
+      a_samples.col(j) = arma::vectorise(LA);
+      z_samples.col(j) = z;
+      corr_chol_samples.col(j) = trimatl2vec(Corr_chol, true);
+      corr_samples.col(j) = trimatl2vec(Corr_chol * Corr_chol.t(), false);
+      mgp_sd_samples.col(j) = mgp_sd;
+      mgp_phi_samples.col(j) = mgp_phi;
+      betas_samples.col(j) = arma::vectorise(B);
     }
   }
 

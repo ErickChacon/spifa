@@ -30,8 +30,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // spifa_cpp
-Rcpp::List spifa_cpp(Rcpp::NumericVector response, arma::mat predictors, arma::mat distances, int nobs, int nitems, int nfactors, int ngp, int niter, int thin, bool standardize, arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd, arma::mat adap_Sigma, double adap_scale, double adap_C, double adap_alpha, double adap_accep_prob, arma::vec c_initial, arma::vec c_prior_mean, arma::vec c_prior_sd, arma::mat A_initial, arma::mat A_prior_mean, arma::mat A_prior_sd, arma::mat R_initial, double R_prior_eta, arma::mat B_initial, arma::mat B_prior_mean, arma::mat B_prior_sd, arma::vec sigmas_gp_initial, arma::vec sigmas_gp_mean, arma::vec sigmas_gp_sd, arma::vec phi_gp_initial, arma::vec phi_gp_mean, arma::vec phi_gp_sd, std::string model_type);
-RcppExport SEXP _spifa_spifa_cpp(SEXP responseSEXP, SEXP predictorsSEXP, SEXP distancesSEXP, SEXP nobsSEXP, SEXP nitemsSEXP, SEXP nfactorsSEXP, SEXP ngpSEXP, SEXP niterSEXP, SEXP thinSEXP, SEXP standardizeSEXP, SEXP constrain_LSEXP, SEXP constrain_TSEXP, SEXP constrain_V_sdSEXP, SEXP adap_SigmaSEXP, SEXP adap_scaleSEXP, SEXP adap_CSEXP, SEXP adap_alphaSEXP, SEXP adap_accep_probSEXP, SEXP c_initialSEXP, SEXP c_prior_meanSEXP, SEXP c_prior_sdSEXP, SEXP A_initialSEXP, SEXP A_prior_meanSEXP, SEXP A_prior_sdSEXP, SEXP R_initialSEXP, SEXP R_prior_etaSEXP, SEXP B_initialSEXP, SEXP B_prior_meanSEXP, SEXP B_prior_sdSEXP, SEXP sigmas_gp_initialSEXP, SEXP sigmas_gp_meanSEXP, SEXP sigmas_gp_sdSEXP, SEXP phi_gp_initialSEXP, SEXP phi_gp_meanSEXP, SEXP phi_gp_sdSEXP, SEXP model_typeSEXP) {
+Rcpp::List spifa_cpp(Rcpp::NumericVector response, arma::mat predictors, arma::mat distances, int nobs, int nitems, int nfactors, int ngp, int niter, int thin, int burnin, bool standardize, arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd, arma::mat adap_Sigma, double adap_scale, double adap_C, double adap_alpha, double adap_accep_prob, arma::vec c_initial, arma::vec c_prior_mean, arma::vec c_prior_sd, arma::mat A_initial, arma::mat A_prior_mean, arma::mat A_prior_sd, arma::mat R_initial, double R_prior_eta, arma::mat B_initial, arma::mat B_prior_mean, arma::mat B_prior_sd, arma::vec sigmas_gp_initial, arma::vec sigmas_gp_mean, arma::vec sigmas_gp_sd, arma::vec phi_gp_initial, arma::vec phi_gp_mean, arma::vec phi_gp_sd, std::string model_type);
+RcppExport SEXP _spifa_spifa_cpp(SEXP responseSEXP, SEXP predictorsSEXP, SEXP distancesSEXP, SEXP nobsSEXP, SEXP nitemsSEXP, SEXP nfactorsSEXP, SEXP ngpSEXP, SEXP niterSEXP, SEXP thinSEXP, SEXP burninSEXP, SEXP standardizeSEXP, SEXP constrain_LSEXP, SEXP constrain_TSEXP, SEXP constrain_V_sdSEXP, SEXP adap_SigmaSEXP, SEXP adap_scaleSEXP, SEXP adap_CSEXP, SEXP adap_alphaSEXP, SEXP adap_accep_probSEXP, SEXP c_initialSEXP, SEXP c_prior_meanSEXP, SEXP c_prior_sdSEXP, SEXP A_initialSEXP, SEXP A_prior_meanSEXP, SEXP A_prior_sdSEXP, SEXP R_initialSEXP, SEXP R_prior_etaSEXP, SEXP B_initialSEXP, SEXP B_prior_meanSEXP, SEXP B_prior_sdSEXP, SEXP sigmas_gp_initialSEXP, SEXP sigmas_gp_meanSEXP, SEXP sigmas_gp_sdSEXP, SEXP phi_gp_initialSEXP, SEXP phi_gp_meanSEXP, SEXP phi_gp_sdSEXP, SEXP model_typeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -44,6 +44,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type ngp(ngpSEXP);
     Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
     Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< int >::type burnin(burninSEXP);
     Rcpp::traits::input_parameter< bool >::type standardize(standardizeSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type constrain_L(constrain_LSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type constrain_T(constrain_TSEXP);
@@ -71,7 +72,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type phi_gp_mean(phi_gp_meanSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type phi_gp_sd(phi_gp_sdSEXP);
     Rcpp::traits::input_parameter< std::string >::type model_type(model_typeSEXP);
-    rcpp_result_gen = Rcpp::wrap(spifa_cpp(response, predictors, distances, nobs, nitems, nfactors, ngp, niter, thin, standardize, constrain_L, constrain_T, constrain_V_sd, adap_Sigma, adap_scale, adap_C, adap_alpha, adap_accep_prob, c_initial, c_prior_mean, c_prior_sd, A_initial, A_prior_mean, A_prior_sd, R_initial, R_prior_eta, B_initial, B_prior_mean, B_prior_sd, sigmas_gp_initial, sigmas_gp_mean, sigmas_gp_sd, phi_gp_initial, phi_gp_mean, phi_gp_sd, model_type));
+    rcpp_result_gen = Rcpp::wrap(spifa_cpp(response, predictors, distances, nobs, nitems, nfactors, ngp, niter, thin, burnin, standardize, constrain_L, constrain_T, constrain_V_sd, adap_Sigma, adap_scale, adap_C, adap_alpha, adap_accep_prob, c_initial, c_prior_mean, c_prior_sd, A_initial, A_prior_mean, A_prior_sd, R_initial, R_prior_eta, B_initial, B_prior_mean, B_prior_sd, sigmas_gp_initial, sigmas_gp_mean, sigmas_gp_sd, phi_gp_initial, phi_gp_mean, phi_gp_sd, model_type));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -112,7 +113,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_spifa_dic_cpp", (DL_FUNC) &_spifa_dic_cpp, 8},
-    {"_spifa_spifa_cpp", (DL_FUNC) &_spifa_spifa_cpp, 36},
+    {"_spifa_spifa_cpp", (DL_FUNC) &_spifa_spifa_cpp, 37},
     {"_spifa_predict_spifa_cpp", (DL_FUNC) &_spifa_predict_spifa_cpp, 24},
     {NULL, NULL, 0}
 };

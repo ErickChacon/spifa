@@ -53,8 +53,21 @@
 #' when \code{data} is an \code{sf} object; set to \code{0} to fit a
 #' non-spatial model even when \code{data} has a geometry column (the
 #' geometry and \code{ngp} are otherwise ignored in that case).
-#' @param niter Number of MCMC iterations to run.
+#' @param niter Number of MCMC iterations to run (after \code{burnin}) and
+#' store.
 #' @param thin Thinning interval for the stored MCMC samples.
+#' @param burnin Number of initial MCMC iterations to discard. These
+#' iterations still run (and the adaptive Metropolis-Hastings proposals for
+#' \code{mgp_sd}/\code{mgp_range}/\code{resid_corr} still adapt through
+#' them), but they are never stored, so \code{niter} counts only the
+#' iterations that end up in the returned samples. \code{0} by default (no
+#' iterations discarded during fitting -- the previous behaviour). Prefer
+#' this over discarding a prefix of the samples afterwards (e.g. via
+#' \code{summary(..., burnin = )}): iterations dropped here were never
+#' stored, so they don't cost memory or thinning-index arithmetic, and the
+#' adaptive proposals get to keep converging across the burnin/niter
+#' boundary rather than someone accidentally analysing them as if they were
+#' post-adaptation draws.
 #' @param standardize Logical; if \code{TRUE} (default), predictors are
 #' standardized before fitting.
 #' @param constraints Named list of constraints associated to the factor model. Accepted
@@ -73,7 +86,7 @@
 #' predictors or a Gaussian process, it is recomended to be lower than 1.
 #'
 #' @param priors Named list of initial values and prior hyperparameters, one
-#' element per parameter block: `difficulty`, `discrimination`, `effect`
+#' element per parameter block: `easiness`, `discrimination`, `effect`
 #' (predictor effect on the latent factors), `resid_corr` (correlation of the
 #' latent factors' residual term, paired with `constraints$resid_sd`),
 #' `mgp_sd` (multivariate Gaussian process standard deviations), and
@@ -107,24 +120,25 @@
 #' @examples
 #' data(ipixuna)
 #'
-#' # true discrimination structure used to simulate ipixuna_wide
-#' parameters <- attr(ipixuna_wide, "parameters")
+#' # true discrimination structure used to simulate ipixuna
+#' parameters <- attr(ipixuna, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
+#' nfactors <- ncol(parameters$discrimination)
 #'
-#' # confirmatory item factor analysis (small niter for a fast example)
-#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+#' # confirmatory item factor analysis (non-spatial: ngp = 0; small niter
+#' # for a fast example)
 #' samples <- spifa(
-#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
 #' summary(samples, select = c("c", "a"))
 #'
 #' @export
 spifa <- function(formula, data, nfactors, ngp = nfactors,
-    niter = 1000, thin = 10, standardize = TRUE,
+    niter = 1000, thin = 10, burnin = 0, standardize = TRUE,
     constraints = list(discrimination = NULL, mgp = NULL, resid_sd = rep(1, nfactors)),
     priors = list(
-      difficulty = list(initial = NULL, mean = NULL, sd = NULL),
+      easiness = list(initial = NULL, mean = NULL, sd = NULL),
       discrimination = list(initial = NULL, mean = NULL, sd = NULL),
       effect = list(initial = NULL, mean = NULL, sd = NULL),
       resid_corr = list(initial = NULL, eta = 1.5),
@@ -186,10 +200,10 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
     constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 1)
   }
 
-  # Optional arguments for difficulty parameters (c)
-  c_prior_mean <- check_param_vec(priors$difficulty, "mean", nitems, 0)
-  c_prior_sd <- check_param_vec(priors$difficulty, "sd", nitems, 1)
-  c_initial <- check_param_vec(priors$difficulty, "initial", nitems,
+  # Optional arguments for easiness parameters (c)
+  c_prior_mean <- check_param_vec(priors$easiness, "mean", nitems, 0)
+  c_prior_sd <- check_param_vec(priors$easiness, "sd", nitems, 1)
+  c_initial <- check_param_vec(priors$easiness, "initial", nitems,
                                rnorm(nitems, c_prior_mean, c_prior_sd))
 
   # Optional arguments for discrimination parameters (A)
@@ -289,7 +303,7 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   model_info <- list(
     response = response, predictors = predictors, distances = distances,
     nobs = nobs, nitems = nitems, nfactors = nfactors, ngp = ngp,
-    niter = niter, thin = thin, standardize = standardize,
+    niter = niter, thin = thin, burnin = burnin, standardize = standardize,
     constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
     adap_Sigma = adap_Sigma, adap_scale = adap_scale, adap_C = adap_C,
     adap_alpha = adap_alpha, adap_accep_prob = adap_accep_prob,

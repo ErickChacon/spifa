@@ -89,7 +89,7 @@ public:
       const double C, const double alpha, const double target, int index);
 
   Rcpp::List sample(
-      int niter, int thin, bool standardize,
+      int niter, int thin, int burnin, bool standardize,
       arma::vec c_prior_mean, arma::vec c_prior_sd,
       arma::mat A_prior_mean, arma::mat A_prior_sd,
       double R_prior_eta,

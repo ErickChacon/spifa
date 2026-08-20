@@ -3,54 +3,42 @@
 \docType{data}
 \name{ipixuna}
 \alias{ipixuna}
-\alias{ipixuna_wide}
 \title{Simulated Food Insecurity Survey Data for Ipixuna}
 \format{
-`ipixuna_wide` is a tibble with one row per household (200 rows)
-and columns:
+An `sf` tibble with one row per household (100 rows) and columns:
 \describe{
   \item{id}{Household identifier.}
-  \item{x1}{A simulated household-level covariate.}
-  \item{coords}{An `sfc_POINT` geometry column with the household's
-    spatial coordinates (longitude/latitude).}
-  \item{Theta1, Theta2}{The true simulated values of the two latent
-    factors, useful for checking recovery.}
-  \item{`Item 1`, ..., `Item 10`}{Binary (0/1) responses to the food
+  \item{wealth}{A simulated household-level covariate.}
+  \item{items}{A 100x10 binary (0/1) matrix of responses to the food
     insecurity items.}
+  \item{geometry}{An `sfc_POINT` geometry column with the household's
+    spatial coordinates (longitude/latitude), concentrated towards the
+    town centre.}
 }
 It has an attribute `"parameters"` holding the true generating parameters
-used in the simulation (`n`, `q`, `m`, `g`, `easiness`, `discrimination`,
-`beta`, `Cov`, `A`, `cor.params`), which is convenient for specifying
+used in the simulation (`easiness`, `discrimination`, `abilities`
+(the true latent factor scores, useful for checking recovery), `effect`,
+`resid_params` (list with `sd` and `corr`, the residual covariance of the
+latent factors), `mgp_params` (list with `sd` and `phi`, the spatial
+Gaussian process hyperparameters)), which is convenient for specifying
 sensible restrictions and checking recovery of the model in examples and
 tests.
-
-`ipixuna` is the long-format equivalent (2000 rows, one per
-household/item pair), with columns `id`, `x1`, `coords`, `Theta1`,
-`Theta2`, `prob` (true response probability), `response` (the binary
-outcome), and `response_label` (the item identifier).
-
-Note: `coords` uses an older `sf` coordinate-reference-system
-representation and will print a one-time "old-style crs object" message;
-this is harmless but can be silenced with
-`sf::st_set_crs(ipixuna_wide$coords, sf::st_crs(ipixuna_wide$coords))`.
 }
 \source{
-Simulated; see `attr(ipixuna_wide, "parameters")` for the
-  generating values.
+Simulated; see `data-raw/ipixuna.R` for the generating code and
+  `attr(ipixuna, "parameters")` for the generating values.
 }
 \description{
 Simulated household survey data for the rural area of Ipixuna
 (Para state, Brazil), used to illustrate spatial item factor analysis.
-Ten binary items (`Item 1`-`Item 10`), a covariate `x1`, and spatial
+Ten binary items, a household-level `wealth` covariate, and spatial
 coordinates are simulated for each household so that they reproduce the
 spatial multidimensional item response structure described in the SPIFA
-paper (Chacon-Montalvan, Giorgi and Taylor). The data are provided in two
-equivalent shapes: `ipixuna` (item responses in long format) and
-`ipixuna_wide` (one row per household, one column per item).
+paper (Chacon-Montalvan, Giorgi and Taylor). The data is provided as an
+`sf` object, already in the format [spifa()] requires.
 }
 \examples{
 data(ipixuna)
-head(dplyr::select(ipixuna, -coords))
-head(dplyr::select(ipixuna_wide, -coords))
-attr(ipixuna_wide, "parameters")
+head(dplyr::select(ipixuna, -geometry, -items))
+attr(ipixuna, "parameters")
 }

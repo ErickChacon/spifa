@@ -9,7 +9,7 @@
 Rcpp::List spifa_cpp(
     Rcpp::NumericVector response, arma::mat predictors, arma::mat distances,
     int nobs, int nitems, int nfactors, int ngp,
-    int niter, int thin, bool standardize,
+    int niter, int thin, int burnin, bool standardize,
     arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd,
     arma::mat adap_Sigma, double adap_scale, double adap_C,
     double adap_alpha, double adap_accep_prob,
@@ -30,7 +30,7 @@ Rcpp::List spifa_cpp(
       model_type);
 
   Rcpp::List output = model.sample(
-      niter, thin, standardize,
+      niter, thin, burnin, standardize,
       c_prior_mean, c_prior_sd,
       A_prior_mean, A_prior_sd,
       R_prior_eta,

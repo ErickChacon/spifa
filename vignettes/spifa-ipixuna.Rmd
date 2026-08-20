@@ -50,12 +50,13 @@ library(sf)
 data(ipixuna)
 ```
 
-`ipixuna_wide` has one row per (simulated) household, with ten binary food
-insecurity items, a covariate `x1`, and a spatial coordinate `coords`:
+`ipixuna` has one row per (simulated) household, with a ten-item binary
+`items` response matrix, a covariate `wealth`, and a spatial coordinate
+`geometry`:
 
 ```{r}
-ipixuna_wide %>%
-  dplyr::select(-coords) %>%
+ipixuna %>%
+  dplyr::select(-geometry, -items) %>%
   head(10) %>%
   knitr::kable(digits = 2)
 ```
@@ -65,29 +66,28 @@ discrimination structure) are stored as an attribute, which is convenient
 both for setting sensible restrictions and for checking recovery below:
 
 ```{r}
-parameters <- attr(ipixuna_wide, "parameters")
+parameters <- attr(ipixuna, "parameters")
 str(parameters)
 ```
 
 ## Fit a SPIFA model for the Ipixuna data
 
 We restrict the discrimination matrix to the structure used to simulate the
-data, and let the two latent factors follow independent Gaussian processes
-(`W = diag(2)`) over the household coordinates. `niter` is kept small here
-so the vignette builds quickly; in practice use a few thousand iterations
-and check convergence (see `?gg_trace`).
+data, and let the three latent factors follow independent Gaussian
+processes (`W = diag(3)`) over the household coordinates. `niter` is kept
+small here so the vignette builds quickly; in practice use a few thousand
+iterations and check convergence (see `?gg_trace`).
 
 ```{r}
 L_a <- (parameters$discrimination != 0) * 1
-
-ipixuna_sf <- sf::st_as_sf(ipixuna_wide)
-ipixuna_sf$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+nfactors <- ncol(parameters$discrimination)
 
 system.time(
   samples <- spifa(
-    items ~ x1, data = ipixuna_sf, nfactors = 2,
+    items ~ wealth, data = ipixuna, nfactors = nfactors,
     niter = 200, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.4^0.5, 2)),
+    constraints = list(discrimination = L_a, mgp = diag(nfactors),
+      resid_sd = parameters$resid_params$sd),
     priors = list(
       mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
       mgp_range = list(initial = 200, mean = 200, sd = 0.4)))

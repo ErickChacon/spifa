@@ -31,8 +31,7 @@ names(.spifa_pars) <- c("c", "A", "Theta", "Z", "Corr_chol", "Corr", "T", "mgp_p
 #'
 #' @examples
 #' data(ipixuna)
-#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
-#' samples <- spifa(items ~ 1, data = ipixuna_wide, nfactors = 2, niter = 20, thin = 1)
+#' samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 20, thin = 1)
 #' samples
 #'
 #' @export
@@ -85,13 +84,13 @@ print.spifa <- function (x, ...) {
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna_wide, "parameters")
+#' parameters <- attr(ipixuna, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
-#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+#' nfactors <- ncol(parameters$discrimination)
 #' samples <- spifa(
-#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
 #' samples_tib <- as_tibble(samples)
 #' samples_tib
 #' }
@@ -153,13 +152,13 @@ as_list <- function (x, ...) {
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna_wide, "parameters")
+#' parameters <- attr(ipixuna, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
-#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+#' nfactors <- ncol(parameters$discrimination)
 #' samples <- spifa(
-#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
 #' samples_list <- as_list(samples)
 #' names(samples_list)
 #' }
@@ -213,13 +212,13 @@ as_list.spifa <- function (x, ...) {
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna_wide, "parameters")
+#' parameters <- attr(ipixuna, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
-#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+#' nfactors <- ncol(parameters$discrimination)
 #' samples <- spifa(
-#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
 #' wide <- as_tibble(samples, select = "c")
 #' long <- gather.spifa(wide)
 #' long
@@ -281,13 +280,13 @@ gather.spifa <- function (samples_wide, each = NULL,
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna_wide, "parameters")
+#' parameters <- attr(ipixuna, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
-#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+#' nfactors <- ncol(parameters$discrimination)
 #' samples <- spifa(
-#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
 #' summary(samples, select = "c")
 #' }
 #'
@@ -341,13 +340,13 @@ dic <- function (x, ...) {
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna_wide, "parameters")
+#' parameters <- attr(ipixuna, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
-#' ipixuna_wide$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+#' nfactors <- ncol(parameters$discrimination)
 #' samples <- spifa(
-#'   items ~ 1, data = ipixuna_wide, nfactors = 2,
+#'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
+#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
 #' dic(samples)
 #' }
 #'
@@ -408,15 +407,14 @@ dic.spifa <- function (x, ...) {
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna_wide, "parameters")
+#' parameters <- attr(ipixuna, "parameters")
 #' L_a <- (parameters$discrimination != 0) * 1
-#' ipixuna_sf <- sf::st_as_sf(ipixuna_wide)
-#' ipixuna_sf$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+#' nfactors <- ncol(parameters$discrimination)
 #' samples <- spifa(
-#'   items ~ 1, data = ipixuna_sf,
-#'   nfactors = 2, niter = 5, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-#' newcoords <- sf::st_coordinates(ipixuna_wide$coords)[1:5, , drop = FALSE]
+#'   items ~ 1, data = ipixuna,
+#'   nfactors = nfactors, niter = 5, thin = 1, standardize = FALSE,
+#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
+#' newcoords <- sf::st_coordinates(ipixuna$geometry)[1:5, , drop = FALSE]
 #' predict(samples, newcoords = newcoords)
 #' }
 #'

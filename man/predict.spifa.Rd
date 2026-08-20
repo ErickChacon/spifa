@@ -57,15 +57,14 @@ for the new locations and/or predictor values is delegated to the
 \examples{
 \donttest{
 data(ipixuna)
-parameters <- attr(ipixuna_wide, "parameters")
+parameters <- attr(ipixuna, "parameters")
 L_a <- (parameters$discrimination != 0) * 1
-ipixuna_sf <- sf::st_as_sf(ipixuna_wide)
-ipixuna_sf$items <- as.matrix(dplyr::select(ipixuna_wide, `Item 1`:`Item 10`))
+nfactors <- ncol(parameters$discrimination)
 samples <- spifa(
-  items ~ 1, data = ipixuna_sf,
-  nfactors = 2, niter = 5, thin = 1, standardize = FALSE,
-  constraints = list(discrimination = L_a, mgp = diag(2), resid_sd = rep(0.5, 2)))
-newcoords <- sf::st_coordinates(ipixuna_wide$coords)[1:5, , drop = FALSE]
+  items ~ 1, data = ipixuna,
+  nfactors = nfactors, niter = 5, thin = 1, standardize = FALSE,
+  constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
+newcoords <- sf::st_coordinates(ipixuna$geometry)[1:5, , drop = FALSE]
 predict(samples, newcoords = newcoords)
 }
 
