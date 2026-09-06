@@ -9,8 +9,8 @@ spifa(
   data,
   nfactors,
   ngp = nfactors,
-  niter = 1000,
-  thin = 10,
+  niter = 100,
+  thin = 1,
   burnin = 0,
   standardize = TRUE,
   constraints = list(discrimination = NULL, mgp = NULL, resid_sd = rep(1, nfactors)),
@@ -35,9 +35,8 @@ right-hand side specifies predictors for the latent factors (e.g.
 on the left-hand side of \code{formula} and, if used, the predictor
 columns named on its right-hand side. If \code{data} is an
 \code{\link[sf]{sf}} object, its geometry (\code{\link[sf]{st_geometry}})
-is used as the spatial coordinates and a spatial Gaussian process is added
-to the model; pass a plain (non-\code{sf}) data frame — e.g. via
-\code{\link[sf]{st_set_geometry}(data, NULL)} — for a non-spatial model.}
+is used as the spatial coordinates and spatial Gaussian processes are added
+to the model.}
 
 \item{nfactors}{Number of latent factors (dimensions of the ability
 construct).}

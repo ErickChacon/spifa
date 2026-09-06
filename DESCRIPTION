@@ -26,7 +26,6 @@ Imports: Rcpp (>= 0.12.13),
          dplyr,
          tidyr,
          sf,
-         pdist,
          ggplot2,
          posterior
 LinkingTo: Rcpp,

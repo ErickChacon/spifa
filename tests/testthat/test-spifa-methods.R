@@ -38,7 +38,7 @@ test_that("predict.spifa() predicts the spatial process at newcoords for spifa",
       mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
       mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
 
-  newcoords <- sf::st_coordinates(ipixuna$geometry)[1:5, , drop = FALSE]
+  newcoords <- sf::st_geometry(ipixuna)[1:5]
   pr <- predict(samples, newcoords = newcoords)
   expect_type(pr, "list")
   expect_equal(dim(pr$theta), c(5, 5 * nfactors))
@@ -76,7 +76,7 @@ test_that("predict.spifa() falls back to reference-level predictors for spifa_pr
       mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
       mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
 
-  newcoords <- sf::st_coordinates(ipixuna$geometry)[1:5, , drop = FALSE]
+  newcoords <- sf::st_geometry(ipixuna)[1:5]
   pr <- predict(samples, newcoords = newcoords)
   expect_type(pr, "list")
   expect_equal(dim(pr$theta), c(5, 5 * nfactors))

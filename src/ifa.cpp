@@ -17,7 +17,7 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
     std::string mod_type):
   model_type(mod_type),
   y(response), dist(distances), X(predictors),
-  n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols), n_corr((m-1)*m / 2),
+  n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols), ncorr((m-1)*m / 2),
   ones_n(arma::ones(n)),
   zeros_nm(arma::zeros(n*m)),
   eye_q(arma::eye(q,q)),
@@ -113,7 +113,7 @@ Ifa::Ifa(Rcpp::NumericVector response, arma::mat predictors, arma::mat distances
       std::string mod_type):
   model_type(mod_type),
   y(response), dist(distances), X(predictors),
-  n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols), n_corr((m-1)*m / 2),
+  n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols), ncorr((m-1)*m / 2),
   ones_n(arma::ones(n)),
   zeros_nm(arma::zeros(n*m)),
   eye_q(arma::eye(q,q)),
@@ -370,7 +370,7 @@ Rcpp::List Ifa::sample(
   arma::mat a_samples(q*m, nsave);
   arma::mat theta_samples(n*m, nsave);
   arma::mat z_samples(q*n, nsave);
-  arma::mat corr_samples(n_corr, nsave);
+  arma::mat corr_samples(ncorr, nsave);
   arma::mat corr_chol_samples(n_chol_corr, nsave);
   arma::mat mgp_sd_samples(mgp_sd.n_elem, nsave);
   arma::mat mgp_phi_samples(ngp, nsave);

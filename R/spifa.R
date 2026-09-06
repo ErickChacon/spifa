@@ -42,9 +42,8 @@
 #' on the left-hand side of \code{formula} and, if used, the predictor
 #' columns named on its right-hand side. If \code{data} is an
 #' \code{\link[sf]{sf}} object, its geometry (\code{\link[sf]{st_geometry}})
-#' is used as the spatial coordinates and a spatial Gaussian process is added
-#' to the model; pass a plain (non-\code{sf}) data frame — e.g. via
-#' \code{\link[sf]{st_set_geometry}(data, NULL)} — for a non-spatial model.
+#' is used as the spatial coordinates and spatial Gaussian processes are added
+#' to the model.
 #' @param nfactors Number of latent factors (dimensions of the ability
 #' construct).
 #' @param ngp Number of independent Gaussian processes used to build the
@@ -153,7 +152,7 @@
 #'
 #' @export
 spifa <- function(formula, data, nfactors, ngp = nfactors,
-    niter = 1000, thin = 10, burnin = 0, standardize = TRUE,
+    niter = 100, thin = 1, burnin = 0, standardize = TRUE,
     constraints = list(discrimination = NULL, mgp = NULL, resid_sd = rep(1, nfactors)),
     priors = list(
       easiness = list(initial = NULL, mean = NULL, sd = NULL),
@@ -166,7 +165,7 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
                     scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
     execute = TRUE) {
 
-  # Determine dimensions, items and predictors
+  # Dimensions, items and predictors
   mf <- model.frame(formula, data)
   response <- model.response(mf)
   if (!is.matrix(response)) stop("The left-hand side of 'formula' must be a matrix")
@@ -182,11 +181,8 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
     predictors <- model.matrix(predictors_terms, mf)
   }
 
-  # Coordinates: spatial structure is inferred from class(data). Pass a
-  # plain (non-sf) data frame, e.g. via sf::st_set_geometry(data, NULL), or
-  # ngp = 0, for a non-spatial model.
-  coordinates <- if (inherits(data, "sf")) sf::st_geometry(data) else NULL
-  has_gp <- !is.null(coordinates) && ngp > 0
+  # Coordinates
+  coordinates <- if (inherits(data, "sf") && ngp > 0) sf::st_geometry(data) else NULL
 
   # Restrictions for discrimination parameters and Gaussian process loadings
   constrain_L_explo <- matrix(NA, nitems, nfactors)
@@ -196,10 +192,10 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
 
   # Sizes
   nsigmas <- sum(constrain_T)
-  n_corr <- nfactors * (nfactors - 1) / 2
+  ncorr <- nfactors * (nfactors - 1) / 2
 
-  # Detect type of model to be fitted: EIFA, CIFA, CIFA_PRED, SPIFA, SPIFA_PRED
-  if (has_gp) {
+  # Model type: EIFA, CIFA, CIFA_PRED, SPIFA, SPIFA_PRED
+  if (!is.null(coordinates)) {
     if (!is.null(predictors)) {
       model_type = "spifa_pred"
       constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 0.2)
@@ -233,7 +229,7 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
     check_param_mat2(priors$discrimination, "initial", c(nitems, nfactors), A_prior_mean)
 
   # Adaptive Metropolis-Hastings arguments for proposed covariance matrix
-  adap_Sigma_R <- check_param_matdiag(adaptive, "Sigma_resid_corr", n_corr, diag(n_corr) * 0.001)
+  adap_Sigma_R <- check_param_matdiag(adaptive, "Sigma_resid_corr", ncorr, diag(ncorr) * 0.001)
   adap_Sigma_gp_sd <-
     check_param_matdiag(adaptive, "Sigma_mgp_sd", nsigmas, diag(nsigmas) * 0.001)
   adap_Sigma_gp_phi <-
@@ -244,19 +240,19 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   adap_accep_prob <- ifelse(is.null(adaptive$accep_prob), 0.234, adaptive$accep_prob)
 
   # Create general sigma proposal in order: gp_sd, gp_phi, corr_free
-  if (!has_gp) {
+  if (is.null(coordinates)) {
     if (is.null(adaptive$Sigma)) {
       adap_Sigma <- adap_Sigma_R
-    } else if (sum(dim(adaptive$Sigma) == c(n_corr, n_corr)) == 2) {
+    } else if (sum(dim(adaptive$Sigma) == c(ncorr, ncorr)) == 2) {
       adap_Sigma <- adaptive$Sigma
     }
   } else {
     if (is.null(adaptive$Sigma)) {
-      adap_Sigma <- matrix(0, nsigmas + ngp + n_corr, nsigmas + ngp + n_corr)
+      adap_Sigma <- matrix(0, nsigmas + ngp + ncorr, nsigmas + ngp + ncorr)
       adap_Sigma[seq_len(nsigmas), seq_len(nsigmas)] <- adap_Sigma_gp_sd
       adap_Sigma[nsigmas + seq_len(ngp), nsigmas + seq_len(ngp)] <- adap_Sigma_gp_phi
-      adap_Sigma[nsigmas + ngp + seq_len(n_corr), nsigmas + ngp + seq_len(n_corr)] <- adap_Sigma_R
-    } else if (sum(dim(adaptive$Sigma) == rep(nsigmas + ngp + n_corr, 2)) == 2) {
+      adap_Sigma[nsigmas + ngp + seq_len(ncorr), nsigmas + ngp + seq_len(ncorr)] <- adap_Sigma_R
+    } else if (sum(dim(adaptive$Sigma) == rep(nsigmas + ngp + ncorr, 2)) == 2) {
       adap_Sigma <- adaptive$Sigma
     }
   }
@@ -290,7 +286,7 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   }
 
   # Optional arguments for GP standard deviations and  scale parameters
-  if (!has_gp) {
+  if (is.null(coordinates)) {
     sigmas_gp_mean <- rep(NA_real_, nsigmas)
     sigmas_gp_sd <- rep(NA_real_, nsigmas)
     sigmas_gp_initial <- rep(NA_real_, nsigmas)
@@ -308,13 +304,10 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
 
   # Compute predictors and distances as matrices
   if (is.null(predictors))  predictors <- matrix(NA)
-  if (!has_gp) {
+  if (is.null(coordinates)) {
     distances <- matrix(NA)
   } else {
-    distances <- sf::st_transform(coordinates, crs = 3857) %>%
-      sf::st_coordinates()  %>%
-      dist()  %>%
-      as.matrix()
+    distances <- matrix(as.numeric(sf::st_distance(coordinates)), nobs, nobs)
   }
 
   # List of options to call c++ spifa function

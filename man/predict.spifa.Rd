@@ -22,8 +22,10 @@
 of \code{formula} when the model was fitted (only needed for models
 with predictors).}
 
-\item{newcoords}{New spatial coordinates to predict at (only needed for
-spatial, i.e. \code{spifa}/\code{spifa_pred}, models).}
+\item{newcoords}{An \code{sfc}/\code{sf} object of new spatial coordinates
+to predict at (only needed for spatial, i.e. \code{spifa}/\code{spifa_pred},
+models). Its CRS is used directly, so it need not match the training
+data's CRS.}
 
 \item{burnin}{Number of initial (post-fitting) iterations to discard
 before using the posterior samples for prediction.}
@@ -64,7 +66,7 @@ samples <- spifa(
   items ~ 1, data = ipixuna,
   nfactors = nfactors, niter = 5, thin = 1, standardize = FALSE,
   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
-newcoords <- sf::st_coordinates(ipixuna$geometry)[1:5, , drop = FALSE]
+newcoords <- sf::st_geometry(ipixuna)[1:5]
 predict(samples, newcoords = newcoords)
 }
 

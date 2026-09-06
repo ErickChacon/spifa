@@ -374,8 +374,10 @@ dic.spifa <- function (x, ...) {
 #' @param newdata New values of the predictors used on the right-hand side
 #' of \code{formula} when the model was fitted (only needed for models
 #' with predictors).
-#' @param newcoords New spatial coordinates to predict at (only needed for
-#' spatial, i.e. \code{spifa}/\code{spifa_pred}, models).
+#' @param newcoords An \code{sfc}/\code{sf} object of new spatial coordinates
+#' to predict at (only needed for spatial, i.e. \code{spifa}/\code{spifa_pred},
+#' models). Its CRS is used directly, so it need not match the training
+#' data's CRS.
 #' @param burnin Number of initial (post-fitting) iterations to discard
 #' before using the posterior samples for prediction.
 #' @param thin Thinning interval applied to the posterior samples used for
@@ -399,7 +401,7 @@ dic.spifa <- function (x, ...) {
 #'   items ~ 1, data = ipixuna,
 #'   nfactors = nfactors, niter = 5, thin = 1, standardize = FALSE,
 #'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
-#' newcoords <- sf::st_coordinates(ipixuna$geometry)[1:5, , drop = FALSE]
+#' newcoords <- sf::st_geometry(ipixuna)[1:5]
 #' predict(samples, newcoords = newcoords)
 #' }
 #'
@@ -428,13 +430,12 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
     newdist <- matrix(NA)
     cross_distances <- matrix(NA)
   } else {
-    npred1 <- nrow(newcoords)
-    newdist <- as.matrix(dist(newcoords))
-      if (inherits(info$coordinates, "sfc")) {
-        info$coordinates <- sf::st_transform(info$coordinates, crs = 3857) %>%
-          sf::st_coordinates()
-      }
-    cross_distances <- as.matrix(pdist::pdist(newcoords, as.matrix(info$coordinates)))
+    newcoords <- sf::st_geometry(newcoords)
+    npred1 <- length(newcoords)
+    newdist <- matrix(as.numeric(sf::st_distance(newcoords)), npred1, npred1)
+    cross_distances <- matrix(
+      as.numeric(sf::st_distance(newcoords, info$coordinates)),
+      npred1, length(info$coordinates))
   }
 
   # New data about predictors

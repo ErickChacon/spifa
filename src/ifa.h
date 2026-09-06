@@ -17,7 +17,7 @@ private:
   const int m;                        // number of latent abilities
   const int ngp;                      // number of gaussian processes
   const int p;                        // number of predictors
-  const int n_corr;                   // number of correlation parameters
+  const int ncorr;                   // number of correlation parameters
   // Data
   Rcpp::NumericVector y;              // response variable
   arma::mat dist;                     // distance matrix
