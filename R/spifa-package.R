@@ -65,23 +65,6 @@
 #' attr(ipixuna, "parameters")
 NULL
 
-#' @title Boundary of the Ipixuna Rural Area
-#'
-#' @description
-#' Polygon boundary of the rural area of Ipixuna (Para state, Brazil), used
-#' for mapping predictions from spatial item factor analysis models fitted
-#' to the [ipixuna] data.
-#'
-#' @format An `sf`/`sfc` polygon object.
-#'
-#' @name ipixuna_boundary
-#' @docType data
-#'
-#' @examples
-#' data(ipixuna_boundary)
-#' plot(sf::st_geometry(ipixuna_boundary))
-NULL
-
 ## variables used in NSE contexts
 utils::globalVariables(c(
   ".", "Parameters", "Value", "iteration", "level",

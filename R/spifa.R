@@ -68,8 +68,26 @@
 #' adaptive proposals get to keep converging across the burnin/niter
 #' boundary rather than someone accidentally analysing them as if they were
 #' post-adaptation draws.
-#' @param standardize Logical; if \code{TRUE} (default), predictors are
-#' standardized before fitting.
+#' @param standardize Logical; if \code{TRUE} (default), the stored posterior
+#' draws are rescaled after fitting so the latent factors have unit variance:
+#' \code{theta} is divided by its posterior SD per factor, and
+#' \code{discrimination}, \code{effect}, \code{mgp_sd}, and the residual SD
+#' (\code{constraints$resid_sd}) are compensated by the same factor so the
+#' fitted response probabilities are unchanged. This only applies to models
+#' with a spatial Gaussian process and/or predictor effects on the latent
+#' factors (\code{cifa_pred}/\code{spifa}/\code{spifa_pred}; ignored for
+#' \code{eifa}/\code{cifa}, where the residual SD is the only source of
+#' \code{theta}'s variance and there's nothing to normalize against). Those
+#' model types have a multiplicative scale non-identifiability between
+#' \code{theta} and \code{discrimination}/the GP variance/the predictor
+#' effect -- an equally good fit can shrink one and inflate the other --
+#' so leaving \code{TRUE} keeps draws on an interpretable, comparable scale.
+#' Set to \code{FALSE} to keep the raw, unscaled posterior, e.g. when
+#' checking recovery of known simulated parameters (see
+#' \code{dev/simulated/analyze-ipixuna.R}), where an extra rescale would
+#' make draws harder to compare directly against the true simulated values.
+#' No predictors are standardized by this argument -- despite the name, it
+#' does not touch \code{formula}'s right-hand side at all.
 #' @param constraints Named list of constraints associated to the factor model. Accepted
 #' names are `discrimination`, `mgp`, and `resid_sd`. The restrictions on the
 #' discrimination paramater should be placed in the element `discrimination` with same
@@ -322,31 +340,17 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
     # Execute model calling c++ spifa function
     samples <- do.call(spifa_cpp, model_info)
     # Update model_info list
-    constrain_V_sd <- attr(samples, "V_sd")
-    attr(samples, "V_sd") <- NULL
-    model_info$constrain_V_sd <- constrain_V_sd
+    model_info$constrain_V_sd <- attr(samples, "V_sd")
     model_info <- append(model_info, list(coordinates = coordinates), 2)
-
-    # src/ifa.cpp always returns all 9 blocks (c, a, theta, z, corr_chol,
-    # corr, mgp_sd, mgp_phi, betas), NA-filled for blocks that aren't part
-    # of this model_type (e.g. betas for eifa/cifa, mgp_sd/mgp_phi for
-    # anything non-spatial) -- those parameters were never actually sampled,
-    # so drop them here rather than shipping structural NAs. This also lets
-    # `bayesplot`, which errors on any NA, work on the returned draws_array
-    # directly without further filtering.
+    attr(samples, "V_sd") <- NULL
+    # Keep only sampled parameters
     has_predictors <- model_type %in% c("cifa_pred", "spifa_pred")
     has_coordinates <- model_type %in% c("spifa", "spifa_pred")
     blocks_drop <- c(
       if (!has_predictors) "betas",
       if (!has_coordinates) c("mgp_sd", "mgp_phi"))
     samples <- samples[!names(samples) %in% blocks_drop]
-
-    # Flatten the named list of per-block sample matrices (each block's own
-    # column names, e.g. "c[1]", "A[1,1]", already set in src/ifa.cpp) into
-    # a single posterior::draws_array. "spifa" is prepended to the class so
-    # package methods (print/summary/as_list) dispatch first, while every
-    # posterior/bayesplot function that works on class "draws_array" keeps
-    # working directly on this object with no conversion call.
+    # Convert to draws_array
     flat <- do.call(cbind, samples)
     arr <- array(flat, dim = c(nrow(flat), 1, ncol(flat)),
                  dimnames = list(NULL, NULL, colnames(flat)))
@@ -358,14 +362,11 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   # Add model_info to the fitted object.
   attr(samples, "model_info") <- model_info
   class(samples) <- unique(c("spifa", class(samples)))
-
   return(samples)
 }
 
-# Internal validators used throughout spifa() to fill in defaults and check
-# dimensions for the many optional prior/initial-value arguments.
-
 check_param_vec <- function (param_list, element, dimension, default) {
+  # Only for vectors
   argument <- deparse(substitute(param_list))
   if (is.null(param_list[[element]])) {
     if (length(default) == 1) {
@@ -384,7 +385,6 @@ check_param_vec <- function (param_list, element, dimension, default) {
   return(output)
 }
 
-
 check_param_mat <- function (param_list, element, dimensions, default) {
   # It only accepts matrices
   argument <- deparse(substitute(param_list))
@@ -398,7 +398,6 @@ check_param_mat <- function (param_list, element, dimensions, default) {
   }
   return(output)
 }
-
 
 check_param_mat2 <- function (param_list, element, dimensions, default) {
   # It accepts matrices and scalar
@@ -419,7 +418,6 @@ check_param_mat2 <- function (param_list, element, dimensions, default) {
   }
   return(output)
 }
-
 
 check_param_matdiag <- function (param_list, element, dimension, default) {
   # It accepts matrices, vectors and scalar: only for square matrices

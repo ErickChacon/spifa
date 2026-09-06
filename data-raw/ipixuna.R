@@ -45,21 +45,16 @@ nsp_cov <- diag(resid_params$sd) %*% nsp_corr %*% diag(resid_params$sd)
 nsp_chol <- chol(nsp_cov)
 nonspatial <- matrix(rnorm(n * nfactors), n) %*% nsp_chol
 
-# Spatial term
+# Spatial term: with houses concentrated on the center
 mgp_params <- list(sd = sqrt(c(0.4, 0.3, 0.5)), phi = c(100, 150, 250))
 
 bbox <- c(xmin = -71.70038, ymin = -7.06058, xmax = -71.68109, ymax = -7.03724)
-# households are concentrated towards the town centre rather than uniform
-# across the bounding box
 coords <- data.frame(
     lon = bbox["xmin"] + rbeta(n, 4, 4) * (bbox["xmax"] - bbox["xmin"]),
     lat = bbox["ymin"] + rbeta(n, 4, 4) * (bbox["ymax"] - bbox["ymin"])) |>
   st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
   st_geometry()
 distances <- st_distance(coords) |> units::drop_units()
-# mean(as.numeric(distances) < 300)
-# mean(as.numeric(distances) < 450)
-# mean(as.numeric(distances) < 750)
 
 spatial <- sapply(seq_len(ngp), function (k) {
   gp_cov <- mgp_params$sd[k]^2 * exp(-distances / mgp_params$phi[k])
@@ -72,7 +67,8 @@ abilities <- wealth_effect + nonspatial + spatial
 
 ## Items
 
-z <- outer(rep(1, n), easiness) + abilities %*% t(discrimination) + matrix(rnorm(n * q), n)
+z <- outer(rep(1, n), easiness) + abilities %*% t(discrimination) +
+    matrix(rnorm(n * q), n)
 items <- (z > 0) * 1
 
 ## Ipixuna dataset

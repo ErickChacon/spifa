@@ -67,8 +67,26 @@ adaptive proposals get to keep converging across the burnin/niter
 boundary rather than someone accidentally analysing them as if they were
 post-adaptation draws.}
 
-\item{standardize}{Logical; if \code{TRUE} (default), predictors are
-standardized before fitting.}
+\item{standardize}{Logical; if \code{TRUE} (default), the stored posterior
+draws are rescaled after fitting so the latent factors have unit variance:
+\code{theta} is divided by its posterior SD per factor, and
+\code{discrimination}, \code{effect}, \code{mgp_sd}, and the residual SD
+(\code{constraints$resid_sd}) are compensated by the same factor so the
+fitted response probabilities are unchanged. This only applies to models
+with a spatial Gaussian process and/or predictor effects on the latent
+factors (\code{cifa_pred}/\code{spifa}/\code{spifa_pred}; ignored for
+\code{eifa}/\code{cifa}, where the residual SD is the only source of
+\code{theta}'s variance and there's nothing to normalize against). Those
+model types have a multiplicative scale non-identifiability between
+\code{theta} and \code{discrimination}/the GP variance/the predictor
+effect -- an equally good fit can shrink one and inflate the other --
+so leaving \code{TRUE} keeps draws on an interpretable, comparable scale.
+Set to \code{FALSE} to keep the raw, unscaled posterior, e.g. when
+checking recovery of known simulated parameters (see
+\code{dev/simulated/analyze-ipixuna.R}), where an extra rescale would
+make draws harder to compare directly against the true simulated values.
+No predictors are standardized by this argument -- despite the name, it
+does not touch \code{formula}'s right-hand side at all.}
 
 \item{constraints}{Named list of constraints associated to the factor model. Accepted
 names are `discrimination`, `mgp`, and `resid_sd`. The restrictions on the

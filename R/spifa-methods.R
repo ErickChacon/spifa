@@ -3,7 +3,7 @@
 # "A[1,1]", "T[2,2]") mapped to the block/argument names used throughout the
 # R API (e.g. "discrimination"'s samples are internally "a", the GP standard
 # deviation block is internally named "T" in C++ but "mgp_sd" in R). Shared
-# by as_list.spifa(), as_tibble.spifa(), and summary.spifa()'s `select`.
+# by as.list.spifa(), as_tibble.spifa(), and summary.spifa()'s `select`.
 .spifa_pars <- c("c", "a", "theta", "z", "corr_chol", "corr", "mgp_sd", "mgp_phi", "betas")
 names(.spifa_pars) <- c("c", "A", "Theta", "Z", "Corr_chol", "Corr", "T", "mgp_phi", "B")
 
@@ -116,21 +116,6 @@ as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
   return(df)
 }
 
-#' @title Convert Samples to a spifa.list
-#'
-#' @description
-#' Generic function converting posterior samples back into the
-#' \code{spifa.list} representation (one matrix per parameter block). See
-#' \code{\link{as_list.spifa}} for the \code{spifa} method.
-#'
-#' @param x An object to convert.
-#' @param ... Further arguments passed to methods.
-#'
-#' @export
-as_list <- function (x, ...) {
-  UseMethod("as_list", x)
-}
-
 #' @title Convert a Fitted spifa Model to a spifa.list
 #'
 #' @description
@@ -159,12 +144,12 @@ as_list <- function (x, ...) {
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
 #'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
-#' samples_list <- as_list(samples)
+#' samples_list <- as.list(samples)
 #' names(samples_list)
 #' }
 #'
 #' @export
-as_list.spifa <- function (x, ...) {
+as.list.spifa <- function (x, ...) {
 
   model_info <- attr(x, "model_info")
   varnames <- dimnames(x)[[3]]
@@ -355,7 +340,7 @@ dic.spifa <- function (x, ...) {
 
   object <- x
   # convert to spifa.list
-  samples <- as_list(object)
+  samples <- as.list(object)
 
   # DIC calling c++ dic_cpp
   dic <- dic_cpp(y = attr(object, "model_info")$response, c = samples$c,
@@ -423,7 +408,7 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
                                 thin = 1, se.fit = FALSE, ...) {
 
   # convert to spifa.list
-  object <- as_list(object)
+  object <- as.list(object)
 
   # Information of model inference
   info <- attr(object, "model_info")

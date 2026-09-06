@@ -17,6 +17,7 @@ Description: Fits item factor analysis models for binary responses using full
     ideological positions or socio-economic indices.
 License: GPL-3
 URL: https://github.com/ErickChacon/spifa
+Depends: R (>= 3.5.0)
 BugReports: https://github.com/ErickChacon/spifa/issues
 Imports: Rcpp (>= 0.12.13),
          RcppTN,

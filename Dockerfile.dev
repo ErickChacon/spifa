@@ -20,6 +20,7 @@ RUN install2.r -e -s \
     ggplot2 \
     ggridges \
     posterior \
+    bayesplot \
     knitr \
     rmarkdown \
     testthat \
