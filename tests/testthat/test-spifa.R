@@ -18,7 +18,7 @@ test_that("spifa() fits eifa (exploratory, no constraints) correctly", {
     items ~ 1, data = ipixuna_flat, nfactors = nfactors,
     niter = 5, thin = 1, standardize = FALSE)
 
-  expect_equal(attr(samples, "model_info")$model_type, "eifa")
+  expect_equal(attr(samples, "spifa_args")$model_type, "eifa")
   expect_setequal(names(as.list(samples)),
     c("c", "a", "theta", "z", "corr_chol", "corr"))
 
@@ -30,8 +30,8 @@ test_that("spifa() fits eifa (exploratory, no constraints) correctly", {
   set.seed(42)
   samples_raw <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
     niter = 5, thin = 1, standardize = FALSE)
-  strip_model_info <- function (x) { attr(x, "model_info") <- NULL; unclass(x) }
-  expect_equal(strip_model_info(as.list(samples_std)), strip_model_info(as.list(samples_raw)))
+  strip_spifa_args <- function (x) { attr(x, "spifa_args") <- NULL; unclass(x) }
+  expect_equal(strip_spifa_args(as.list(samples_std)), strip_spifa_args(as.list(samples_raw)))
 })
 
 test_that("spifa() fits cifa (confirmatory, no predictors/spatial) correctly", {
@@ -46,7 +46,7 @@ test_that("spifa() fits cifa (confirmatory, no predictors/spatial) correctly", {
     niter = 5, thin = 1, standardize = FALSE,
     constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
 
-  expect_equal(attr(samples, "model_info")$model_type, "cifa")
+  expect_equal(attr(samples, "spifa_args")$model_type, "cifa")
 
   # constraints$discrimination mask respected: entries fixed to 0 stay
   # exactly 0 in every stored draw (parsed off the "A[i,j]" column names
@@ -72,7 +72,7 @@ test_that("spifa() fits cifa_pred (confirmatory with predictors) correctly", {
     constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd),
     priors = list(effect = list(initial = effect_initial, mean = effect_initial)))
 
-  expect_equal(attr(samples, "model_info")$model_type, "cifa_pred")
+  expect_equal(attr(samples, "spifa_args")$model_type, "cifa_pred")
   blocks <- as.list(samples)
   expect_setequal(names(blocks), c("c", "a", "theta", "z", "corr_chol", "corr", "betas"))
   expect_equal(dim(blocks$betas), c(5, ncol(effect_initial)))
@@ -106,7 +106,7 @@ test_that("spifa() fits spifa (spatial, no predictors) correctly", {
       mgp_sd = list(initial = parameters$mgp_params$sd, mean = parameters$mgp_params$sd, sd = 0.4),
       mgp_range = list(initial = parameters$mgp_params$phi, mean = parameters$mgp_params$phi, sd = 0.3)))
 
-  expect_equal(attr(samples, "model_info")$model_type, "spifa")
+  expect_equal(attr(samples, "spifa_args")$model_type, "spifa")
   blocks <- as.list(samples)
   expect_setequal(names(blocks),
     c("c", "a", "theta", "z", "corr_chol", "corr", "mgp_sd", "mgp_phi"))
@@ -129,7 +129,7 @@ test_that("spifa() fits spifa_pred (spatial with predictors) correctly", {
       mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
       mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
 
-  expect_equal(attr(samples, "model_info")$model_type, "spifa_pred")
+  expect_equal(attr(samples, "spifa_args")$model_type, "spifa_pred")
   expect_setequal(names(as.list(samples)),
     c("c", "a", "theta", "z", "corr_chol", "corr", "mgp_sd", "mgp_phi", "betas"))
 })
@@ -146,7 +146,7 @@ test_that("spifa() with ngp = 0 opts an sf dataset out of the spatial model", {
     niter = 5, thin = 1, standardize = FALSE,
     constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
 
-  expect_equal(attr(samples, "model_info")$model_type, "cifa_pred")
+  expect_equal(attr(samples, "spifa_args")$model_type, "cifa_pred")
   expect_false(any(c("mgp_sd", "mgp_phi") %in% names(as.list(samples))))
 })
 
@@ -177,7 +177,7 @@ test_that("spifa() burnin discards iterations without storing them", {
   expect_equal(dim(samples_edge)[1], ceiling(7 / 3))
 })
 
-test_that("spifa() execute = FALSE returns model_info without sampling", {
+test_that("spifa() execute = FALSE returns spifa_args without sampling", {
   data(ipixuna, package = "spifa")
   parameters <- attr(ipixuna, "parameters")
   L_a <- (parameters$discrimination != 0) * 1
@@ -189,7 +189,7 @@ test_that("spifa() execute = FALSE returns model_info without sampling", {
     constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
 
   expect_equal(length(samples), 0)
-  info <- attr(samples, "model_info")
+  info <- attr(samples, "spifa_args")
   expect_equal(info$model_type, "cifa")
   expect_equal(info$nobs, nrow(ipixuna_flat))
 })

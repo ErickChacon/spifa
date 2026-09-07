@@ -93,7 +93,7 @@ system.time(
       mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
   )
 
-attr(samples, "model_info")$model_type
+attr(samples, "spifa_args")$model_type
 ```
 
 ## Summarise samples

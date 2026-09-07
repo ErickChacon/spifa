@@ -37,7 +37,7 @@ names(.spifa_pars) <- c("c", "A", "Theta", "Z", "Corr_chol", "Corr", "T", "mgp_p
 #' @export
 print.spifa <- function (x, ...) {
 
-  info <- attr(x, "model_info")
+  info <- attr(x, "spifa_args")
   cat("<spifa model fit>\n")
   cat("Model type: ", info$model_type, "\n", sep = "")
   cat(info$nobs, " respondents, ", info$nitems, " items, ", info$nfactors,
@@ -77,7 +77,7 @@ print.spifa <- function (x, ...) {
 #' for consistency with the \code{\link[tibble]{as_tibble}} generic).
 #'
 #' @return A plain wide \code{\link[tibble]{tibble}}, with the
-#' \code{"model_info"} attribute carried over from \code{x}.
+#' \code{"spifa_args"} attribute carried over from \code{x}.
 #'
 #' @author Erick A. Chacón-Montalván
 #'
@@ -100,7 +100,7 @@ print.spifa <- function (x, ...) {
 #' @export
 as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
 
-  model_info <- attr(x, "model_info")
+  spifa_args <- attr(x, "spifa_args")
   varnames <- dimnames(x)[[3]]
   if (!is.null(select)) {
     idx <- .spifa_var_blocks(varnames) %in% select
@@ -112,7 +112,7 @@ as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
                 dimnames = list(NULL, varnames))
   df <- tibble::as_tibble(mat)
   df <- df[seq(burnin + 1, niter, thin), ]
-  attr(df, "model_info") <- model_info
+  attr(df, "spifa_args") <- spifa_args
   return(df)
 }
 
@@ -129,7 +129,7 @@ as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
 #' @param ... Further arguments passed to methods (currently unused).
 #'
 #' @return An object of class \code{spifa.list}: a named list of matrices,
-#' one per parameter block, with the \code{"model_info"} attribute carried
+#' one per parameter block, with the \code{"spifa_args"} attribute carried
 #' over from \code{x}.
 #'
 #' @author Erick A. Chacón-Montalván
@@ -151,7 +151,7 @@ as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
 #' @export
 as.list.spifa <- function (x, ...) {
 
-  model_info <- attr(x, "model_info")
+  spifa_args <- attr(x, "spifa_args")
   varnames <- dimnames(x)[[3]]
   niter <- dim(x)[1]
   blocks <- .spifa_var_blocks(varnames)
@@ -166,7 +166,8 @@ as.list.spifa <- function (x, ...) {
   samples <- lapply(block_names_unique, extract_block)
   names(samples) <- block_names_unique
   class(samples) <- c("spifa.list", class(samples))
-  attr(samples, "model_info") <- model_info
+  attr(samples, "spifa_args") <- spifa_args
+  attr(samples, "coordinates") <- attr(x, "coordinates")
   return(samples)
 }
 
@@ -214,9 +215,9 @@ gather.spifa <- function (samples_wide, each = NULL,
                            keys = c("group", "Parameter")) {
 
   # Convert to long format
-  samples_long <- samples_wide %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate(iteration = 1:dplyr::n()) %>%
+  samples_long <- samples_wide |>
+    tibble::as_tibble() |>
+    dplyr::mutate(iteration = 1:dplyr::n()) |>
     tidyr::gather(Parameters, Value, -iteration, factor_key = TRUE)
 
   if (!is.null(each)) {
@@ -229,9 +230,9 @@ gather.spifa <- function (samples_wide, each = NULL,
     names(var) <- levels(samples_long$Parameters)
 
     # Group parameters
-    samples_long <- samples_long %>%
-      dplyr::mutate(groups = groups[Parameters], var = var[Parameters]) %>%
-    dplyr::select(-Parameters) %>%
+    samples_long <- samples_long |>
+      dplyr::mutate(groups = groups[Parameters], var = var[Parameters]) |>
+    dplyr::select(-Parameters) |>
     tidyr::spread(var, Value)
 
   }
@@ -343,12 +344,12 @@ dic.spifa <- function (x, ...) {
   samples <- as.list(object)
 
   # DIC calling c++ dic_cpp
-  dic <- dic_cpp(y = attr(object, "model_info")$response, c = samples$c,
+  dic <- dic_cpp(y = attr(object, "spifa_args")$response, c = samples$c,
                  a = samples$a, theta = samples$theta,
-                 n = attr(object, "model_info")$nobs,
-                 q = attr(object, "model_info")$nitems,
-                 m = attr(object, "model_info")$nfactors,
-                 L = attr(object, "model_info")$constrain_L)
+                 n = attr(object, "spifa_args")$nobs,
+                 q = attr(object, "spifa_args")$nitems,
+                 m = attr(object, "spifa_args")$nfactors,
+                 L = attr(object, "spifa_args")$constrain_L)
 
   return(dic)
 }
@@ -413,7 +414,8 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
   object <- as.list(object)
 
   # Information of model inference
-  info <- attr(object, "model_info")
+  info <- attr(object, "spifa_args")
+  coordinates <- attr(object, "coordinates")
 
   # Prediction I: for the observed subjects
   if (info$model_type %in% c("eifa", "cifa") |
@@ -427,15 +429,15 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
 
   # Distances between predictive locations
   if (is.null(newcoords)) {
-    newdist <- matrix(NA)
-    cross_distances <- matrix(NA)
+    newdist <- matrix(nrow = 0, ncol = 0)
+    cross_distances <- matrix(nrow = 0, ncol = 0)
   } else {
     newcoords <- sf::st_geometry(newcoords)
     npred1 <- length(newcoords)
     newdist <- matrix(as.numeric(sf::st_distance(newcoords)), npred1, npred1)
     cross_distances <- matrix(
-      as.numeric(sf::st_distance(newcoords, info$coordinates)),
-      npred1, length(info$coordinates))
+      as.numeric(sf::st_distance(newcoords, coordinates)),
+      npred1, length(coordinates))
   }
 
   # New data about predictors
@@ -469,20 +471,14 @@ predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
   } else if (info$model_type %in% c("cifa_pred", "spifa_pred")) {
     newpredictors <- matrix(0, npred, ncol(info$predictors))
   } else {
-    newpredictors <- matrix(NA)
+    newpredictors <- matrix(nrow = npred, ncol = 0)
   }
 
   # Information about number of posterior samples to use
   nsamples <- nrow(object$z)
-  # if (is.null(burnin)) burnin <- as.integer(nsamples / 2)
-  # if (is.null(thin)) thin <- as.integer( (nsamples - burnin) / 1000)
-
-  # blocks not sampled for this model_type (e.g. mgp_sd/mgp_phi for a
-  # non-spatial fit, betas with no predictors) are absent from `object`
-  # (dropped in spifa(), see R/spifa.R) rather than kept NA-filled; the C++
-  # side still expects a placeholder matrix argument, so fall back to
-  # matrix(NA) for whichever of these are missing.
-  as_pred_mat <- function (block) if (is.null(object[[block]])) matrix(NA) else t(object[[block]])
+  as_pred_mat <- function (block) {
+    if (is.null(object[[block]])) matrix(nrow = 0, ncol = nsamples) else t(object[[block]])
+  }
 
   # List of options to call c++ function to predict
   pred_list <- list(samples_theta = t(object$theta),

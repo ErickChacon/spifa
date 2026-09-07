@@ -14,7 +14,7 @@
 }
 \value{
 An object of class \code{spifa.list}: a named list of matrices,
-one per parameter block, with the \code{"model_info"} attribute carried
+one per parameter block, with the \code{"spifa_args"} attribute carried
 over from \code{x}.
 }
 \description{

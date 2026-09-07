@@ -22,7 +22,7 @@ for consistency with the \code{\link[tibble]{as_tibble}} generic).}
 }
 \value{
 A plain wide \code{\link[tibble]{tibble}}, with the
-\code{"model_info"} attribute carried over from \code{x}.
+\code{"spifa_args"} attribute carried over from \code{x}.
 }
 \description{
 Converts a fitted \code{spifa} object (the output of \code{\link{spifa}})

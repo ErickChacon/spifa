@@ -128,7 +128,7 @@
 #' An object of (informal) class \code{spifa.list}: a named list of MCMC
 #' sample matrices (one entry per parameter block, e.g. \code{c}, \code{a},
 #' \code{theta}, \code{corr}, \code{betas}, ...), with an attribute
-#' \code{"model_info"} recording the data and options used to fit the model
+#' \code{"spifa_args"} recording the data and options used to fit the model
 #' (needed by \code{\link{predict.spifa}} and \code{\link{dic}}). Convert it
 #' to a tidy \code{\link[tibble]{tibble}} with \code{\link{as_tibble.spifa}}.
 #'
@@ -171,18 +171,19 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   if (!is.matrix(response)) stop("The left-hand side of 'formula' must be a matrix")
   nobs <- nrow(response)
   nitems <- ncol(response)
-  response <- as.numeric(response)
 
-  if (length(attr(terms(mf), "term.labels")) == 0) {
-    predictors <- NULL
+  predictors_terms <- delete.response(terms(mf))
+  attr(predictors_terms, "intercept") <- 0
+  predictors <- model.matrix(predictors_terms, mf)
+  npred <- ncol(predictors)
+
+  # Coordinates and ngp
+  if (inherits(data, "sf") && ngp > 0) {
+    coordinates <- sf::st_geometry(data)
   } else {
-    predictors_terms <- delete.response(terms(mf))
-    attr(predictors_terms, "intercept") <- 0
-    predictors <- model.matrix(predictors_terms, mf)
+    coordinates <- NULL
+    ngp <- 0
   }
-
-  # Coordinates
-  coordinates <- if (inherits(data, "sf") && ngp > 0) sf::st_geometry(data) else NULL
 
   # Restrictions for discrimination parameters and Gaussian process loadings
   constrain_L_explo <- matrix(NA, nitems, nfactors)
@@ -196,21 +197,21 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
 
   # Model type: EIFA, CIFA, CIFA_PRED, SPIFA, SPIFA_PRED
   if (!is.null(coordinates)) {
-    if (!is.null(predictors)) {
-      model_type = "spifa_pred"
+    if (npred > 0) {
+      model_type <- "spifa_pred"
       constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 0.2)
     } else {
-      model_type = "spifa"
+      model_type <- "spifa"
       constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 0.2)
     }
-  } else if (!is.null(predictors)) {
-    model_type = "cifa_pred"
+  } else if (npred > 0) {
+    model_type <- "cifa_pred"
     constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 0.3)
   } else if (all(constrain_L == constrain_L_explo)) {
-    model_type = "eifa"
+    model_type <- "eifa"
     constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 1)
   } else {
-    model_type = "cifa"
+    model_type <- "cifa"
     constrain_V_sd <- check_param_vec(constraints, "resid_sd", nfactors, 1)
   }
 
@@ -264,55 +265,38 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
     if (all(diag(priors$resid_corr$initial) == 1)) {
       R_initial <- priors$resid_corr$initial
     } else {
-      stop("element 'initial' of 'priors$resid_corr' argument is not a correlation matrix")
+      stop("'initial' of 'priors$resid_corr' argument is not a correlation matrix")
     }
   } else {
-    stop("element 'initial' of 'priors$resid_corr' argument must be of dimension ",
+    stop("'initial' of 'priors$resid_corr' argument must be of dimension ",
          sprintf("c(%i, %i)", nfactors, nfactors))
   }
 
   R_prior_eta <- ifelse(is.null(priors$resid_corr$eta), 1, priors$resid_corr$eta)
 
   # Optional arguments for parameter of fixed effects (Beta)
-  if (is.null(predictors)) {
-    B_prior_mean <- matrix(NA, 1, nfactors)
-    B_prior_sd <- matrix(NA, 1, nfactors)
-    B_initial <- matrix(NA, 1, nfactors)
-  } else {
-    npred <- ncol(predictors)
-    B_prior_mean <- check_param_mat2(priors$effect, "mean", c(npred, nfactors), 0)
-    B_prior_sd <- check_param_mat2(priors$effect, "sd", c(npred, nfactors), 1)
-    B_initial <- check_param_mat2(priors$effect, "initial", c(npred, nfactors), B_prior_mean)
-  }
+  B_prior_mean <- check_param_mat2(priors$effect, "mean", c(npred, nfactors), 0)
+  B_prior_sd <- check_param_mat2(priors$effect, "sd", c(npred, nfactors), 1)
+  B_initial <- check_param_mat2(priors$effect, "initial", c(npred, nfactors), B_prior_mean)
 
   # Optional arguments for GP standard deviations and  scale parameters
-  if (is.null(coordinates)) {
-    sigmas_gp_mean <- rep(NA_real_, nsigmas)
-    sigmas_gp_sd <- rep(NA_real_, nsigmas)
-    sigmas_gp_initial <- rep(NA_real_, nsigmas)
-    phi_gp_mean <- rep(NA_real_, ngp)
-    phi_gp_sd <- rep(NA_real_, ngp)
-    phi_gp_initial <- rep(NA_real_, ngp)
-  } else {
-    sigmas_gp_mean <- check_param_vec(priors$mgp_sd, "mean", nsigmas, 0.6)
-    sigmas_gp_sd <- check_param_vec(priors$mgp_sd, "sd", nsigmas, 0.2)
-    sigmas_gp_initial <- check_param_vec(priors$mgp_sd, "initial", nsigmas, sigmas_gp_mean)
-    phi_gp_mean <- check_param_vec(priors$mgp_range, "mean", ngp, 0.05)
-    phi_gp_sd <- check_param_vec(priors$mgp_range, "sd", ngp, 0.2)
-    phi_gp_initial <- check_param_vec(priors$mgp_range, "initial", ngp, phi_gp_mean)
-  }
+  sigmas_gp_mean <- check_param_vec(priors$mgp_sd, "mean", nsigmas, 0.6)
+  sigmas_gp_sd <- check_param_vec(priors$mgp_sd, "sd", nsigmas, 0.2)
+  sigmas_gp_initial <- check_param_vec(priors$mgp_sd, "initial", nsigmas, sigmas_gp_mean)
+  phi_gp_mean <- check_param_vec(priors$mgp_range, "mean", ngp, 0.05)
+  phi_gp_sd <- check_param_vec(priors$mgp_range, "sd", ngp, 0.2)
+  phi_gp_initial <- check_param_vec(priors$mgp_range, "initial", ngp, phi_gp_mean)
 
-  # Compute predictors and distances as matrices
-  if (is.null(predictors))  predictors <- matrix(NA)
+  # Compute distances as a matrix
   if (is.null(coordinates)) {
-    distances <- matrix(NA)
+    distances <- matrix(nrow = 0, ncol = 0)
   } else {
-    distances <- matrix(as.numeric(sf::st_distance(coordinates)), nobs, nobs)
+    distances <- matrix(as.numeric(sf::st_distance(coordinates)), nobs)
   }
 
   # List of options to call c++ spifa function
-  model_info <- list(
-    response = response, predictors = predictors, distances = distances,
+  spifa_args <- list(
+    response = as.numeric(response), predictors = predictors, distances = distances,
     nobs = nobs, nitems = nitems, nfactors = nfactors, ngp = ngp,
     niter = niter, thin = thin, burnin = burnin, standardize = standardize,
     constrain_L = constrain_L, constrain_T = constrain_T, constrain_V_sd = constrain_V_sd,
@@ -330,30 +314,16 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
 
   # Execute c++ if requested
   if (execute) {
-    # Execute model calling c++ spifa function
-    samples <- do.call(spifa_cpp, model_info)
-    # Update model_info list
-    model_info$constrain_V_sd <- attr(samples, "V_sd")
-    model_info <- append(model_info, list(coordinates = coordinates), 2)
-    attr(samples, "V_sd") <- NULL
-    # Keep only sampled parameters
-    has_predictors <- model_type %in% c("cifa_pred", "spifa_pred")
-    has_coordinates <- model_type %in% c("spifa", "spifa_pred")
-    blocks_drop <- c(
-      if (!has_predictors) "betas",
-      if (!has_coordinates) c("mgp_sd", "mgp_phi"))
-    samples <- samples[!names(samples) %in% blocks_drop]
-    # Convert to draws_array
-    flat <- do.call(cbind, samples)
-    arr <- array(flat, dim = c(nrow(flat), 1, ncol(flat)),
-                 dimnames = list(NULL, NULL, colnames(flat)))
-    samples <- posterior::as_draws_array(arr)
+    samples <- do.call(spifa_cpp, spifa_args)
+    spifa_args$constrain_V_sd <- attr(samples, "V_sd")
+    samples <- do.call(cbind, samples) |> posterior::as_draws_array()
   } else {
     samples <- list()
   }
 
-  # Add model_info to the fitted object.
-  attr(samples, "model_info") <- model_info
+  # Add attributes
+  attr(samples, "spifa_args") <- spifa_args
+  attr(samples, "coordinates") <- coordinates
   class(samples) <- unique(c("spifa", class(samples)))
   return(samples)
 }

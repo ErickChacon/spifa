@@ -128,7 +128,7 @@ proposed in Andrieu and Thomas (2008).}
 An object of (informal) class \code{spifa.list}: a named list of MCMC
 sample matrices (one entry per parameter block, e.g. \code{c}, \code{a},
 \code{theta}, \code{corr}, \code{betas}, ...), with an attribute
-\code{"model_info"} recording the data and options used to fit the model
+\code{"spifa_args"} recording the data and options used to fit the model
 (needed by \code{\link{predict.spifa}} and \code{\link{dic}}). Convert it
 to a tidy \code{\link[tibble]{tibble}} with \code{\link{as_tibble.spifa}}.
 }
