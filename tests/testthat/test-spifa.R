@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Per-model-type: block presence, constraints/priors application, standardize
+# Per-model-type: eifa, cifa, cifa_pred, spifa, spifa_pred
 # ---------------------------------------------------------------------------
 
 test_that("eifa", {

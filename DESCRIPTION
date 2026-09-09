@@ -1,6 +1,6 @@
 Package: spifa
 Type: Package
-Title: Spatial Item Factor Analysis
+Title: Bayesian Spatial Item Factor Analysis
 Version: 0.1.0
 Encoding: UTF-8
 Authors@R: c(

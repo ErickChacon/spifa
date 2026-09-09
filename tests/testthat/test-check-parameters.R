@@ -1,4 +1,6 @@
-# --- check_param_: check parameters dimensions -----------------------------
+# ---------------------------------------------------------------------------
+# Parameter dimensions
+# ---------------------------------------------------------------------------
 
 test_that("check_param_vec fills in defaults and validates length", {
   expect_equal(check_param_vec(list(), "mean", 3, 0), c(0, 0, 0))
