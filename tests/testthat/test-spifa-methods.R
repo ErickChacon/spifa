@@ -17,7 +17,7 @@ test_that("predict.spifa() returns the means-only message for eifa/cifa", {
 
   samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
     niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
+    constraints = list(discrimination = L_a, sd = parameters$resid_params$sd))
 
   expect_equal(predict(samples), "here is only the means of the latent abilities")
   # newcoords/newdata are meaningless for eifa/cifa -- still short-circuits
@@ -33,10 +33,10 @@ test_that("predict.spifa() predicts the spatial process at newcoords for spifa",
 
   samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors,
     niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, mgp = diag(nfactors), resid_sd = parameters$resid_params$sd),
+    constraints = list(discrimination = L_a, loading = diag(nfactors), sd = parameters$resid_params$sd),
     priors = list(
-      mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
-      mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
+      loading = list(initial = 0.6, mean = 0.6, sd = 0.4),
+      range = list(initial = 200, mean = 200, sd = 0.4)))
 
   newcoords <- sf::st_geometry(ipixuna)[1:5]
   pr <- predict(samples, newcoords = newcoords)
@@ -53,7 +53,7 @@ test_that("predict.spifa() predicts new subjects from newdata for cifa_pred", {
 
   samples <- spifa(items ~ wealth, data = ipixuna_flat, nfactors = nfactors,
     niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
+    constraints = list(discrimination = L_a, sd = parameters$resid_params$sd))
 
   # one column: formula's right-hand side (~ wealth) has no intercept, just
   # the single "wealth" predictor
@@ -71,10 +71,10 @@ test_that("predict.spifa() falls back to reference-level predictors for spifa_pr
 
   samples <- spifa(items ~ wealth, data = ipixuna, nfactors = nfactors,
     niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, mgp = diag(nfactors), resid_sd = parameters$resid_params$sd),
+    constraints = list(discrimination = L_a, loading = diag(nfactors), sd = parameters$resid_params$sd),
     priors = list(
-      mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
-      mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
+      loading = list(initial = 0.6, mean = 0.6, sd = 0.4),
+      range = list(initial = 200, mean = 200, sd = 0.4)))
 
   newcoords <- sf::st_geometry(ipixuna)[1:5]
   pr <- predict(samples, newcoords = newcoords)
@@ -95,7 +95,7 @@ test_that("dic.spifa() computes deviance information criterion components", {
 
   samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
     niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
+    constraints = list(discrimination = L_a, sd = parameters$resid_params$sd))
 
   d <- dic(samples)
   expect_true(all(c("average_of_deviance", "n_effec_params", "dic") %in% names(d)))
@@ -110,7 +110,7 @@ test_that("summary.spifa() returns posterior summaries with burnin/thin/select",
 
   samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
     niter = 10, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
+    constraints = list(discrimination = L_a, sd = parameters$resid_params$sd))
 
   smry <- summary(samples, select = "c")
   expect_true(all(c("variable", "q2.5", "median", "q97.5") %in% names(smry)))
@@ -130,7 +130,7 @@ test_that("as_tibble.spifa() converts to a wide tibble with burnin/thin/select",
 
   samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
     niter = 10, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
+    constraints = list(discrimination = L_a, sd = parameters$resid_params$sd))
 
   samples_tib <- as_tibble(samples)
   expect_false(inherits(samples_tib, "spifa"))
@@ -150,7 +150,7 @@ test_that("as.list.spifa() splits samples back into block-shaped matrices", {
 
   samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors, ngp = 0,
     niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
+    constraints = list(discrimination = L_a, sd = parameters$resid_params$sd))
 
   samples_list <- as.list(samples)
   expect_equal(nrow(samples_list$c), 5)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/spifa.R
 \name{spifa}
 \alias{spifa}
-\title{Fit an (Spatial) Item Factor Analysis Model}
+\title{Bayesian Spatial Item Factor Analysis}
 \usage{
 spifa(
   formula,
@@ -13,14 +13,13 @@ spifa(
   thin = 1,
   burnin = 0,
   standardize = TRUE,
-  constraints = list(discrimination = NULL, mgp = NULL, resid_sd = rep(1, nfactors)),
+  constraints = list(discrimination = NULL, loading = NULL, sd = rep(1, nfactors)),
   priors = list(easiness = list(initial = NULL, mean = NULL, sd = NULL), discrimination =
     list(initial = NULL, mean = NULL, sd = NULL), effect = list(initial = NULL, mean =
-    NULL, sd = NULL), resid_corr = list(initial = NULL, eta = 1.5), mgp_sd = list(initial
-    = NULL, mean = NULL, sd = NULL), mgp_range = list(initial = NULL, mean = NULL, sd =
-    NULL)),
-  adaptive = list(Sigma = NULL, Sigma_resid_corr = NULL, Sigma_mgp_sd = NULL,
-    Sigma_mgp_range = NULL, scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
+    NULL, sd = NULL), corr = list(initial = NULL, eta = 1.5), loading = list(initial =
+    NULL, mean = NULL, sd = NULL), range = list(initial = NULL, mean = NULL, sd = NULL)),
+  adaptive = list(Sigma = NULL, Sigma_corr = NULL, Sigma_loading = NULL, Sigma_range =
+    NULL, scale = 1, C = 0.7, alpha = 0.8, accep_prob = 0.234),
   execute = TRUE
 )
 }
@@ -55,7 +54,7 @@ store.}
 
 \item{burnin}{Number of initial MCMC iterations to discard. These
 iterations still run (and the adaptive Metropolis-Hastings proposals for
-\code{mgp_sd}/\code{mgp_range}/\code{resid_corr} still adapt through
+\code{loading}/\code{range}/\code{corr} still adapt through
 them), but they are never stored, so \code{niter} counts only the
 iterations that end up in the returned samples. \code{0} by default (no
 iterations discarded during fitting -- the previous behaviour). Prefer
@@ -69,8 +68,8 @@ post-adaptation draws.}
 \item{standardize}{Logical; if \code{TRUE} (default), the stored posterior
 draws are rescaled after fitting so the latent factors have unit variance:
 \code{theta} is divided by its posterior SD per factor, and
-\code{discrimination}, \code{effect}, \code{mgp_sd}, and the residual SD
-(\code{constraints$resid_sd}) are compensated by the same factor so the
+\code{discrimination}, \code{effect}, \code{loading}, and the residual SD
+(\code{constraints$sd}) are compensated by the same factor so the
 fitted response probabilities are unchanged. This only applies to models
 with a spatial Gaussian process and/or predictor effects on the latent
 factors (\code{cifa_pred}/\code{spifa}/\code{spifa_pred}; ignored for
@@ -88,37 +87,38 @@ No predictors are standardized by this argument -- despite the name, it
 does not touch \code{formula}'s right-hand side at all.}
 
 \item{constraints}{Named list of constraints associated to the factor model. Accepted
-names are `discrimination`, `mgp`, and `resid_sd`. The restrictions on the
+names are `discrimination`, `loading`, and `sd`. The restrictions on the
 discrimination paramater should be placed in the element `discrimination` with same
 dimensions as the discrimination matrix (nitems x nfactors). A value of 0 indicates that
 the link betwen the item and the factor is disabled and 1 indicates that it remains
 active and the coefficient associated will be estimated. The restrictions for the
-multivariate Gaussian process should be placed in the element `mgp` with dimensions
-nfactors x ngp, such as a value of 0 indicates a link disconnected between the factor
-and the (independent) GP while 1 indicates that it remains active. The restrictions with
+multivariate Gaussian process loading matrix should be placed in the element `loading`
+with dimensions nfactors x ngp, such as a value of 0 indicates a link disconnected between
+the factor and the (independent) GP while 1 indicates that it remains active. The restrictions with
 respect to the standard deviation of the latent factors' residual term should be placed
-in the element `resid_sd`, which should be a vector (length nfactors) providing the fixed
-values for that standard deviation (paired with `priors$resid_corr`, together they
-parameterize the residual covariance — see `dev/design/scope.md`). If the model includes
+in the element `sd`, which should be a vector (length nfactors) providing the fixed
+values for that standard deviation (paired with `priors$corr`, together they
+parameterize the residual covariance). If the model includes
 predictors or a Gaussian process, it is recomended to be lower than 1.}
 
 \item{priors}{Named list of initial values and prior hyperparameters, one
 element per parameter block: `easiness`, `discrimination`, `effect`
-(predictor effect on the latent factors), `resid_corr` (correlation of the
-latent factors' residual term, paired with `constraints$resid_sd`),
-`mgp_sd` (multivariate Gaussian process standard deviations), and
-`mgp_range` (multivariate Gaussian process scale parameters). Each
-element (except `resid_corr`) accepts `initial`, `mean`, and `sd`;
-`resid_corr` accepts `initial` and `eta` (the LKJ prior shape parameter).
-See `dev/design/scope.md` for the mapping between these names and the
-paper's notation (`c`, `a`, `B`, `R`).}
+(predictor effect on the latent factors), `corr` (correlation of the
+latent factors' residual term, paired with `constraints$sd`),
+`loading` (multivariate Gaussian process loading matrix, paired with
+`constraints$loading`), and `range` (multivariate Gaussian process
+scale parameters). Each
+element (except `corr`) accepts `initial`, `mean`, and `sd`;
+`corr` accepts `initial` and `eta` (the LKJ prior shape parameter).
+See the parameter glossary above for how these names map to the
+fitted model's sampled output.}
 
 \item{adaptive}{Named list of hyperparameters associated with the adaptive sampling.
 The adaptive sampling is done jointly for the `correlation` parameters, `standard
 deviation of the gps` and `scale parameter of the gps`. The matrix `Sigma` can be
 provided as the full covariance matrix of these parameters for the proposal
 distribution. Otherwise, part of this matrix can be provided by using the elements
-`Sigma`, `Sigma_resid_corr`, `Sigma_mgp_sd` and `Sigma_mgp_range`. Additional elements are `scale`,
+`Sigma`, `Sigma_corr`, `Sigma_loading` and `Sigma_range`. Additional elements are `scale`,
 `C`, `alpha` and `accep_prob` which are hyperparameters of the adaptive sampling
 proposed in Andrieu and Thomas (2008).}
 
@@ -164,6 +164,26 @@ items <- as.matrix(dplyr::select(data, `Item 1`:`Item 10`))
 data$items <- items
 spifa(items ~ x1, data = data, nfactors = 2)
 }
+
+\strong{Parameter glossary.} \code{priors}/\code{constraints} use
+descriptive names; the fitted model's sampled output (from
+\code{\link{as.list.spifa}}, \code{\link{summary.spifa}}, and
+\code{\link{as_tibble.spifa}}) instead uses short internal names
+matching the underlying model notation. The two are deliberately
+different vocabularies (what you configure vs. what the sampler
+produced) -- this table maps between them:
+\tabular{lll}{
+\code{priors}/\code{constraints} name \tab output block name \tab meaning \cr
+\code{easiness} \tab \code{c} \tab item easiness (intercept) \cr
+\code{discrimination} \tab \code{A} \tab item-factor discrimination (loading) matrix \cr
+\code{effect} \tab \code{B} \tab predictor effect on the latent factors \cr
+\code{corr} \tab \code{Corr}, \code{Chol} \tab residual correlation matrix, and its Cholesky factor \cr
+\code{sd} \tab \emph{(fixed, not sampled)} \tab residual standard deviation \cr
+\code{loading} \tab \code{T} \tab multivariate Gaussian process loading matrix \cr
+\code{range} \tab \code{phi} \tab multivariate Gaussian process spatial range \cr
+\emph{(not user-set)} \tab \code{Theta} \tab latent abilities \cr
+\emph{(not user-set)} \tab \code{Z} \tab augmented latent response
+}
 }
 \examples{
 data(ipixuna)
@@ -178,8 +198,8 @@ nfactors <- ncol(parameters$discrimination)
 samples <- spifa(
   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
   niter = 20, thin = 1, standardize = FALSE,
-  constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
-summary(samples, select = c("c", "a"))
+  constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
+summary(samples, select = c("c", "A"))
 
 }
 \author{

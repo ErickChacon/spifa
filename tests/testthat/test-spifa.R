@@ -1,122 +1,135 @@
-# Tests for spifa() itself: the model-type detection matrix (type-dependent
-# behaviour) followed by sampler mechanics and argument validation (shared,
-# model-type-agnostic behaviour). Method tests (predict/dic/summary/
-# as_tibble/as.list/print) live in test-spifa-methods.R instead -- see
-# dev/design/scope.md for the model_type definitions.
-
 # ---------------------------------------------------------------------------
 # Per-model-type: block presence, constraints/priors application, standardize
 # ---------------------------------------------------------------------------
 
-test_that("spifa() fits eifa (exploratory, no constraints) correctly", {
+test_that("eifa", {
   data(ipixuna, package = "spifa")
   parameters <- attr(ipixuna, "parameters")
   nfactors <- ncol(parameters$discrimination)
-  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
+  nitems <- ncol(ipixuna$items)
 
-  samples <- spifa(
-    items ~ 1, data = ipixuna_flat, nfactors = nfactors,
+  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
     niter = 5, thin = 1, standardize = FALSE)
 
   expect_equal(attr(samples, "spifa_args")$model_type, "eifa")
-  expect_setequal(names(as.list(samples)),
-    c("c", "a", "theta", "z", "corr_chol", "corr"))
+  expect_equal(attr(samples, "spifa_args")$constrain_L,
+    lower.tri(matrix(NA, nitems, nfactors), diag = TRUE) * 1)
+  expect_equal(length(attr(samples, "spifa_args")$response), nrow(ipixuna) * nitems)
+  expect_setequal(names(as.list(samples)), c("c", "A", "Theta", "Z", "Chol", "Corr"))
 
-  # standardize is a documented no-op for eifa/cifa (no GP/predictor scale
-  # non-identifiability to normalize against)
+  # standardize does not affect eifa models
   set.seed(42)
-  samples_std <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
-    niter = 5, thin = 1, standardize = TRUE)
+  samples_raw <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+     niter = 5, thin = 1, standardize = FALSE)
+  attr(samples_raw, "spifa_args")$standardize <- NULL
   set.seed(42)
-  samples_raw <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
-    niter = 5, thin = 1, standardize = FALSE)
-  strip_spifa_args <- function (x) { attr(x, "spifa_args") <- NULL; unclass(x) }
-  expect_equal(strip_spifa_args(as.list(samples_std)), strip_spifa_args(as.list(samples_raw)))
+  samples_std <- spifa(items ~ 1, data = sf::st_set_geometry(ipixuna, NULL),
+    nfactors = nfactors, niter = 5, thin = 1, standardize = TRUE)
+  attr(samples_std, "spifa_args")$standardize <- NULL
+  expect_equal(as.list(samples_raw), as.list(samples_std))
 })
 
-test_that("spifa() fits cifa (confirmatory, no predictors/spatial) correctly", {
+test_that("cifa", {
   data(ipixuna, package = "spifa")
   parameters <- attr(ipixuna, "parameters")
   L_a <- (parameters$discrimination != 0) * 1
   nfactors <- ncol(parameters$discrimination)
-  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
 
   samples <- spifa(
-    items ~ 1, data = ipixuna_flat, nfactors = nfactors,
+    items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
     niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
+    constraints = list(discrimination = L_a, sd = parameters$resid_params$sd))
 
   expect_equal(attr(samples, "spifa_args")$model_type, "cifa")
+  expect_setequal(names(as.list(samples)),
+    c("c", "A", "Theta", "Z", "Chol", "Corr"))
 
-  # constraints$discrimination mask respected: entries fixed to 0 stay
-  # exactly 0 in every stored draw (parsed off the "A[i,j]" column names
-  # rather than assumed, since the flatten order isn't a public contract)
-  a_samples <- as.list(samples)$a
+  # verify zero loadings based on constraints
+  a_samples <- as.list(samples)$A
   idx <- as.integer(sub("A\\[(\\d+),(\\d+)\\]", "\\1", colnames(a_samples)))
   jdx <- as.integer(sub("A\\[(\\d+),(\\d+)\\]", "\\2", colnames(a_samples)))
   zero_mask <- L_a[cbind(idx, jdx)] == 0
   expect_true(all(a_samples[, zero_mask] == 0))
 })
 
-test_that("spifa() fits cifa_pred (confirmatory with predictors) correctly", {
+test_that("cifa_pred", {
   data(ipixuna, package = "spifa")
   parameters <- attr(ipixuna, "parameters")
   L_a <- (parameters$discrimination != 0) * 1
   nfactors <- ncol(parameters$discrimination)
-  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
-  effect_initial <- matrix(parameters$effect, nrow = 1)
 
   samples <- spifa(
-    items ~ wealth, data = ipixuna_flat, nfactors = nfactors,
+    items ~ poly(wealth, 2), data = ipixuna, nfactors = nfactors, ngp = 0,
     niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd),
-    priors = list(effect = list(initial = effect_initial, mean = effect_initial)))
+    constraints = list(discrimination = L_a, sd = parameters$resid_params$sd))
 
   expect_equal(attr(samples, "spifa_args")$model_type, "cifa_pred")
+  expect_equal(dim(attr(samples, "spifa_args")$predictors), c(nrow(ipixuna), 2))
   blocks <- as.list(samples)
-  expect_setequal(names(blocks), c("c", "a", "theta", "z", "corr_chol", "corr", "betas"))
-  expect_equal(dim(blocks$betas), c(5, ncol(effect_initial)))
+  expect_setequal(names(blocks), c("c", "A", "Theta", "Z", "Chol", "Corr", "B"))
+  expect_equal(dim(blocks$B), c(5, 2 * nfactors))
 
-  # standardize actually rescales theta to ~unit variance per factor (coarse
-  # check: pool all iterations/observations for a factor and look at the sd
-  # of the pooled vector, not an exact per-column target)
+  # standardize rescales theta (latent abilities) to unit variance
   set.seed(1)
   samples_std <- spifa(
-    items ~ wealth, data = ipixuna_flat, nfactors = nfactors,
+    items ~ wealth, data = ipixuna, nfactors = nfactors, ngp = 0,
     niter = 200, thin = 1, standardize = TRUE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
-  theta <- as.list(samples_std)$theta
+    constraints = list(discrimination = L_a, sd = parameters$resid_params$sd))
+  theta <- as.list(samples_std)$Theta
   factor_idx <- as.integer(sub(".*,(\\d+)\\]$", "\\1", colnames(theta)))
   for (k in seq_len(nfactors)) {
-    expect_true(abs(sd(as.numeric(theta[, factor_idx == k])) - 1) < 0.5)
+    expect_true(abs(sd(as.numeric(theta[, factor_idx == k])) - 1) < 0.1)
   }
 })
 
-test_that("spifa() fits spifa (spatial, no predictors) correctly", {
+test_that("spifa", {
   data(ipixuna, package = "spifa")
   parameters <- attr(ipixuna, "parameters")
   L_a <- (parameters$discrimination != 0) * 1
   nfactors <- ncol(parameters$discrimination)
 
-  samples <- spifa(
-    items ~ 1, data = ipixuna, nfactors = nfactors,
+  # default case
+  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors,
     niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, mgp = diag(nfactors), resid_sd = parameters$resid_params$sd),
-    priors = list(
-      mgp_sd = list(initial = parameters$mgp_params$sd, mean = parameters$mgp_params$sd, sd = 0.4),
-      mgp_range = list(initial = parameters$mgp_params$phi, mean = parameters$mgp_params$phi, sd = 0.3)))
+    constraints = list(discrimination = L_a, sd = parameters$resid_params$sd))
 
   expect_equal(attr(samples, "spifa_args")$model_type, "spifa")
+  expect_equal(attr(samples, "spifa_args")$ngp, nfactors)
+  expect_equal(attr(samples, "spifa_args")$constrain_T, diag(1, nfactors, nfactors))
+  expect_equal(attr(samples, "coordinates"), sf::st_geometry(ipixuna))
   blocks <- as.list(samples)
   expect_setequal(names(blocks),
-    c("c", "a", "theta", "z", "corr_chol", "corr", "mgp_sd", "mgp_phi"))
-  # constraints$mgp = diag(nfactors): one independent GP per factor, so
-  # exactly nfactors mgp_sd entries are estimated (not the full nfactors x
-  # ngp product)
-  expect_equal(ncol(blocks$mgp_sd), nfactors)
+    c("c", "A", "Theta", "Z", "Chol", "Corr", "T", "phi"))
+  expect_equal(ncol(blocks$T), nfactors)
+  expect_equal(ncol(blocks$phi), nfactors)
+
+  # custom gps and factors relationship
+  fit_spifa <- function (loading, ngp) {
+    spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = ngp,
+      niter = 5, thin = 1, standardize = FALSE,
+      constraints = list(discrimination = L_a, loading = loading, sd = parameters$resid_params$sd),
+      priors = list(
+        loading = list(initial = rep(0.6, sum(loading)), mean = rep(0.6, sum(loading)), sd = 0.4),
+        range = list(initial = rep(200, ngp), mean = rep(200, ngp), sd = 0.3))
+    )
+  }
+
+  # 1 GP
+  loading_shared <- matrix(c(1, 1, 0), nfactors, 1)
+  samples_shared <- fit_spifa(loading_shared, 1)
+  blocks_shared <- as.list(samples_shared)
+  expect_equal(ncol(blocks_shared$T), sum(loading_shared))
+  expect_equal(ncol(blocks_shared$phi), 1)
+
+  # 2 GP
+  loading_partial <- matrix(c(1, 0, 0, 0, 1, 1), nfactors, 2)
+  samples_partial <- fit_spifa(loading_partial, 2)
+  blocks_partial <- as.list(samples_partial)
+  expect_equal(ncol(blocks_partial$T), sum(loading_partial))
+  expect_equal(ncol(blocks_partial$phi), 2)
 })
 
-test_that("spifa() fits spifa_pred (spatial with predictors) correctly", {
+test_that("spifa_pred", {
   data(ipixuna, package = "spifa")
   parameters <- attr(ipixuna, "parameters")
   L_a <- (parameters$discrimination != 0) * 1
@@ -124,105 +137,88 @@ test_that("spifa() fits spifa_pred (spatial with predictors) correctly", {
 
   samples <- spifa(
     items ~ wealth, data = ipixuna, nfactors = nfactors, niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, mgp = diag(nfactors), resid_sd = parameters$resid_params$sd),
+    constraints = list(discrimination = L_a, loading = diag(nfactors), sd = parameters$resid_params$sd),
     priors = list(
-      mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
-      mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
+      loading = list(initial = 0.6, mean = 0.6, sd = 0.4),
+      range = list(initial = 200, mean = 200, sd = 0.4)))
 
   expect_equal(attr(samples, "spifa_args")$model_type, "spifa_pred")
+  expect_equal(dim(attr(samples, "spifa_args")$predictors), c(nrow(ipixuna), 1))
   expect_setequal(names(as.list(samples)),
-    c("c", "a", "theta", "z", "corr_chol", "corr", "mgp_sd", "mgp_phi", "betas"))
-})
-
-test_that("spifa() with ngp = 0 opts an sf dataset out of the spatial model", {
-  data(ipixuna, package = "spifa")
-  parameters <- attr(ipixuna, "parameters")
-  L_a <- (parameters$discrimination != 0) * 1
-  nfactors <- ncol(parameters$discrimination)
-
-  # ipixuna is an sf object, but ngp = 0 must force a non-spatial fit anyway
-  samples <- spifa(
-    items ~ wealth, data = ipixuna, nfactors = nfactors, ngp = 0,
-    niter = 5, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
-
-  expect_equal(attr(samples, "spifa_args")$model_type, "cifa_pred")
-  expect_false(any(c("mgp_sd", "mgp_phi") %in% names(as.list(samples))))
+    c("c", "A", "Theta", "Z", "Chol", "Corr", "T", "phi", "B"))
 })
 
 # ---------------------------------------------------------------------------
-# Shared, model-type-agnostic: sampler mechanics and argument validation
+# Sampler mechanics and argument validation
 # ---------------------------------------------------------------------------
 
-test_that("spifa() burnin discards iterations without storing them", {
+test_that("spifa(): burnin, thin, niter", {
   data(ipixuna, package = "spifa")
-  parameters <- attr(ipixuna, "parameters")
-  L_a <- (parameters$discrimination != 0) * 1
-  nfactors <- ncol(parameters$discrimination)
-  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
-  constraints <- list(discrimination = L_a, resid_sd = parameters$resid_params$sd)
+  nfactors <- 2
 
-  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
-    niter = 5, thin = 1, burnin = 0, standardize = FALSE, constraints = constraints)
+  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+    niter = 5, thin = 1, burnin = 0, standardize = FALSE)
   expect_equal(dim(samples)[1], 5)
 
-  samples_burnin <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
-    niter = 5, thin = 1, burnin = 10, standardize = FALSE, constraints = constraints)
+  samples_burnin <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+    niter = 5, thin = 1, burnin = 10, standardize = FALSE)
   expect_equal(dim(samples_burnin)[1], 5)
 
-  # non-divisible edge case: ceiling(niter / thin) draws are stored (this
-  # combination previously under-allocated, see src/ifa.cpp's nsave fix)
-  samples_edge <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
-    niter = 7, thin = 3, burnin = 2, standardize = FALSE, constraints = constraints)
-  expect_equal(dim(samples_edge)[1], ceiling(7 / 3))
+  # non-divisible niter and thin
+  samples_edge <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+    niter = 8, thin = 3, burnin = 2, standardize = FALSE)
+  expect_equal(dim(samples_edge)[1], ceiling(8 / 3))
+  expect_equal(attr(samples_edge, "spifa_args")$niter, 7)
 })
 
-test_that("spifa() execute = FALSE returns spifa_args without sampling", {
+test_that("spifa(): execute = FALSE", {
   data(ipixuna, package = "spifa")
-  parameters <- attr(ipixuna, "parameters")
-  L_a <- (parameters$discrimination != 0) * 1
-  nfactors <- ncol(parameters$discrimination)
-  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
+  nfactors <- 2
+  L <- matrix(1, ncol(ipixuna$items), nfactors)
+  L[1:3, nfactors] <- 0
+  easiness_mean <- rep(0.5, ncol(ipixuna$items))
 
-  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
+  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors,
     niter = 5, thin = 1, standardize = FALSE, execute = FALSE,
-    constraints = list(discrimination = L_a, resid_sd = parameters$resid_params$sd))
+    constraints = list(discrimination = L),
+    priors = list(easiness = list(mean = easiness_mean)))
 
   expect_equal(length(samples), 0)
   info <- attr(samples, "spifa_args")
-  expect_equal(info$model_type, "cifa")
-  expect_equal(info$nobs, nrow(ipixuna_flat))
+  expect_equal(info$model_type, "spifa")
+  expect_equal(info$nobs, nrow(ipixuna))
+  expect_equal(info$constrain_L, L)
+  expect_equal(info$c_prior_mean, easiness_mean)
+  expect_equal(attr(samples, "coordinates"), sf::st_geometry(ipixuna))
 })
 
-test_that("spifa() surfaces clear errors for malformed constraints/priors", {
+test_that("spifa(): malformed constraints/priors", {
   data(ipixuna, package = "spifa")
-  parameters <- attr(ipixuna, "parameters")
-  nfactors <- ncol(parameters$discrimination)
-  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
+  nfactors <- 2
 
   # mismatched constraints$discrimination dimensions
   expect_error(
-    spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
+    spifa(items ~ 1, data = ipixuna, nfactors = nfactors,
           niter = 2, thin = 1, execute = FALSE,
           constraints = list(discrimination = matrix(1, 2, 2))),
     "must be of dimension")
 
-  # mismatched constraints$mgp dimensions (sf data, spatial model)
+  # mismatched constraints$loading dimensions (spatial model)
   expect_error(
     spifa(items ~ 1, data = ipixuna, nfactors = nfactors,
           niter = 2, thin = 1, execute = FALSE,
-          constraints = list(mgp = matrix(1, 2, 2))),
+          constraints = list(loading = matrix(1, 3, 3))),
     "must be of dimension")
 
   # malformed priors$easiness$mean length
   expect_error(
-    spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
+    spifa(items ~ 1, data = ipixuna, nfactors = nfactors,
           niter = 2, thin = 1, execute = FALSE,
           priors = list(easiness = list(mean = c(1, 2)))),
     "must be of length")
 
   # left-hand side of formula must be a matrix-valued column
   expect_error(
-    spifa(wealth ~ 1, data = ipixuna_flat, nfactors = nfactors, niter = 2, thin = 1),
+    spifa(wealth ~ 1, data = ipixuna, nfactors = nfactors, niter = 2, thin = 1),
     "must be a matrix")
 })

@@ -86,11 +86,11 @@ system.time(
   samples <- spifa(
     items ~ wealth, data = ipixuna, nfactors = nfactors,
     niter = 200, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, mgp = diag(nfactors),
-      resid_sd = parameters$resid_params$sd),
+    constraints = list(discrimination = L_a, loading = diag(nfactors),
+      sd = parameters$resid_params$sd),
     priors = list(
-      mgp_sd = list(initial = 0.6, mean = 0.6, sd = 0.4),
-      mgp_range = list(initial = 200, mean = 200, sd = 0.4)))
+      loading = list(initial = 0.6, mean = 0.6, sd = 0.4),
+      range = list(initial = 200, mean = 200, sd = 0.4)))
   )
 
 attr(samples, "spifa_args")$model_type
@@ -110,21 +110,21 @@ Traceplots of the easiness (`c`) and discrimination (`a`) parameters:
 as_tibble(samples, select = "c") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble(samples, select = "a") %>%
+as_tibble(samples, select = "A") %>%
   gg_trace(alpha = 0.6)
 ```
 
 Traceplots of the residual correlation and of the Gaussian process
-hyperparameters (standard deviation and range):
+hyperparameters (loading matrix `T` and range `phi`):
 
 ```{r, fig.height = 6}
-as_tibble(samples, select = "corr") %>%
+as_tibble(samples, select = "Corr") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble(samples, select = "mgp_sd") %>%
+as_tibble(samples, select = "T") %>%
   gg_trace(alpha = 0.6)
 
-as_tibble(samples, select = "mgp_phi") %>%
+as_tibble(samples, select = "phi") %>%
   gg_trace(alpha = 0.6)
 ```
 
@@ -132,7 +132,7 @@ Credible intervals for the discrimination parameters, against the true
 simulated values:
 
 ```{r, fig.height = 5}
-summary(samples, burnin = 100, select = "a") %>%
+summary(samples, burnin = 100, select = "A") %>%
   mutate(param = as.numeric(parameters$discrimination)) %>%
   gg_errorbarh(sorted = FALSE) +
   geom_point(aes(x = param), col = 3)

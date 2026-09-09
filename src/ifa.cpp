@@ -432,14 +432,14 @@ Rcpp::List Ifa::sample(
   Rcpp::NumericMatrix z_samples_rcpp = Rcpp::wrap(z_samples.t());
   Rcpp::colnames(z_samples_rcpp) = name_samples_mat(n, q, "Z");
   Rcpp::NumericMatrix corr_chol_samples_rcpp = Rcpp::wrap(corr_chol_samples.t());
-  Rcpp::colnames(corr_chol_samples_rcpp) = name_samples_lower(m, m, "Corr_chol", true);
+  Rcpp::colnames(corr_chol_samples_rcpp) = name_samples_lower(m, m, "Chol", true);
   Rcpp::NumericMatrix corr_samples_rcpp = Rcpp::wrap(corr_samples.t());
   Rcpp::colnames(corr_samples_rcpp) = name_samples_lower(m, m, "Corr", false);
   Rcpp::NumericMatrix mgp_sd_samples_rcpp = Rcpp::wrap(mgp_sd_samples.t());
   Rcpp::colnames(mgp_sd_samples_rcpp) =
     name_samples_mat(m, ngp, "T")[Rcpp::as<Rcpp::IntegerVector>(Rcpp::wrap(T_index))];
   Rcpp::NumericMatrix mgp_phi_samples_rcpp = Rcpp::wrap(mgp_phi_samples.t());
-  Rcpp::colnames(mgp_phi_samples_rcpp) = name_samples_vec(ngp, "mgp_phi");
+  Rcpp::colnames(mgp_phi_samples_rcpp) = name_samples_vec(ngp, "phi");
   Rcpp::NumericMatrix betas_samples_rcpp = Rcpp::wrap(betas_samples.t());
   Rcpp::colnames(betas_samples_rcpp) = name_samples_mat(p, m, "B");
 

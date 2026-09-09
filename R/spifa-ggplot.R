@@ -26,7 +26,7 @@
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
+#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
 #' as_tibble(samples, select = "c") %>% gg_trace(wrap = TRUE, alpha = 0.6)
 #' }
 #'
@@ -75,7 +75,7 @@ gg_trace <- function (df, wrap = FALSE, legend = "bottom", ...) {
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
+#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
 #' as_tibble(samples, select = "c") %>% gg_density()
 #' }
 #'
@@ -141,7 +141,7 @@ gg_density <- function (df, ..., ridges = FALSE) {
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
+#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
 #' samples_tib <- as_tibble(samples)
 #' gg_density2d(samples_tib, `c[1]`, `c[2]`)
 #' }
@@ -223,7 +223,7 @@ gg_density2d <- function (samples, var1, var2, each = NULL,
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
+#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
 #' samples_tib <- as_tibble(samples)
 #' gg_scatter(samples_tib, `c[1]`, `c[2]`)
 #' }
@@ -296,7 +296,7 @@ gg_scatter <- function (samples, var1, var2, each = NULL,
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
+#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
 #' gg_errorbarh(summary(samples, select = "c"))
 #' }
 #'
@@ -353,7 +353,7 @@ gg_errorbarh <- function (df_summary, sorted = FALSE,
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
+#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
 #' gg_errorbar(summary(samples, select = "c"), sorted = FALSE)
 #' }
 #'

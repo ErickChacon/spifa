@@ -32,7 +32,7 @@ nfactors <- ncol(parameters$discrimination)
 samples <- spifa(
   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
   niter = 20, thin = 1, standardize = FALSE,
-  constraints = list(discrimination = L_a, resid_sd = rep(0.5, nfactors)))
+  constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
 samples_list <- as.list(samples)
 names(samples_list)
 }
