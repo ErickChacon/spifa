@@ -1,4 +1,4 @@
-#' @title spifa: Spatial (Geostatistical) Item Factor Analysis
+#' @title spifa: Bayesian Spatial Item Factor Analysis
 #'
 #' @docType package
 #' @name spifa-package

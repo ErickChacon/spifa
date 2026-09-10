@@ -1,163 +1,9 @@
 # ---------------------------------------------------------------------------
-# predict.spifa(): behaviour genuinely differs by model_type
+# summary/as_tibble/as.list/print: pure R reshaping of an already-fitted
+# draws array, tested once (see test-predict-dic.R for predict()/dic(),
+# which are tested against every model_type since they consume freshly-
+# computed, model-type-branching C++ output)
 # ---------------------------------------------------------------------------
-
-test_that("predict.spifa(): eifa/cifa", {
- # returns the latent abilities of the observed subjects
-  data(ipixuna, package = "spifa")
-  nitems <- ncol(ipixuna$items)
-  nfactors <- 3
-
-  # eifa
-  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-    niter = 5)
-  pr <- predict(samples)
-  expect_equal(pr, as_draws_array(as.list(samples)$Theta))
-  expect_equal(predict(samples, newdata = sf::st_geometry(ipixuna)[1:2]), pr)
-
-  # cifa
-  A <- matrix(1, nitems, nfactors)
-  A[c(1, 3, 5), 1] <- 0
-  A[c(2, 6, 9), 2] <- 0
-  A[c(4, 7, 10), 3] <- 0
-  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-    niter = 5, constraints = list(discrimination = A))
-  pr <- predict(samples)
-  expect_equal(pr, as_draws_array(as.list(samples)$Theta))
-  expect_equal(predict(samples, newdata = sf::st_geometry(ipixuna)[1:2]), pr)
-
-  # burnin/thin subset the returned samples
-  pr_burnin <- predict(samples, burnin = 2, thin = 2)
-  expect_equal(pr_burnin,
-    as_draws_array(as.list(samples)$Theta[c(3, 5), , drop = FALSE]))
-})
-
-test_that("predict.spifa(): spifa", {
-  data(ipixuna, package = "spifa")
-  nitems <- ncol(ipixuna$items)
-  nfactors <- 3
-  A <- matrix(1, nitems, nfactors)
-  A[c(4, 8), 1] <- 0
-  A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
-  A[c(5, 6), 3] <- 0
-
-  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors,
-    niter = 5, constraints = list(discrimination = A, loading = diag(nfactors)),
-    priors = list(
-      loading = list(initial = 0.6, mean = 0.6, sd = 0.4),
-      range = list(initial = 200, mean = 200, sd = 0.4))
-  )
-
-  # no newdata: latent abilities at observed locations
-  pr <- predict(samples)
-  expect_equal(pr, as_draws_array(as.list(samples)$Theta))
-
-  # newdata (sfc): latent abilities at new locations
-  newcoords <- sf::st_make_grid(ipixuna, n = c(5, 1), what = "centers")
-  # marginal spatial prediction
-  pr <- predict(samples, newdata = newcoords)
-  expect_s3_class(pr, "draws_array")
-  expect_equal(ndraws(pr), 5)
-  expect_equal(nvariables(pr), 5 * nfactors)
-  # joint spatial prediction
-  pr_joint <- predict(samples, newdata = newcoords, joint = TRUE)
-  expect_equal(dim(pr_joint), dim(pr))
-})
-
-test_that("predict.spifa(): cifa_pred", {
-  data(ipixuna, package = "spifa")
-  nitems <- ncol(ipixuna$items)
-  nfactors <- 3
-  A <- matrix(1, nitems, nfactors)
-  A[c(2, 7), 1] <- 0
-  A[c(1, 4, 9, 10), 2] <- 0
-  A[c(3, 6), 3] <- 0
-
-  samples <- spifa(items ~ wealth, data = ipixuna, nfactors = nfactors,
-    ngp = 0, niter = 5, thin = 1, constraints = list(discrimination = A))
-
-  # no newdata: latent abilities at observed subjects
-  pr_none <- predict(samples)
-  expect_equal(pr_none, as_draws_array(as.list(samples)$Theta))
-
-  # incorrect newdata: missing predictors
-  expect_error(predict(samples, newdata = data.frame(other_col = c(1, 2, 3))),
-    "missing the predictor column")
-
-  # adequate newdata
-  newdata <- data.frame(wealth = c(0.1, -0.2, 0.3))
-  pr <- predict(samples, newdata = newdata)
-  expect_s3_class(pr, "draws_array")
-  expect_equal(ndraws(pr), 5)
-  expect_equal(nvariables(pr), 3 * nfactors)
-})
-
-test_that("predict.spifa(): spifa_pred", {
-  data(ipixuna, package = "spifa")
-  nitems <- ncol(ipixuna$items)
-  nfactors <- 3
-  A <- matrix(1, nitems, nfactors)
-  A[c(4, 8), 1] <- 0
-  A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
-  A[c(5, 6), 3] <- 0
-  ngp <- 2
-  loading <- matrix(c(1, 1, 0, 0, 0, 1), nfactors, ngp)
-
-  samples <- spifa(items ~ wealth, data = ipixuna, nfactors = nfactors, ngp = ngp,
-    niter = 5, constraints = list(discrimination = A, loading = loading),
-    priors = list(
-      loading = list(initial = 0.6, mean = 0.6, sd = 0.4),
-      range = list(initial = 200, mean = 200, sd = 0.4))
-  )
-
-  # no newdata: latent abilities at observed locations
-  pr_none <- predict(samples)
-  expect_equal(pr_none, as_draws_array(as.list(samples)$Theta))
-
-  # incorrect newdata: missing predictors
-  newcoords <- sf::st_make_grid(ipixuna, n = c(5, 1), what = "centers")
-  expect_error(predict(samples, newdata = newcoords), "wealth")
-  expect_error(predict(samples, newdata = sf::st_sf(geometry = newcoords)), "wealth")
-  expect_error(predict(samples, newdata = sf::st_sf(other_col = 1:5, geometry = newcoords)), "wealth")
-
-  # incorrect newdata: a plain data.frame (no geometry) for a spatial model
-  expect_error(predict(samples, newdata = data.frame(wealth = c(0.1, -0.2, 0.3))),
-    "sf/sfc")
-
-  # adequate newdata: supplying the predictor explicitly
-  newdata <- sf::st_sf(wealth = rep(0, 5), geometry = newcoords)
-  pr <- predict(samples, newdata = newdata)
-  expect_s3_class(pr, "draws_array")
-  expect_equal(ndraws(pr), 5)
-  expect_equal(nvariables(pr), 5 * nfactors)
-})
-
-# ---------------------------------------------------------------------------
-# dic/summary/as_tibble/as.list/print: model_type-agnostic, tested once
-# ---------------------------------------------------------------------------
-
-test_that("dic.spifa() computes deviance information criterion components", {
-  data(ipixuna, package = "spifa")
-  nitems <- ncol(ipixuna$items)
-  nfactors <- 3
-  A <- matrix(1, nitems, nfactors)
-  A[c(3, 9), 1] <- 0
-  A[c(1, 5, 8), 2] <- 0
-  A[c(2, 6, 7, 10), 3] <- 0
-  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
-
-  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
-    niter = 10, thin = 1, constraints = list(discrimination = A))
-
-  d <- dic(samples)
-  expect_s3_class(d, "tbl_df")
-  expect_equal(nrow(d), 1)
-  expect_true(all(c("mean_deviance", "p_eff", "dic") %in% names(d)))
-
-  # burnin/thin narrow which posterior draws are used
-  d_burnin <- dic(samples, burnin = 5)
-  expect_false(isTRUE(all.equal(d, d_burnin)))
-})
 
 test_that("summary.spifa() returns posterior summaries with burnin/thin/select", {
   data(ipixuna, package = "spifa")
@@ -224,7 +70,7 @@ test_that("as.list.spifa() splits samples back into block-shaped matrices", {
   expect_equal(ncol(samples_list$c), ncol(ipixuna_flat$items))
 })
 
-test_that("burnin >= niter gives a clear error, not a raw seq() crash", {
+test_that("summary()/as_tibble(): burnin >= niter gives a clear error, not a raw seq() crash", {
   data(ipixuna, package = "spifa")
   nitems <- ncol(ipixuna$items)
   nfactors <- 3
@@ -240,10 +86,8 @@ test_that("burnin >= niter gives a clear error, not a raw seq() crash", {
   # regression test: burnin >= niter used to crash with a raw, confusing
   # "wrong sign in 'by' argument" error from seq(burnin+1, niter, thin);
   # now it hits posterior::subset_draws()'s own clear validation instead
-  expect_error(predict(samples, burnin = 5), "iterations")
   expect_error(summary(samples, burnin = 5), "iterations")
   expect_error(as_tibble(samples, burnin = 5), "iterations")
-  expect_error(dic(samples, burnin = 5), "iterations")
 })
 
 test_that("print.spifa() prints without error", {
