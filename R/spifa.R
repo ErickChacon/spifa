@@ -14,12 +14,16 @@
 #' @details
 #' The type of model fitted is determined automatically from \code{formula}
 #' and the class of \code{data}: a one-sided right-hand side (\code{items ~
-#' 1}) with unrestricted \code{constraints$discrimination} gives exploratory
-#' IFA (EIFA); the same with a restricted \code{constraints$discrimination}
-#' gives confirmatory IFA (CIFA); adding predictors to the right-hand side
-#' (e.g. \code{items ~ x1}) gives CIFA with predictors; \code{data} being an
-#' \code{\link[sf]{sf}} object adds a spatial Gaussian process on the latent
-#' factors, giving spatial IFA (SPIFA), with or without predictors.
+#' 1}) with \code{constraints$discrimination} left unspecified gives
+#' exploratory IFA (EIFA) -- a default lower-triangular restriction on
+#' \code{discrimination} is applied automatically for identifiability in
+#' this case, not something the user chooses (see \code{constraints} below);
+#' supplying your own (typically theory-driven) restricted
+#' \code{constraints$discrimination} instead gives confirmatory IFA (CIFA);
+#' adding predictors to the right-hand side (e.g. \code{items ~ x1}) gives
+#' CIFA with predictors; \code{data} being an \code{\link[sf]{sf}} object
+#' adds a spatial Gaussian process on the latent factors, giving spatial IFA
+#' (SPIFA), with or without predictors.
 #'
 #' The left-hand side of \code{formula} must be a single symbol naming a
 #' matrix-valued column of \code{data} (\code{nobs x nitems}, one row per
@@ -112,7 +116,11 @@
 #' discrimination paramater should be placed in the element `discrimination` with same
 #' dimensions as the discrimination matrix (nitems x nfactors). A value of 0 indicates that
 #' the link betwen the item and the factor is disabled and 1 indicates that it remains
-#' active and the coefficient associated will be estimated. The restrictions for the
+#' active and the coefficient associated will be estimated. If left unspecified
+#' (`NULL`), a lower-triangular restriction is applied by default (the item on row `i`
+#' can only load on factors `1:i`) -- this is a standard identifiability trick for
+#' exploratory factor analysis, not a fully unrestricted model, and gives EIFA (see
+#' Details). The restrictions for the
 #' multivariate Gaussian process loading matrix should be placed in the element `loading`
 #' with dimensions nfactors x ngp, such as a value of 0 indicates a link disconnected between
 #' the factor and the (independent) GP while 1 indicates that it remains active. The restrictions with
@@ -149,27 +157,43 @@
 #' An object of (informal) class \code{spifa.list}: a named list of MCMC
 #' sample matrices (one entry per parameter block, e.g. \code{c}, \code{a},
 #' \code{theta}, \code{corr}, \code{betas}, ...), with an attribute
-#' \code{"spifa_args"} recording the data and options used to fit the model
+#' \code{"fit_args"} recording the data and options used to fit the model
 #' (needed by \code{\link{predict.spifa}} and \code{\link{dic}}). Convert it
 #' to a tidy \code{\link[tibble]{tibble}} with \code{\link{as_tibble.spifa}}.
 #'
 #' @author Erick A. Chacón-Montalván
 #'
 #' @examples
+#' \donttest{
 #' data(ipixuna)
+#' nitems <- ncol(ipixuna$items)
+#' nfactors <- 3
 #'
-#' # true discrimination structure used to simulate ipixuna
-#' parameters <- attr(ipixuna, "parameters")
-#' L_a <- (parameters$discrimination != 0) * 1
-#' nfactors <- ncol(parameters$discrimination)
+#' # EIFA: default discrimination constraints, non-spatial
+#' samples_eifa <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+#'   niter = 20)
 #'
-#' # confirmatory item factor analysis (non-spatial: ngp = 0; small niter
-#' # for a fast example)
-#' samples <- spifa(
-#'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-#'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
-#' summary(samples, select = c("c", "A"))
+#' # discrimination constraint for cifa/spifa
+#' A <- matrix(1, nitems, nfactors)
+#' A[c(4, 8), 1] <- 0
+#' A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+#' A[c(5, 6), 3] <- 0
+#'
+#' # CIFA with predictors: custom discrimination constraints, non-spatial
+#' samples_cifa <- spifa(items ~ poly(wealth, 2), data = ipixuna, nfactors = nfactors,
+#'   ngp = 0, niter = 20, burnin = 5, constraints = list(discrimination = A))
+#'
+#' # SPIFA: custom discrimination constraints, default spatial components
+#' samples_spifa <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors,
+#'   niter = 20, burnin = 5, thin = 2, constraints = list(discrimination = A))
+#'
+#' # SPIFA with predictors and a custom loading matrix: factors 1 and 2
+#' # share one Gaussian process, factor 3 gets its own
+#' ngp <- 2
+#' T <- matrix(c(1, 1, 0, 0, 0, 1), nfactors, ngp)
+#' samples_spifa_pred <- spifa(items ~ wealth, data = ipixuna, nfactors = nfactors,
+#'   ngp = 2, niter = 20, constraints = list(discrimination = A, loading = T))
+#' }
 #'
 #' @export
 spifa <- function(formula, data, nfactors, ngp = nfactors,
@@ -196,9 +220,9 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   nobs <- nrow(response)
   nitems <- ncol(response)
 
-  predictors_terms <- delete.response(terms(mf))
-  attr(predictors_terms, "intercept") <- 0
-  predictors <- model.matrix(predictors_terms, mf)
+  pred_terms <- delete.response(terms(mf))
+  attr(pred_terms, "intercept") <- 0
+  predictors <- model.matrix(pred_terms, mf)
   npred <- ncol(predictors)
 
   # Coordinates and ngp
@@ -319,7 +343,7 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   }
 
   # List of options to call c++ spifa function
-  spifa_args <- list(
+  fit_args <- list(
     response = as.numeric(response), predictors = predictors, distances = distances,
     nobs = nobs, nitems = nitems, nfactors = nfactors, ngp = ngp,
     niter = niter, thin = thin, burnin = burnin, standardize = standardize,
@@ -338,16 +362,18 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
 
   # Execute c++ if requested
   if (execute) {
-    samples <- do.call(spifa_cpp, spifa_args)
-    spifa_args$constrain_V_sd <- attr(samples, "V_sd")
+    samples <- do.call(spifa_cpp, fit_args)
+    fit_args$constrain_V_sd <- attr(samples, "V_sd")
     samples <- do.call(cbind, samples) |> posterior::as_draws_array()
   } else {
     samples <- list()
   }
 
   # Add attributes
-  attr(samples, "spifa_args") <- spifa_args
-  attr(samples, "coordinates") <- coordinates
+  attr(samples, "fit_args") <- fit_args
+  attr(samples, "predict_setup") <- list(coordinates = coordinates,
+    pred_terms = pred_terms, xlevels = get_xlevels(pred_terms, mf))
+
   class(samples) <- unique(c("spifa", class(samples)))
   return(samples)
 }
@@ -422,4 +448,12 @@ check_param_matdiag <- function (param_list, element, dimension, default) {
          sprintf("1 or %i, or dimension c(%i, %i)", dimension, dimension, dimension))
   }
   return(output)
+}
+
+# get factor levels of the predictor columns
+get_xlevels <- function (pred_terms, mf) {
+  xlevels <- lapply(mf[intersect(names(mf), all.vars(pred_terms))],
+    function (v) if (is.factor(v)) levels(v) else NULL)
+  xlevels <- xlevels[!vapply(xlevels, is.null, logical(1))]
+  if (length(xlevels) == 0) NULL else xlevels
 }

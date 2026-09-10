@@ -76,9 +76,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// predict_spifa_cpp
-Rcpp::List predict_spifa_cpp(arma::mat samples_theta, arma::mat samples_corr_chol, arma::mat samples_corr, arma::mat samples_mgp_sd, arma::mat samples_mgp_phi, arma::mat samples_betas, Rcpp::NumericVector response, arma::mat predictors, arma::mat newpredictors, arma::mat distances, arma::mat newdist, arma::mat cross_distances, int nobs, int nitems, int nfactors, int ngp, int npred, int niter, int burnin, int thin, arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd, std::string model_type);
-RcppExport SEXP _spifa_predict_spifa_cpp(SEXP samples_thetaSEXP, SEXP samples_corr_cholSEXP, SEXP samples_corrSEXP, SEXP samples_mgp_sdSEXP, SEXP samples_mgp_phiSEXP, SEXP samples_betasSEXP, SEXP responseSEXP, SEXP predictorsSEXP, SEXP newpredictorsSEXP, SEXP distancesSEXP, SEXP newdistSEXP, SEXP cross_distancesSEXP, SEXP nobsSEXP, SEXP nitemsSEXP, SEXP nfactorsSEXP, SEXP ngpSEXP, SEXP npredSEXP, SEXP niterSEXP, SEXP burninSEXP, SEXP thinSEXP, SEXP constrain_LSEXP, SEXP constrain_TSEXP, SEXP constrain_V_sdSEXP, SEXP model_typeSEXP) {
+// predict_cpp
+Rcpp::List predict_cpp(arma::mat samples_theta, arma::mat samples_corr_chol, arma::mat samples_corr, arma::mat samples_mgp_sd, arma::mat samples_mgp_phi, arma::mat samples_betas, Rcpp::NumericVector response, arma::mat predictors, arma::mat newpredictors, arma::mat distances, arma::mat newdist, arma::mat cross_distances, int nobs, int nitems, int nfactors, int ngp, int npred, int niter, int burnin, int thin, arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd, std::string model_type, bool joint);
+RcppExport SEXP _spifa_predict_cpp(SEXP samples_thetaSEXP, SEXP samples_corr_cholSEXP, SEXP samples_corrSEXP, SEXP samples_mgp_sdSEXP, SEXP samples_mgp_phiSEXP, SEXP samples_betasSEXP, SEXP responseSEXP, SEXP predictorsSEXP, SEXP newpredictorsSEXP, SEXP distancesSEXP, SEXP newdistSEXP, SEXP cross_distancesSEXP, SEXP nobsSEXP, SEXP nitemsSEXP, SEXP nfactorsSEXP, SEXP ngpSEXP, SEXP npredSEXP, SEXP niterSEXP, SEXP burninSEXP, SEXP thinSEXP, SEXP constrain_LSEXP, SEXP constrain_TSEXP, SEXP constrain_V_sdSEXP, SEXP model_typeSEXP, SEXP jointSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -106,7 +106,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::mat >::type constrain_T(constrain_TSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type constrain_V_sd(constrain_V_sdSEXP);
     Rcpp::traits::input_parameter< std::string >::type model_type(model_typeSEXP);
-    rcpp_result_gen = Rcpp::wrap(predict_spifa_cpp(samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type));
+    Rcpp::traits::input_parameter< bool >::type joint(jointSEXP);
+    rcpp_result_gen = Rcpp::wrap(predict_cpp(samples_theta, samples_corr_chol, samples_corr, samples_mgp_sd, samples_mgp_phi, samples_betas, response, predictors, newpredictors, distances, newdist, cross_distances, nobs, nitems, nfactors, ngp, npred, niter, burnin, thin, constrain_L, constrain_T, constrain_V_sd, model_type, joint));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -114,7 +115,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_spifa_dic_cpp", (DL_FUNC) &_spifa_dic_cpp, 8},
     {"_spifa_spifa_cpp", (DL_FUNC) &_spifa_spifa_cpp, 37},
-    {"_spifa_predict_spifa_cpp", (DL_FUNC) &_spifa_predict_spifa_cpp, 24},
+    {"_spifa_predict_cpp", (DL_FUNC) &_spifa_predict_cpp, 25},
     {NULL, NULL, 0}
 };
 

@@ -93,7 +93,7 @@ system.time(
       range = list(initial = 200, mean = 200, sd = 0.4)))
   )
 
-attr(samples, "spifa_args")$model_type
+attr(samples, "fit_args")$model_type
 ```
 
 ## Summarise samples

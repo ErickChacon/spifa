@@ -33,13 +33,20 @@ helpers.
 \examples{
 \donttest{
 data(ipixuna)
-parameters <- attr(ipixuna, "parameters")
-L_a <- (parameters$discrimination != 0) * 1
-nfactors <- ncol(parameters$discrimination)
+nitems <- ncol(ipixuna$items)
+nfactors <- 3
+
+# discrimination constraint: start with every item free to load on every
+# factor, then restrict a few items per factor based on what each item is
+# meant to measure (0 = no relationship, 1 = free parameter to estimate)
+A <- matrix(1, nitems, nfactors)
+A[c(4, 8), 1] <- 0
+A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+A[c(5, 6), 3] <- 0
 samples <- spifa(
   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-  niter = 20, thin = 1, standardize = FALSE,
-  constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
+  niter = 20, standardize = FALSE,
+  constraints = list(discrimination = A))
 wide <- as_tibble(samples, select = "c")
 long <- gather.spifa(wide)
 long

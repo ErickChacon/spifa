@@ -102,7 +102,7 @@ public:
       arma::mat samples_corr,
       arma::mat samples_mgp_sd, arma::mat samples_mgp_phi, arma::mat samples_betas,
       arma::mat newpredictors, arma::mat newdist, arma::mat cross_distances,
-      int npred, int niter, int burnin, int thin);
+      int npred, int niter, int burnin, int thin, bool joint);
 };
 
 

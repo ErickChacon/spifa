@@ -28,13 +28,13 @@
 #'
 #' @examples
 #' data(ipixuna)
-#' samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 20, thin = 1)
+#' samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 20)
 #' samples
 #'
 #' @export
 print.spifa <- function (x, ...) {
 
-  info <- attr(x, "spifa_args")
+  info <- attr(x, "fit_args")
   cat("<spifa model fit>\n")
   cat("Model type: ", info$model_type, "\n", sep = "")
   cat(info$nobs, " respondents, ", info$nitems, " items, ", info$nfactors,
@@ -74,20 +74,27 @@ print.spifa <- function (x, ...) {
 #' for consistency with the \code{\link[tibble]{as_tibble}} generic).
 #'
 #' @return A plain wide \code{\link[tibble]{tibble}}, with the
-#' \code{"spifa_args"} attribute carried over from \code{x}.
+#' \code{"fit_args"} attribute carried over from \code{x}.
 #'
 #' @author Erick A. Chacón-Montalván
 #'
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna, "parameters")
-#' L_a <- (parameters$discrimination != 0) * 1
-#' nfactors <- ncol(parameters$discrimination)
+#' nitems <- ncol(ipixuna$items)
+#' nfactors <- 3
+#'
+#' # discrimination constraint: start with every item free to load on every
+#' # factor, then restrict a few items per factor based on what each item is
+#' # meant to measure (0 = no relationship, 1 = free parameter to estimate)
+#' A <- matrix(1, nitems, nfactors)
+#' A[c(4, 8), 1] <- 0
+#' A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+#' A[c(5, 6), 3] <- 0
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-#'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
+#'   niter = 20, standardize = FALSE,
+#'   constraints = list(discrimination = A))
 #' samples_tib <- as_tibble(samples)
 #' samples_tib
 #' }
@@ -97,7 +104,7 @@ print.spifa <- function (x, ...) {
 #' @export
 as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
 
-  spifa_args <- attr(x, "spifa_args")
+  fit_args <- attr(x, "fit_args")
   varnames <- dimnames(x)[[3]]
   if (!is.null(select)) {
     idx <- .spifa_var_blocks(varnames) %in% select
@@ -109,7 +116,7 @@ as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
                 dimnames = list(NULL, varnames))
   df <- tibble::as_tibble(mat)
   df <- df[seq(burnin + 1, niter, thin), ]
-  attr(df, "spifa_args") <- spifa_args
+  attr(df, "fit_args") <- fit_args
   return(df)
 }
 
@@ -126,7 +133,7 @@ as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
 #' @param ... Further arguments passed to methods (currently unused).
 #'
 #' @return An object of class \code{spifa.list}: a named list of matrices,
-#' one per parameter block, with the \code{"spifa_args"} attribute carried
+#' one per parameter block, with the \code{"fit_args"} attribute carried
 #' over from \code{x}.
 #'
 #' @author Erick A. Chacón-Montalván
@@ -134,13 +141,20 @@ as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna, "parameters")
-#' L_a <- (parameters$discrimination != 0) * 1
-#' nfactors <- ncol(parameters$discrimination)
+#' nitems <- ncol(ipixuna$items)
+#' nfactors <- 3
+#'
+#' # discrimination constraint: start with every item free to load on every
+#' # factor, then restrict a few items per factor based on what each item is
+#' # meant to measure (0 = no relationship, 1 = free parameter to estimate)
+#' A <- matrix(1, nitems, nfactors)
+#' A[c(4, 8), 1] <- 0
+#' A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+#' A[c(5, 6), 3] <- 0
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-#'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
+#'   niter = 20, standardize = FALSE,
+#'   constraints = list(discrimination = A))
 #' samples_list <- as.list(samples)
 #' names(samples_list)
 #' }
@@ -148,7 +162,7 @@ as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
 #' @export
 as.list.spifa <- function (x, ...) {
 
-  spifa_args <- attr(x, "spifa_args")
+  fit_args <- attr(x, "fit_args")
   varnames <- dimnames(x)[[3]]
   niter <- dim(x)[1]
   blocks <- .spifa_var_blocks(varnames)
@@ -163,8 +177,8 @@ as.list.spifa <- function (x, ...) {
   samples <- lapply(block_names_unique, extract_block)
   names(samples) <- block_names_unique
   class(samples) <- c("spifa.list", class(samples))
-  attr(samples, "spifa_args") <- spifa_args
-  attr(samples, "coordinates") <- attr(x, "coordinates")
+  attr(samples, "fit_args") <- fit_args
+  attr(samples, "predict_setup") <- attr(x, "predict_setup")
   return(samples)
 }
 
@@ -195,13 +209,20 @@ as.list.spifa <- function (x, ...) {
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna, "parameters")
-#' L_a <- (parameters$discrimination != 0) * 1
-#' nfactors <- ncol(parameters$discrimination)
+#' nitems <- ncol(ipixuna$items)
+#' nfactors <- 3
+#'
+#' # discrimination constraint: start with every item free to load on every
+#' # factor, then restrict a few items per factor based on what each item is
+#' # meant to measure (0 = no relationship, 1 = free parameter to estimate)
+#' A <- matrix(1, nitems, nfactors)
+#' A[c(4, 8), 1] <- 0
+#' A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+#' A[c(5, 6), 3] <- 0
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-#'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
+#'   niter = 20, standardize = FALSE,
+#'   constraints = list(discrimination = A))
 #' wide <- as_tibble(samples, select = "c")
 #' long <- gather.spifa(wide)
 #' long
@@ -263,13 +284,20 @@ gather.spifa <- function (samples_wide, each = NULL,
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna, "parameters")
-#' L_a <- (parameters$discrimination != 0) * 1
-#' nfactors <- ncol(parameters$discrimination)
+#' nitems <- ncol(ipixuna$items)
+#' nfactors <- 3
+#'
+#' # discrimination constraint: start with every item free to load on every
+#' # factor, then restrict a few items per factor based on what each item is
+#' # meant to measure (0 = no relationship, 1 = free parameter to estimate)
+#' A <- matrix(1, nitems, nfactors)
+#' A[c(4, 8), 1] <- 0
+#' A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+#' A[c(5, 6), 3] <- 0
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-#'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
+#'   niter = 20, standardize = FALSE,
+#'   constraints = list(discrimination = A))
 #' summary(samples, select = "c")
 #' }
 #'
@@ -323,13 +351,20 @@ dic <- function (x, ...) {
 #' @examples
 #' \donttest{
 #' data(ipixuna)
-#' parameters <- attr(ipixuna, "parameters")
-#' L_a <- (parameters$discrimination != 0) * 1
-#' nfactors <- ncol(parameters$discrimination)
+#' nitems <- ncol(ipixuna$items)
+#' nfactors <- 3
+#'
+#' # discrimination constraint: start with every item free to load on every
+#' # factor, then restrict a few items per factor based on what each item is
+#' # meant to measure (0 = no relationship, 1 = free parameter to estimate)
+#' A <- matrix(1, nitems, nfactors)
+#' A[c(4, 8), 1] <- 0
+#' A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+#' A[c(5, 6), 3] <- 0
 #' samples <- spifa(
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-#'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
+#'   niter = 20, standardize = FALSE,
+#'   constraints = list(discrimination = A))
 #' dic(samples)
 #' }
 #'
@@ -341,12 +376,12 @@ dic.spifa <- function (x, ...) {
   samples <- as.list(object)
 
   # DIC calling c++ dic_cpp
-  dic <- dic_cpp(y = attr(object, "spifa_args")$response, c = samples$c,
+  dic <- dic_cpp(y = attr(object, "fit_args")$response, c = samples$c,
                  a = samples$A, theta = samples$Theta,
-                 n = attr(object, "spifa_args")$nobs,
-                 q = attr(object, "spifa_args")$nitems,
-                 m = attr(object, "spifa_args")$nfactors,
-                 L = attr(object, "spifa_args")$constrain_L)
+                 n = attr(object, "fit_args")$nobs,
+                 q = attr(object, "fit_args")$nitems,
+                 m = attr(object, "fit_args")$nfactors,
+                 L = attr(object, "fit_args")$constrain_L)
 
   return(dic)
 }
@@ -354,145 +389,169 @@ dic.spifa <- function (x, ...) {
 #' @title Predict from a Fitted spifa Model
 #'
 #' @description
-#' Predicts the latent factors (and, for spatial models, the underlying
-#' spatial process) at new locations and/or for new predictor values, using
+#' Predicts the latent factors of (spatial) item factor analysis
+#' for new subjects/locations and/or for new predictor values, using
 #' the posterior samples from a fitted \code{\link{spifa}} model.
 #'
 #' @details
 #' If the fitted model has no spatial or predictor structure (\code{eifa} or
-#' \code{cifa}), or if neither \code{newcoords} nor \code{newdata} is
-#' supplied for a model that has one, there is nothing to predict beyond the
-#' posterior means of the latent abilities already available from the fitted
-#' samples, and the function currently returns early. Otherwise, prediction
-#' for the new locations and/or predictor values is delegated to the
-#' \code{C++} sampler.
+#' \code{cifa}), or if \code{newdata} is not supplied for a model that has
+#' one, there is nothing to predict beyond the latent abilities' own
+#' posterior samples already available from the fit, so those are returned
+#' directly (subject to \code{burnin}/\code{thin}) instead of calling the
+#' \code{C++} sampler. Otherwise, prediction for the new locations and/or
+#' predictor values is delegated to the \code{C++} sampler.
+#'
+#' If the fitted model has predictors (\code{cifa_pred}/\code{spifa_pred}),
+#' \code{newdata} must include those predictor columns, the same as
+#' \code{\link[stats]{predict.lm}} and similar methods require -- this is
+#' an error otherwise. There's no synthesized reference-level fallback for
+#' missing predictors (e.g. an \code{sf}/\code{sfc} object holding only new
+#' locations, with no predictor columns at all): for a factor predictor
+#' under the no-intercept encoding \code{\link{spifa}} uses, an
+#' automatically-filled all-zero row wouldn't correspond to any real
+#' category, so any reference profile -- including all zeros for numeric
+#' predictors -- must be supplied explicitly in \code{newdata}, matching
+#' the original data's format.
 #'
 #' @param object A fitted \code{spifa} object, as returned by
 #' \code{\link{spifa}}.
-#' @param newdata New values of the predictors used on the right-hand side
-#' of \code{formula} when the model was fitted (only needed for models
-#' with predictors).
-#' @param newcoords An \code{sfc}/\code{sf} object of new spatial coordinates
-#' to predict at (only needed for spatial, i.e. \code{spifa}/\code{spifa_pred},
-#' models). Its CRS is used directly, so it need not match the training
-#' data's CRS.
+#' @param newdata New data to predict at, mirroring \code{\link{spifa}}'s
+#' own \code{data} argument: an \code{\link[sf]{sf}}/\code{\link[sf]{sfc}}
+#' object (for spatial, i.e. \code{spifa}/\code{spifa_pred}, models --
+#' its geometry gives the new locations, and its CRS is used directly, so
+#' it need not match the training data's CRS) or a plain data frame (for
+#' \code{cifa_pred}), with columns matching the predictors used on the
+#' right-hand side of \code{formula} when the model was fitted. Its design
+#' matrix is built the same way \code{\link{spifa}} built the training one,
+#' using the same terms and factor levels.
 #' @param burnin Number of initial (post-fitting) iterations to discard
 #' before using the posterior samples for prediction.
 #' @param thin Thinning interval applied to the posterior samples used for
 #' prediction.
-#' @param se.fit Currently unused; reserved for returning prediction
-#' standard errors.
+#' @param joint Logical; for spatial models (\code{spifa}/\code{spifa_pred}),
+#' whether the posterior predictive draws should respect the full predictive
+#' covariance across new locations and factors (\code{TRUE}), or be drawn
+#' marginally/independently per location-factor combination (\code{FALSE},
+#' the default, cheaper). Each draw still propagates posterior parameter
+#' uncertainty (one draw per retained MCMC iteration) either way -- this
+#' only controls whether, within a single draw, the values across new
+#' locations/factors are jointly correlated as the model implies. Marginal
+#' draws are fine for per-location summaries (e.g. means, credible
+#' intervals computed independently per column); set \code{TRUE} when the
+#' samples themselves will be used as input to another model or computation
+#' that depends on their joint structure (e.g. a spatial contrast or
+#' aggregate across new locations). Ignored for \code{cifa_pred}, whose
+#' draws are already jointly correct across factors.
 #' @param ... Further arguments (currently unused).
 #'
-#' @return A list of posterior predictive samples/summaries for the
-#' requested new locations and/or predictor values.
+#' @return A \code{\link[posterior]{draws_array}} of posterior predictive
+#' samples of the latent abilities (\code{theta}) for the requested new
+#' locations and/or predictor values (or, if no prediction was requested,
+#' for the originally observed subjects).
 #'
 #' @author Erick A. Chacón-Montalván
 #'
 #' @examples
 #' \donttest{
+#' library(sf)
 #' data(ipixuna)
-#' parameters <- attr(ipixuna, "parameters")
-#' L_a <- (parameters$discrimination != 0) * 1
-#' nfactors <- ncol(parameters$discrimination)
-#' samples <- spifa(
-#'   items ~ 1, data = ipixuna,
-#'   nfactors = nfactors, niter = 5, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
-#' newcoords <- sf::st_geometry(ipixuna)[1:5]
-#' predict(samples, newcoords = newcoords)
+#'
+#' nitems <- ncol(ipixuna$items)
+#' nfactors <- 3
+#' A <- matrix(1, nitems, nfactors)
+#' A[c(4, 8), 1] <- 0
+#' A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+#' A[c(5, 6), 3] <- 0
+#'
+#' # Spifa model
+#' samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, niter = 5,
+#'   constraints = list(discrimination = A))
+#' # latent abilities for observed locations
+#' predict(samples)
+#' # latent abilities for new locations
+#' newdata <- st_make_grid(ipixuna, n = c(3, 2), what = "centers")
+#' predict(samples, newdata = newdata)
+#'
+#' # Spifa model with predictors
+#' samples_pred <- spifa(items ~ wealth, data = ipixuna, nfactors = nfactors, niter = 5,
+#'   constraints = list(discrimination = A))
+#' newdata_pred <- st_sf(wealth = rnorm(6), geometry = newdata)
+#' predict(samples_pred, newdata = newdata_pred)
 #' }
 #'
 #' @export
-predict.spifa <- function (object, newdata = NULL, newcoords = NULL, burnin = 0,
-                                thin = 1, se.fit = FALSE, ...) {
+predict.spifa <- function (object, newdata = NULL, burnin = 0, thin = 1,
+                                joint = FALSE, ...) {
 
-  # convert to spifa.list
+  fit_args <- attr(object, "fit_args")
+  predict_setup <- attr(object, "predict_setup")
+
+  # Filter to the posterior samples and convert to list
+  idx <- seq(burnin + 1, nrow(object), thin)
+  object <- posterior::subset_draws(object, iteration = idx)
   object <- as.list(object)
 
-  # Information of model inference
-  info <- attr(object, "spifa_args")
-  coordinates <- attr(object, "coordinates")
-
-  # Prediction I: for the observed subjects
-  if (info$model_type %in% c("eifa", "cifa") |
-      (info$model_type == "cifa_pred" & is.null(newdata)) |
-      (info$model_type == "spifa" & is.null(newcoords)) |
-      (info$model_type == "spifa_pred" & is.null(newcoords) & is.null(newdata))) {
-    return("here is only the means of the latent abilities")
+  # Prediction I: for the observed subjects/locations
+  has_newcoords <- inherits(newdata, "sf") || inherits(newdata, "sfc")
+  if (fit_args$model_type %in% c("eifa", "cifa") |
+      (fit_args$model_type == "cifa_pred" & is.null(newdata)) |
+      (fit_args$model_type == "spifa" & !has_newcoords) |
+      (fit_args$model_type == "spifa_pred" & is.null(newdata))) {
+    return(posterior::as_draws_array(object$Theta))
   }
 
-  # Prediction II: for the new subjects or new locations
+  # Prediction II: for the new subjects/locations
+  coordinates <- predict_setup$coordinates
+  pred_terms <- predict_setup$pred_terms
 
-  # Distances between predictive locations
-  if (is.null(newcoords)) {
+  # Construct distances for spifa/spifa_pred
+  if (fit_args$model_type == "cifa_pred") {
+    npred <- nrow(newdata)
     newdist <- matrix(nrow = 0, ncol = 0)
     cross_distances <- matrix(nrow = 0, ncol = 0)
   } else {
-    newcoords <- sf::st_geometry(newcoords)
-    npred1 <- length(newcoords)
-    newdist <- matrix(as.numeric(sf::st_distance(newcoords)), npred1, npred1)
-    cross_distances <- matrix(
-      as.numeric(sf::st_distance(newcoords, coordinates)),
-      npred1, length(coordinates))
-  }
-
-  # New data about predictors
-  if (is.null(newdata)) {
-    npred2 <- NULL
-  } else {
-    npred2 <- nrow(newdata)
-  }
-
-  # Obtain number of subjects or locations to predict
-  if (!is.null(npred2) && exists("npred1")) {
-    if (npred1 == npred2) {
-      npred = npred1
-    } else {
-      stop(sprintf("number of rows of '%s' of '%s' must be the same",
-                   "newcoords", "newdata"))
+    if (!has_newcoords) {
+      stop("newdata must be an sf/sfc object for a spatial model.", call. = FALSE)
     }
-  } else if (exists("npred1")) {
-    npred = npred1
-  } else if (!is.null(npred2)) {
-    npred = npred2
+    newcoords <- sf::st_geometry(newdata)
+    npred <- length(newcoords)
+    newdist <- matrix(as.numeric(sf::st_distance(newcoords)), npred, npred)
+    cross_distances <- matrix(as.numeric(sf::st_distance(newcoords, coordinates)),
+      npred, length(coordinates))
   }
 
-  # Build predictors for the new locations/subjects. If the model has
-  # predictors but newdata was not supplied (e.g. predicting the spatial
-  # component only), fall back to zeros so the predictor contribution is
-  # held at its reference level instead of crashing with mismatched
-  # dimensions.
-  if (!is.null(newdata)) {
-    newpredictors <- newdata
-  } else if (info$model_type %in% c("cifa_pred", "spifa_pred")) {
-    newpredictors <- matrix(0, npred, ncol(info$predictors))
-  } else {
+  # Contruct newpredictors
+  if (fit_args$model_type %in% c("cifa_pred", "spifa_pred") &&
+      !all(all.vars(pred_terms) %in% names(newdata))) {
+    stop("newdata is missing the predictor column(s) required (",
+      paste(all.vars(pred_terms), collapse = ", "), ").", call. = FALSE)
+  } else if (fit_args$model_type == "spifa") {
     newpredictors <- matrix(nrow = npred, ncol = 0)
-  }
-
-  # Information about number of posterior samples to use
-  nsamples <- nrow(object$Z)
-  as_pred_mat <- function (block) {
-    if (is.null(object[[block]])) matrix(nrow = 0, ncol = nsamples) else t(object[[block]])
+  } else {
+    mf_new <- model.frame(pred_terms, newdata, xlev = predict_setup$xlevels)
+    newpredictors <- model.matrix(pred_terms, mf_new)
   }
 
   # List of options to call c++ function to predict
-  pred_list <- list(samples_theta = t(object$Theta),
+  as_pred_mat <- function (block) {
+    if (is.null(object[[block]])) matrix(nrow = 0, ncol = length(idx)) else t(object[[block]])
+  }
+  predict_args <- list(samples_theta = t(object$Theta),
     samples_corr_chol = t(object$Chol), samples_corr = t(object$Corr),
     samples_mgp_sd = as_pred_mat("T"), samples_mgp_phi = as_pred_mat("phi"),
     samples_betas = as_pred_mat("B"),
-    response = info$response, predictors = info$predictors, newpredictors = newpredictors,
-    distances = info$distances, newdist = newdist, cross_distances = cross_distances,
-    nobs = info$nobs, nitems = info$nitems, nfactors = info$nfactors, ngp = info$ngp,
-    npred = npred, niter = nsamples, burnin = burnin, thin = thin,
-    constrain_L = info$constrain_L, constrain_T = info$constrain_T,
-    constrain_V_sd = info$constrain_V_sd,
-    model_type = info$model_type
+    response = fit_args$response, predictors = fit_args$predictors, newpredictors = newpredictors,
+    distances = fit_args$distances, newdist = newdist, cross_distances = cross_distances,
+    nobs = fit_args$nobs, nitems = fit_args$nitems, nfactors = fit_args$nfactors, ngp = fit_args$ngp,
+    npred = npred, niter = length(idx), burnin = 0, thin = 1,
+    constrain_L = fit_args$constrain_L, constrain_T = fit_args$constrain_T,
+    constrain_V_sd = fit_args$constrain_V_sd,
+    model_type = fit_args$model_type, joint = joint
     )
 
-  # Predict calling c++ predict_spifa_cpp
-  prediction <- do.call(predict_spifa_cpp, pred_list)
+  # Predict calling c++ predict_cpp
+  prediction <- do.call(predict_cpp, predict_args)
 
-  return(prediction)
+  return(posterior::as_draws_array(prediction$theta))
 }

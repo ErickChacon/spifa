@@ -24,7 +24,7 @@ further inspection.
 }
 \examples{
 data(ipixuna)
-samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 20, thin = 1)
+samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 20)
 samples
 
 }

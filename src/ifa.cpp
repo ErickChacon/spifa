@@ -414,8 +414,10 @@ Rcpp::List Ifa::sample(
       theta_samples.submat(i*n, 0, arma::size(n, nsave)) /= theta_samples_sd(i);
       // standardize discrimation parameters
       a_samples.submat(i*q, 0, arma::size(q, nsave)) *= theta_samples_sd(i);
-      // standardize betas
-      betas_samples.submat(i*p, 0, arma::size(p, nsave)) /= theta_samples_sd(i);
+      // standardize betas (nothing to do when the model has no predictors)
+      if (p > 0) {
+        betas_samples.submat(i*p, 0, arma::size(p, nsave)) /= theta_samples_sd(i);
+      }
       // standardize gaussian process variance parameter if diagonal
       mgp_sd_samples.rows(find(T_sub.row(0) == i)) /= theta_samples_sd(i);
     }
@@ -468,7 +470,7 @@ Rcpp::List Ifa::predict(arma::mat samples_theta, arma::mat samples_corr_chol,
     arma::mat samples_corr,
     arma::mat samples_mgp_sd, arma::mat samples_mgp_phi, arma::mat samples_betas,
     arma::mat newpredictors, arma::mat newdist, arma::mat cross_distances,
-    int npred, int niter, int burnin, int thin)
+    int npred, int niter, int burnin, int thin, bool joint)
 {
 
   // dimensions
@@ -533,13 +535,13 @@ Rcpp::List Ifa::predict(arma::mat samples_theta, arma::mat samples_corr_chol,
       // compute prediction mean and variance
       arma::vec pred_mean = new_mean + L_inv_S21.t() * L_inv_res;
       arma::mat pred_var = new_mgp_Sigma - L_inv_S21.t() * L_inv_S21;
-      // sample prediction
-      if (true) {
-        prediction.col(isave) =
-          pred_mean + sqrt(pred_var.diag()) % arma::randn(npred * m);
-      } else {
+      // sample prediction: joint or marginal draws
+      if (joint) {
         prediction.col(isave) =
           pred_mean + arma::chol(pred_var, "lower") * arma::randn(npred * m);
+      } else {
+        prediction.col(isave) =
+          pred_mean + sqrt(pred_var.diag()) % arma::randn(npred * m);
       }
       isave++;
     }

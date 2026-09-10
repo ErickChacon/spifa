@@ -4,28 +4,21 @@
 \alias{predict.spifa}
 \title{Predict from a Fitted spifa Model}
 \usage{
-\method{predict}{spifa}(
-  object,
-  newdata = NULL,
-  newcoords = NULL,
-  burnin = 0,
-  thin = 1,
-  se.fit = FALSE,
-  ...
-)
+\method{predict}{spifa}(object, newdata = NULL, burnin = 0, thin = 1, joint = FALSE, ...)
 }
 \arguments{
 \item{object}{A fitted \code{spifa} object, as returned by
 \code{\link{spifa}}.}
 
-\item{newdata}{New values of the predictors used on the right-hand side
-of \code{formula} when the model was fitted (only needed for models
-with predictors).}
-
-\item{newcoords}{An \code{sfc}/\code{sf} object of new spatial coordinates
-to predict at (only needed for spatial, i.e. \code{spifa}/\code{spifa_pred},
-models). Its CRS is used directly, so it need not match the training
-data's CRS.}
+\item{newdata}{New data to predict at, mirroring \code{\link{spifa}}'s
+own \code{data} argument: an \code{\link[sf]{sf}}/\code{\link[sf]{sfc}}
+object (for spatial, i.e. \code{spifa}/\code{spifa_pred}, models --
+its geometry gives the new locations, and its CRS is used directly, so
+it need not match the training data's CRS) or a plain data frame (for
+\code{cifa_pred}), with columns matching the predictors used on the
+right-hand side of \code{formula} when the model was fitted. Its design
+matrix is built the same way \code{\link{spifa}} built the training one,
+using the same terms and factor levels.}
 
 \item{burnin}{Number of initial (post-fitting) iterations to discard
 before using the posterior samples for prediction.}
@@ -33,41 +26,81 @@ before using the posterior samples for prediction.}
 \item{thin}{Thinning interval applied to the posterior samples used for
 prediction.}
 
-\item{se.fit}{Currently unused; reserved for returning prediction
-standard errors.}
+\item{joint}{Logical; for spatial models (\code{spifa}/\code{spifa_pred}),
+whether the posterior predictive draws should respect the full predictive
+covariance across new locations and factors (\code{TRUE}), or be drawn
+marginally/independently per location-factor combination (\code{FALSE},
+the default, cheaper). Each draw still propagates posterior parameter
+uncertainty (one draw per retained MCMC iteration) either way -- this
+only controls whether, within a single draw, the values across new
+locations/factors are jointly correlated as the model implies. Marginal
+draws are fine for per-location summaries (e.g. means, credible
+intervals computed independently per column); set \code{TRUE} when the
+samples themselves will be used as input to another model or computation
+that depends on their joint structure (e.g. a spatial contrast or
+aggregate across new locations). Ignored for \code{cifa_pred}, whose
+draws are already jointly correct across factors.}
 
 \item{...}{Further arguments (currently unused).}
 }
 \value{
-A list of posterior predictive samples/summaries for the
-requested new locations and/or predictor values.
+A \code{\link[posterior]{draws_array}} of posterior predictive
+samples of the latent abilities (\code{theta}) for the requested new
+locations and/or predictor values (or, if no prediction was requested,
+for the originally observed subjects).
 }
 \description{
-Predicts the latent factors (and, for spatial models, the underlying
-spatial process) at new locations and/or for new predictor values, using
+Predicts the latent factors of (spatial) item factor analysis
+for new subjects/locations and/or for new predictor values, using
 the posterior samples from a fitted \code{\link{spifa}} model.
 }
 \details{
 If the fitted model has no spatial or predictor structure (\code{eifa} or
-\code{cifa}), or if neither \code{newcoords} nor \code{newdata} is
-supplied for a model that has one, there is nothing to predict beyond the
-posterior means of the latent abilities already available from the fitted
-samples, and the function currently returns early. Otherwise, prediction
-for the new locations and/or predictor values is delegated to the
-\code{C++} sampler.
+\code{cifa}), or if \code{newdata} is not supplied for a model that has
+one, there is nothing to predict beyond the latent abilities' own
+posterior samples already available from the fit, so those are returned
+directly (subject to \code{burnin}/\code{thin}) instead of calling the
+\code{C++} sampler. Otherwise, prediction for the new locations and/or
+predictor values is delegated to the \code{C++} sampler.
+
+If the fitted model has predictors (\code{cifa_pred}/\code{spifa_pred}),
+\code{newdata} must include those predictor columns, the same as
+\code{\link[stats]{predict.lm}} and similar methods require -- this is
+an error otherwise. There's no synthesized reference-level fallback for
+missing predictors (e.g. an \code{sf}/\code{sfc} object holding only new
+locations, with no predictor columns at all): for a factor predictor
+under the no-intercept encoding \code{\link{spifa}} uses, an
+automatically-filled all-zero row wouldn't correspond to any real
+category, so any reference profile -- including all zeros for numeric
+predictors -- must be supplied explicitly in \code{newdata}, matching
+the original data's format.
 }
 \examples{
 \donttest{
+library(sf)
 data(ipixuna)
-parameters <- attr(ipixuna, "parameters")
-L_a <- (parameters$discrimination != 0) * 1
-nfactors <- ncol(parameters$discrimination)
-samples <- spifa(
-  items ~ 1, data = ipixuna,
-  nfactors = nfactors, niter = 5, thin = 1, standardize = FALSE,
-  constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
-newcoords <- sf::st_geometry(ipixuna)[1:5]
-predict(samples, newcoords = newcoords)
+
+nitems <- ncol(ipixuna$items)
+nfactors <- 3
+A <- matrix(1, nitems, nfactors)
+A[c(4, 8), 1] <- 0
+A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+A[c(5, 6), 3] <- 0
+
+# Spifa model
+samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, niter = 5,
+  constraints = list(discrimination = A))
+# latent abilities for observed locations
+predict(samples)
+# latent abilities for new locations
+newdata <- st_make_grid(ipixuna, n = c(3, 2), what = "centers")
+predict(samples, newdata = newdata)
+
+# Spifa model with predictors
+samples_pred <- spifa(items ~ wealth, data = ipixuna, nfactors = nfactors, niter = 5,
+  constraints = list(discrimination = A))
+newdata_pred <- st_sf(wealth = rnorm(6), geometry = newdata)
+predict(samples_pred, newdata = newdata_pred)
 }
 
 }

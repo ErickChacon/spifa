@@ -50,7 +50,7 @@ Rcpp::List spifa_cpp(
 }
 
 // [[Rcpp::export]]
-Rcpp::List predict_spifa_cpp(arma::mat samples_theta, arma::mat samples_corr_chol,
+Rcpp::List predict_cpp(arma::mat samples_theta, arma::mat samples_corr_chol,
     arma::mat samples_corr, arma::mat samples_mgp_sd, arma::mat samples_mgp_phi,
     arma::mat samples_betas,
     Rcpp::NumericVector response, arma::mat predictors, arma::mat newpredictors,
@@ -58,7 +58,7 @@ Rcpp::List predict_spifa_cpp(arma::mat samples_theta, arma::mat samples_corr_cho
     int nobs, int nitems, int nfactors, int ngp, int npred,
     int niter, int burnin, int thin,
     arma::mat constrain_L, arma::mat constrain_T, arma::vec constrain_V_sd,
-    std::string model_type
+    std::string model_type, bool joint
     ) {
 
   Ifa model(response, predictors, distances,
@@ -70,7 +70,7 @@ Rcpp::List predict_spifa_cpp(arma::mat samples_theta, arma::mat samples_corr_cho
       samples_mgp_sd,
       samples_mgp_phi, samples_betas,
       newpredictors, newdist, cross_distances,
-      npred, niter, burnin, thin);
+      npred, niter, burnin, thin, joint);
 
   // Rcpp::List output = Rcpp::List::create(
   //     Rcpp::Named("beta") = 1,
