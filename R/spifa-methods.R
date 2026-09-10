@@ -105,6 +105,11 @@ print.spifa <- function (x, ...) {
 as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
 
   fit_args <- attr(x, "fit_args")
+
+  niter <- posterior::niterations(x)
+  x <- posterior::subset_draws(x, iteration = (burnin + 1):niter)
+  x <- posterior::thin_draws(x, thin)
+
   varnames <- dimnames(x)[[3]]
   if (!is.null(select)) {
     idx <- .spifa_var_blocks(varnames) %in% select
@@ -115,7 +120,6 @@ as_tibble.spifa <- function (x, burnin = 0, thin = 1, select = NULL, ...) {
   mat <- matrix(x[, 1, ], nrow = niter, ncol = length(varnames),
                 dimnames = list(NULL, varnames))
   df <- tibble::as_tibble(mat)
-  df <- df[seq(burnin + 1, niter, thin), ]
   attr(df, "fit_args") <- fit_args
   return(df)
 }
@@ -304,8 +308,9 @@ gather.spifa <- function (samples_wide, each = NULL,
 #' @export
 summary.spifa <- function (object, burnin = 0, thin = 1, select = NULL, ...) {
 
-  niter <- dim(object)[1]
-  object <- object[seq(burnin + 1, niter, thin), , , drop = FALSE]
+  niter <- posterior::niterations(object)
+  object <- posterior::subset_draws(object, iteration = (burnin + 1):niter)
+  object <- posterior::thin_draws(object, thin)
   if (!is.null(select)) {
     varnames <- dimnames(object)[[3]]
     idx <- .spifa_var_blocks(varnames) %in% select
@@ -341,10 +346,15 @@ dic <- function (x, ...) {
 #' same data.
 #'
 #' @param x A fitted \code{spifa} object, as returned by \code{\link{spifa}}.
+#' @param burnin Number of initial iterations to discard.
+#' @param thin Thinning interval applied after discarding burn-in.
 #' @param ... Further arguments passed to methods (currently unused).
 #'
-#' @return A list with elements \code{average_of_deviance},
-#' \code{n_effec_params} (effective number of parameters), and \code{dic}.
+#' @return A one-row \code{\link[tibble]{tibble}} with columns
+#' \code{mean_deviance} (posterior mean of the deviance), \code{p_eff}
+#' (effective number of parameters), and \code{dic} -- naming follows
+#' \pkg{INLA}'s \code{$dic} output (\code{mean.deviance}/\code{p.eff}/
+#' \code{dic}).
 #'
 #' @author Erick A. Chacón-Montalván
 #'
@@ -369,21 +379,20 @@ dic <- function (x, ...) {
 #' }
 #'
 #' @export
-dic.spifa <- function (x, ...) {
+dic.spifa <- function (x, burnin = 0, thin = 1, ...) {
 
-  object <- x
-  # convert to spifa.list
-  samples <- as.list(object)
+  fit_args <- attr(x, "fit_args")
+  niter <- posterior::niterations(x)
+  x <- posterior::subset_draws(x, iteration = (burnin + 1):niter)
+  x <- posterior::thin_draws(x, thin)
+  samples <- as.list(x)
 
-  # DIC calling c++ dic_cpp
-  dic <- dic_cpp(y = attr(object, "fit_args")$response, c = samples$c,
-                 a = samples$A, theta = samples$Theta,
-                 n = attr(object, "fit_args")$nobs,
-                 q = attr(object, "fit_args")$nitems,
-                 m = attr(object, "fit_args")$nfactors,
-                 L = attr(object, "fit_args")$constrain_L)
+  output <- dic_cpp(y = fit_args$response, c = samples$c,
+    a = samples$A, theta = samples$Theta,
+    n = fit_args$nobs, q = fit_args$nitems, m = fit_args$nfactors,
+    L = fit_args$constrain_L)
 
-  return(dic)
+  tibble::as_tibble(output)
 }
 
 #' @title Predict from a Fitted spifa Model
@@ -488,8 +497,9 @@ predict.spifa <- function (object, newdata = NULL, burnin = 0, thin = 1,
   predict_setup <- attr(object, "predict_setup")
 
   # Filter to the posterior samples and convert to list
-  idx <- seq(burnin + 1, nrow(object), thin)
-  object <- posterior::subset_draws(object, iteration = idx)
+  niter <- posterior::niterations(object)
+  object <- posterior::subset_draws(object, iteration = (burnin + 1):niter)
+  object <- posterior::thin_draws(object, thin)
   object <- as.list(object)
 
   # Prediction I: for the observed subjects/locations
@@ -534,8 +544,9 @@ predict.spifa <- function (object, newdata = NULL, burnin = 0, thin = 1,
   }
 
   # List of options to call c++ function to predict
+  nsamples <- nrow(object$Theta)
   as_pred_mat <- function (block) {
-    if (is.null(object[[block]])) matrix(nrow = 0, ncol = length(idx)) else t(object[[block]])
+    if (is.null(object[[block]])) matrix(nrow = 0, ncol = nsamples) else t(object[[block]])
   }
   predict_args <- list(samples_theta = t(object$Theta),
     samples_corr_chol = t(object$Chol), samples_corr = t(object$Corr),
@@ -544,14 +555,14 @@ predict.spifa <- function (object, newdata = NULL, burnin = 0, thin = 1,
     response = fit_args$response, predictors = fit_args$predictors, newpredictors = newpredictors,
     distances = fit_args$distances, newdist = newdist, cross_distances = cross_distances,
     nobs = fit_args$nobs, nitems = fit_args$nitems, nfactors = fit_args$nfactors, ngp = fit_args$ngp,
-    npred = npred, niter = length(idx), burnin = 0, thin = 1,
+    npred = npred, niter = nsamples, burnin = 0, thin = 1,
     constrain_L = fit_args$constrain_L, constrain_T = fit_args$constrain_T,
     constrain_V_sd = fit_args$constrain_V_sd,
     model_type = fit_args$model_type, joint = joint
     )
 
   # Predict calling c++ predict_cpp
-  prediction <- do.call(predict_cpp, predict_args)
+  samples <- do.call(predict_cpp, predict_args)
 
-  return(posterior::as_draws_array(prediction$theta))
+  return(posterior::as_draws_array(samples$theta))
 }

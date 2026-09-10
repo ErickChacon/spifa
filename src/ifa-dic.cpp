@@ -45,20 +45,20 @@ Rcpp::List dic_cpp(arma::vec y, arma::mat c, arma::mat a, arma::mat theta,
   double deviance_of_average = deviance(y, c_mean, a_mean, theta_mean, L, n, q, m);
 
   // posterior average of the deviance
-  double average_of_deviance = 0;
+  double mean_deviance = 0;
   for (int i = 0; i < nsamples; ++i) {
-    average_of_deviance += deviance(y, c.col(i), a.col(i), theta.col(i), L, n, q, m);
+    mean_deviance += deviance(y, c.col(i), a.col(i), theta.col(i), L, n, q, m);
   }
-  average_of_deviance /= nsamples;
+  mean_deviance /= nsamples;
 
   // effective number of parameters and dic
-  double n_effec_params = average_of_deviance - deviance_of_average;
-  double dic = average_of_deviance + n_effec_params;
+  double p_eff = mean_deviance - deviance_of_average;
+  double dic = mean_deviance + p_eff;
 
   // output list
   Rcpp::List output = Rcpp::List::create(
-      Rcpp::Named("average_of_deviance") = average_of_deviance,
-      Rcpp::Named("n_effec_params") = n_effec_params,
+      Rcpp::Named("mean_deviance") = mean_deviance,
+      Rcpp::Named("p_eff") = p_eff,
       Rcpp::Named("dic") = dic
       );
 

@@ -147,11 +147,16 @@ test_that("dic.spifa() computes deviance information criterion components", {
   ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
 
   samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
-    niter = 5, thin = 1,
-    constraints = list(discrimination = A))
+    niter = 10, thin = 1, constraints = list(discrimination = A))
 
   d <- dic(samples)
-  expect_true(all(c("average_of_deviance", "n_effec_params", "dic") %in% names(d)))
+  expect_s3_class(d, "tbl_df")
+  expect_equal(nrow(d), 1)
+  expect_true(all(c("mean_deviance", "p_eff", "dic") %in% names(d)))
+
+  # burnin/thin narrow which posterior draws are used
+  d_burnin <- dic(samples, burnin = 5)
+  expect_false(isTRUE(all.equal(d, d_burnin)))
 })
 
 test_that("summary.spifa() returns posterior summaries with burnin/thin/select", {
@@ -217,6 +222,28 @@ test_that("as.list.spifa() splits samples back into block-shaped matrices", {
   samples_list <- as.list(samples)
   expect_equal(nrow(samples_list$c), 5)
   expect_equal(ncol(samples_list$c), ncol(ipixuna_flat$items))
+})
+
+test_that("burnin >= niter gives a clear error, not a raw seq() crash", {
+  data(ipixuna, package = "spifa")
+  nitems <- ncol(ipixuna$items)
+  nfactors <- 3
+  A <- matrix(1, nitems, nfactors)
+  A[c(3, 9), 1] <- 0
+  A[c(1, 5, 8), 2] <- 0
+  A[c(2, 6, 7, 10), 3] <- 0
+  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
+
+  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
+    niter = 5, thin = 1, constraints = list(discrimination = A))
+
+  # regression test: burnin >= niter used to crash with a raw, confusing
+  # "wrong sign in 'by' argument" error from seq(burnin+1, niter, thin);
+  # now it hits posterior::subset_draws()'s own clear validation instead
+  expect_error(predict(samples, burnin = 5), "iterations")
+  expect_error(summary(samples, burnin = 5), "iterations")
+  expect_error(as_tibble(samples, burnin = 5), "iterations")
+  expect_error(dic(samples, burnin = 5), "iterations")
 })
 
 test_that("print.spifa() prints without error", {

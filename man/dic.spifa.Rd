@@ -4,16 +4,23 @@
 \alias{dic.spifa}
 \title{Deviance Information Criterion for a spifa Model}
 \usage{
-\method{dic}{spifa}(x, ...)
+\method{dic}{spifa}(x, burnin = 0, thin = 1, ...)
 }
 \arguments{
 \item{x}{A fitted \code{spifa} object, as returned by \code{\link{spifa}}.}
 
+\item{burnin}{Number of initial iterations to discard.}
+
+\item{thin}{Thinning interval applied after discarding burn-in.}
+
 \item{...}{Further arguments passed to methods (currently unused).}
 }
 \value{
-A list with elements \code{average_of_deviance},
-\code{n_effec_params} (effective number of parameters), and \code{dic}.
+A one-row \code{\link[tibble]{tibble}} with columns
+\code{mean_deviance} (posterior mean of the deviance), \code{p_eff}
+(effective number of parameters), and \code{dic} -- naming follows
+\pkg{INLA}'s \code{$dic} output (\code{mean.deviance}/\code{p.eff}/
+\code{dic}).
 }
 \description{
 Computes the Deviance Information Criterion (DIC) for a fitted
