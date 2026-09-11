@@ -3,7 +3,7 @@
 \docType{package}
 \name{spifa-package}
 \alias{spifa-package}
-\title{spifa: Spatial (Geostatistical) Item Factor Analysis}
+\title{spifa: Bayesian Spatial Item Factor Analysis}
 \description{
 Fits item factor analysis models for binary responses using full Bayesian
 inference via Gibbs sampling and auxiliary variables with a probit link

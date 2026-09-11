@@ -59,16 +59,34 @@ dic.spifa <- function (x, burnin = 0, thin = 1, ...) {
 
   fit_args <- attr(x, "fit_args")
   niter <- posterior::niterations(x)
-  x <- posterior::subset_draws(x, iteration = (burnin + 1):niter)
-  x <- posterior::thin_draws(x, thin)
-  samples <- as.list(x)
+  x <- posterior::subset_draws(x, iteration = (burnin + 1):niter) |>
+      posterior::thin_draws(thin)
 
-  output <- dic_cpp(y = fit_args$response, c = samples$c,
-    a = samples$A, theta = samples$Theta,
-    n = fit_args$nobs, q = fit_args$nitems, m = fit_args$nfactors,
-    L = fit_args$constrain_L)
+  output <- dic_cpp(
+    y = fit_args$response,
+    c = as_matrix(x, "c"),
+    a = as_matrix(x, "A"),
+    theta = as_matrix(x, "Theta"),
+    n = fit_args$nobs,
+    q = fit_args$nitems,
+    m = fit_args$nfactors,
+    L = fit_args$constrain_L
+  )
 
   tibble::as_tibble(output)
+}
+
+as_matrix <- function (x, param) {
+  posterior::as_draws_matrix(posterior::subset_draws(x, variable = param))
+}
+
+as_matrix_opt <- function (x, param) {
+  if (param %in% posterior::variables(x, with_indices = FALSE)) {
+    as_matrix(x, param)
+  } else {
+    nsamples <- posterior::ndraws(x)
+    matrix(nrow = nsamples, ncol = 0)
+  }
 }
 
 #' @title Predict from a Fitted spifa Model
@@ -172,11 +190,10 @@ predict.spifa <- function (object, newdata = NULL, burnin = 0, thin = 1,
   fit_args <- attr(object, "fit_args")
   predict_setup <- attr(object, "predict_setup")
 
-  # Filter to the posterior samples and convert to list
+  # Filter to the posterior samples
   niter <- posterior::niterations(object)
-  object <- posterior::subset_draws(object, iteration = (burnin + 1):niter)
-  object <- posterior::thin_draws(object, thin)
-  object <- as.list(object)
+  object <- posterior::subset_draws(object, iteration = (burnin + 1):niter) |>
+    posterior::thin_draws(thin)
 
   # Prediction I: for the observed subjects/locations
   has_newcoords <- inherits(newdata, "sf") || inherits(newdata, "sfc")
@@ -184,7 +201,7 @@ predict.spifa <- function (object, newdata = NULL, burnin = 0, thin = 1,
       (fit_args$model_type == "cifa_pred" & is.null(newdata)) |
       (fit_args$model_type == "spifa" & !has_newcoords) |
       (fit_args$model_type == "spifa_pred" & is.null(newdata))) {
-    return(posterior::as_draws_array(object$Theta))
+    return(posterior::as_draws_array(as_matrix(object, "Theta")))
   }
 
   # Prediction II: for the new subjects/locations
@@ -220,22 +237,34 @@ predict.spifa <- function (object, newdata = NULL, burnin = 0, thin = 1,
   }
 
   # List of options to call c++ function to predict
-  nsamples <- nrow(object$Theta)
-  as_pred_mat <- function (block) {
-    if (is.null(object[[block]])) matrix(nrow = 0, ncol = nsamples) else t(object[[block]])
-  }
-  predict_args <- list(samples_theta = t(object$Theta),
-    samples_corr_chol = t(object$Chol), samples_corr = t(object$Corr),
-    samples_mgp_sd = as_pred_mat("T"), samples_mgp_phi = as_pred_mat("phi"),
-    samples_betas = as_pred_mat("B"),
-    response = fit_args$response, predictors = fit_args$predictors, newpredictors = newpredictors,
-    distances = fit_args$distances, newdist = newdist, cross_distances = cross_distances,
-    nobs = fit_args$nobs, nitems = fit_args$nitems, nfactors = fit_args$nfactors, ngp = fit_args$ngp,
-    npred = npred, niter = nsamples, burnin = 0, thin = 1,
-    constrain_L = fit_args$constrain_L, constrain_T = fit_args$constrain_T,
+  nsamples <- posterior::ndraws(object)
+  predict_args <- list(
+    samples_theta = t(as_matrix(object, "Theta")),
+    samples_corr_chol = t(as_matrix(object, "Chol")),
+    samples_corr = t(as_matrix(object, "Corr")),
+    samples_mgp_sd = t(as_matrix_opt(object, "T")),
+    samples_mgp_phi = t(as_matrix_opt(object, "phi")),
+    samples_betas = t(as_matrix_opt(object, "B")),
+    response = fit_args$response,
+    predictors = fit_args$predictors,
+    newpredictors = newpredictors,
+    distances = fit_args$distances,
+    newdist = newdist,
+    cross_distances = cross_distances,
+    nobs = fit_args$nobs,
+    nitems = fit_args$nitems,
+    nfactors = fit_args$nfactors,
+    ngp = fit_args$ngp,
+    npred = npred,
+    niter = nsamples,
+    burnin = 0,
+    thin = 1,
+    constrain_L = fit_args$constrain_L,
+    constrain_T = fit_args$constrain_T,
     constrain_V_sd = fit_args$constrain_V_sd,
-    model_type = fit_args$model_type, joint = joint
-    )
+    model_type = fit_args$model_type,
+    joint = joint
+  )
 
   # Predict calling c++ predict_cpp
   samples <- do.call(predict_cpp, predict_args)

@@ -372,7 +372,8 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   # Add attributes
   attr(samples, "fit_args") <- fit_args
   attr(samples, "predict_setup") <- list(coordinates = coordinates,
-    pred_terms = pred_terms, xlevels = get_xlevels(pred_terms, mf))
+    pred_terms = pred_terms, xlevels = get_xlevels(pred_terms, mf),
+    formula = formula)
 
   class(samples) <- unique(c("spifa", class(samples)))
   return(samples)

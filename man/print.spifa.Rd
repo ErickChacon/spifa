@@ -16,11 +16,12 @@
 Invisibly returns \code{x}.
 }
 \description{
-Concise summary of a fitted \code{spifa} object (the output of
-\code{\link{spifa}}): model type, data dimensions, MCMC settings, and the
-stored parameter blocks — rather than dumping every raw MCMC sample to the
-console. Convert to a tidy tibble with \code{\link{as_tibble.spifa}} for
-further inspection.
+Prints a fitted \code{spifa} object (the output of \code{\link{spifa}}):
+model type, formula, data dimensions, MCMC settings, and a posterior
+summary table (via \code{\link{summary.spifa}}) -- following the
+convention of \pkg{rstan}/\pkg{rstanarm}/\pkg{brms}/\pkg{R2jags}, which
+all show actual parameter estimates by default rather than just fit
+metadata.
 }
 \examples{
 data(ipixuna)

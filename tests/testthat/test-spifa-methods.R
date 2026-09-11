@@ -26,6 +26,10 @@ test_that("summary.spifa() returns posterior summaries with burnin/thin/select",
   smry_burnin <- summary(samples, burnin = 5, select = "c")
   c_block <- as.list(samples)$c
   expect_equal(smry_burnin$mean, unname(colMeans(c_block[6:10, , drop = FALSE])))
+
+  # a select naming a block absent from this fit (ngp = 0, so no "T") is an
+  # error, not a silent zero-row result
+  expect_error(summary(samples, select = "T"), "missing")
 })
 
 test_that("as_tibble.spifa() converts to a wide tibble with burnin/thin/select", {
@@ -90,10 +94,32 @@ test_that("summary()/as_tibble(): burnin >= niter gives a clear error, not a raw
   expect_error(as_tibble(samples, burnin = 5), "iterations")
 })
 
-test_that("print.spifa() prints without error", {
+test_that("print.spifa() shows formula, dimensions, and a posterior summary table", {
   data(ipixuna, package = "spifa")
   samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0,
     niter = 5, thin = 1)
 
-  expect_output(print(samples))
+  out <- capture.output(print(samples))
+  out1 <- paste(out, collapse = "\n")
+  expect_match(out1, "Formula: items ~ 1", fixed = TRUE)
+  expect_match(out1, "100 respondents, 10 items, 3 latent factors", fixed = TRUE)
+  expect_match(out1, "c\\[1\\]")
+  # Theta/Z/Chol are excluded from the default table (large and/or
+  # not directly interpretable)
+  expect_no_match(out1, "Theta\\[")
+  expect_no_match(out1, "Z\\[")
+  expect_no_match(out1, "Chol\\[")
+
+  # summary table is split into item model parameters (c, A) and factor
+  # model parameters (B, T, phi, Corr), mirroring brms' grouped summaries
+  expect_match(out1, "Item model parameters:", fixed = TRUE)
+  expect_match(out1, "Factor model parameters:", fixed = TRUE)
+  expect_match(out1, "Corr\\[2,1\\]")
+  expect_true(which(out == "Factor model parameters:") >
+    which(grepl("^A\\[", out))[1])
+
+  # execute = FALSE: no posterior samples to summarise, shouldn't error
+  samples_unexecuted <- spifa(items ~ 1, data = ipixuna, nfactors = 3,
+    niter = 5, execute = FALSE)
+  expect_output(print(samples_unexecuted), "not executed")
 })

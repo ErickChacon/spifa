@@ -1,3 +1,79 @@
+#' @title Gather Parameters into a Long Format Tibble
+#'
+#' @description
+#' Reshapes a wide samples tibble (one column per parameter, as produced by
+#' \code{\link{as_tibble.spifa}}) into long format (one row per
+#' iteration/parameter pair), which is the shape expected by the
+#' \code{\link{gg_trace}}/\code{\link{gg_density}} family of plotting
+#' helpers.
+#'
+#' @param samples_wide A wide samples tibble, e.g. from
+#' \code{\link{as_tibble.spifa}}.
+#' @param each If not \code{NULL}, the number of columns that make up each
+#' group of parameters (e.g. the number of items), used to additionally
+#' split the gathered \code{Parameters} column into \code{group}/
+#' \code{Parameter} columns.
+#' @param keys Names to use for the group/parameter columns when \code{each}
+#' is supplied.
+#'
+#' @return A long-format \code{\link[tibble]{tibble}} with columns
+#' \code{iteration}, \code{Parameters}, and \code{Value} (plus \code{group}/
+#' the second \code{keys} element when \code{each} is supplied).
+#'
+#' @author Erick A. Chacón-Montalván
+#'
+#' @examples
+#' \donttest{
+#' data(ipixuna)
+#' nitems <- ncol(ipixuna$items)
+#' nfactors <- 3
+#'
+#' # discrimination constraint: start with every item free to load on every
+#' # factor, then restrict a few items per factor based on what each item is
+#' # meant to measure (0 = no relationship, 1 = free parameter to estimate)
+#' A <- matrix(1, nitems, nfactors)
+#' A[c(4, 8), 1] <- 0
+#' A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+#' A[c(5, 6), 3] <- 0
+#' samples <- spifa(
+#'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+#'   niter = 20, standardize = FALSE,
+#'   constraints = list(discrimination = A))
+#' wide <- as_tibble(samples, select = "c")
+#' long <- gather.spifa(wide)
+#' long
+#' }
+#'
+#' @export
+gather.spifa <- function (samples_wide, each = NULL,
+                           keys = c("group", "Parameter")) {
+
+  # Convert to long format
+  samples_long <- samples_wide |>
+    tibble::as_tibble() |>
+    dplyr::mutate(iteration = 1:dplyr::n()) |>
+    tidyr::gather(Parameters, Value, -iteration, factor_key = TRUE)
+
+  if (!is.null(each)) {
+
+    # Auxiliary variables to group
+    groups <- paste0(keys[1], rep(1:each, ncol(samples_wide)/each))
+    groups <- factor(groups, unique(groups))
+    var <- paste0(keys[2], rep(1:(ncol(samples_wide)/each), each = each))
+    names(groups) <- levels(samples_long$Parameters)
+    names(var) <- levels(samples_long$Parameters)
+
+    # Group parameters
+    samples_long <- samples_long |>
+      dplyr::mutate(groups = groups[Parameters], var = var[Parameters]) |>
+    dplyr::select(-Parameters) |>
+    tidyr::spread(var, Value)
+
+  }
+
+  return(samples_long)
+}
+
 #' @title Traceplot of Samples
 #'
 #' @description

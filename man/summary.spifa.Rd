@@ -15,7 +15,8 @@
 \item{thin}{Thinning interval applied after discarding burn-in.}
 
 \item{select}{Character vector of parameter blocks to summarise (defaults
-to all of them).}
+to all of them). An error if any requested block does not exist in the
+fitted model (e.g. \code{"T"} for a model with no spatial process).}
 
 \item{...}{Further arguments passed to methods (currently unused).}
 }
@@ -26,9 +27,11 @@ A \code{\link[tibble]{tibble}} with one row per parameter; see
 \description{
 Computes posterior summary statistics for every parameter in a fitted
 \code{spifa} object, via \code{\link[posterior]{summarise_draws}}: mean,
-median, sd, mad, the 2.5\%/10\%/50\%/90\%/97.5\% quantiles, and effective
-sample size (bulk and tail). \code{rhat} is not included since
-\code{\link{spifa}} only ever fits a single chain.
+median, sd, mad, the 2.5\%/10\%/50\%/90\%/97.5\% quantiles, effective
+sample size (bulk and tail), and \code{rhat}. \code{rhat} is computed via
+split-chain R-hat (Vehtari et al. 2021), which splits each chain in half
+and compares the halves -- so it remains a meaningful convergence
+diagnostic even though \code{\link{spifa}} only ever fits a single chain.
 }
 \examples{
 \donttest{
