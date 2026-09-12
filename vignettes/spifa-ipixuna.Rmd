@@ -76,7 +76,7 @@ We restrict the discrimination matrix to the structure used to simulate the
 data, and let the three latent factors follow independent Gaussian
 processes (`W = diag(3)`) over the household coordinates. `niter` is kept
 small here so the vignette builds quickly; in practice use a few thousand
-iterations and check convergence (see `?gg_trace`).
+iterations and check convergence (see `?plot_trace`).
 
 ```{r}
 L_a <- (parameters$discrimination != 0) * 1
@@ -107,25 +107,20 @@ summary(samples, burnin = 100, select = "c")
 Traceplots of the easiness (`c`) and discrimination (`a`) parameters:
 
 ```{r, fig.height = 6}
-as_tibble(samples, select = "c") %>%
-  gg_trace(alpha = 0.6)
+plot_trace(samples, select = "c")
 
-as_tibble(samples, select = "A") %>%
-  gg_trace(alpha = 0.6)
+plot_trace(samples, select = "A")
 ```
 
 Traceplots of the residual correlation and of the Gaussian process
 hyperparameters (loading matrix `T` and range `phi`):
 
 ```{r, fig.height = 6}
-as_tibble(samples, select = "Corr") %>%
-  gg_trace(alpha = 0.6)
+plot_trace(samples, select = "Corr")
 
-as_tibble(samples, select = "T") %>%
-  gg_trace(alpha = 0.6)
+plot_trace(samples, select = "T")
 
-as_tibble(samples, select = "phi") %>%
-  gg_trace(alpha = 0.6)
+plot_trace(samples, select = "phi")
 ```
 
 Credible intervals for the discrimination parameters, against the true

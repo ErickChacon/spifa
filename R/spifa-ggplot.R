@@ -1,3 +1,131 @@
+# remove restricted discrimination parameters
+drop_restricted <- function (x) {
+
+  fit_args <- attr(x, "fit_args")
+  predict_setup <- attr(x, "predict_setup")
+
+  index <- which(fit_args$constrain_L == 0, arr.ind = TRUE)
+  a_restricted <- paste0("A[", index[, 1], ",", index[, 2], "]")
+  a_unrestricted <- setdiff(posterior::variables(x), a_restricted)
+  x <- posterior::subset_draws(x, variable = a_unrestricted)
+
+  attr(x, "fit_args") <- fit_args
+  attr(x, "predict_setup") <- predict_setup
+  return(x)
+}
+
+theme_trace <- function (legend = "none") {
+  theme_minimal() +
+    theme(panel.border = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_line(linetype = "dashed"),
+          axis.line = element_line(),
+          strip.background = element_blank(),
+          strip.text.y = element_text(angle = 0),
+          legend.position = legend)
+}
+
+#' @title Traceplot of Samples
+#'
+#' @description
+#' Draws MCMC traceplots (iteration vs. value) directly from a fitted
+#' \code{spifa} model, in one of two formats: \code{"facet"} (one panel per
+#' parameter, with its own free y-scale, so a slow-mixing or small-variance
+#' parameter isn't visually flattened by others sharing the same axis) or
+#' \code{"overlay"} (all series on a single panel, for a quick glance at
+#' overall convergence). Replaces the older \code{\link{gg_trace}}/
+#' \code{\link{gather.spifa}} pair: it reshapes draws via
+#' \code{\link[bayesplot]{mcmc_trace_data}} instead, so it works directly
+#' on \code{x} with no intermediate conversion.
+#'
+#' @param x A fitted \code{spifa} model.
+#' @param select Parameters to plot, passed to the \code{variable} argument
+#' of \code{\link[posterior]{subset_draws}}: either a block name (e.g.
+#' \code{"A"}, matching every parameter in that block) or one or more full
+#' indexed names (e.g. \code{"c[1]"}, \code{paste0("A[", 1:10, ",1]")}).
+#' @param format Either \code{"facet"} (default) or \code{"overlay"}; see
+#' Description.
+#' @param burnin Number of initial iterations to discard.
+#' @param thin Thinning interval applied after \code{burnin}.
+#' @param nshow If \code{select} matches more than \code{nshow} parameters,
+#' a random (sorted) subsample of \code{nshow} of them is shown instead of
+#' all of them. Set to \code{NULL} to always show every matched parameter.
+#' @param ncol Number of columns in the facet grid (\code{format = "facet"}
+#' only); defaults to a single column.
+#' @param legend Legend position (\code{format = "overlay"} only): one of
+#' \code{"bottom"}, \code{"right"}, \code{"none"}, or a logical. Defaults to
+#' \code{NULL}, which shows the legend unless there are more than 10
+#' series, since a legend that large stops being readable and can dwarf the
+#' plot itself.
+#' @param ... Currently unused.
+#'
+#' @return A \code{ggplot} object.
+#'
+#' @author Erick A. Chacón-Montalván
+#'
+#' @examples
+#' \donttest{
+#' data(ipixuna)
+#' samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 1000)
+#'
+#' plot_trace(samples, select = "c", format = "facet")
+#' plot_trace(samples, select = "c", format = "overlay")
+#'
+#' # more than nshow (10) parameters: a random subsample is shown
+#' plot_trace(samples, select = "A", format = "facet", nshow = 6)
+#'
+#' # explicit selection instead of a random subsample
+#' plot_trace(samples, select = paste0("A[", 1:10, ",1]"), format = "facet")
+#' }
+#'
+#' @export
+plot_trace <- function (x, select, format = c("facet", "overlay"),
+                        burnin = 0, thin = 1, nshow = 10, ncol = 1,
+                        legend = NULL, ...) {
+  x <- drop_restricted(x)
+  format <- match.arg(format)
+
+  # create data
+  niter <- posterior::niterations(x)
+  df <- x |>
+    posterior::subset_draws(variable = select, iteration = (burnin + 1):niter) |>
+    posterior::thin_draws(thin) |>
+    bayesplot::mcmc_trace_data() |>
+    dplyr::mutate(parameter = gsub("\\[(.+),(.+)\\]", "[list(\\1,\\2)]", parameter))
+
+  # random sorted subsample when there are more parameters than nshow
+  pars <- unique(df$parameter)
+  if (!is.null(nshow) && length(pars) > nshow) {
+    pars_keep <- sort(sample(pars, nshow))
+    df <- dplyr::filter(df, parameter %in% pars_keep)
+  }
+
+  if (format == "overlay") {
+    # remove legend if more than 10 parameters
+    if (is.null(legend)) {
+      legend <- if (length(unique(df$parameter)) > 10) "none" else "bottom"
+    } else if (is.logical(legend)) {
+      legend <- if (legend) "bottom" else "none"
+    }
+    gg <- ggplot(df, aes(iteration, value, group = parameter, col = parameter)) +
+      geom_path(alpha = 0.6) +
+      scale_x_continuous(expand = c(0, 0)) +
+      scale_colour_discrete(labels = function(x) parse(text = x)) +
+      labs(x = "Iteration", y = "Value", col = "Parameter") +
+      theme_trace(legend = legend)
+  } else {
+    gg <- ggplot(df, aes(iteration, value, col = parameter)) +
+      geom_path(linewidth = 0.2) +
+      facet_wrap(~ parameter, ncol = ncol, scales = "free_y", strip.position = "right",
+                 labeller = label_parsed) +
+      scale_x_continuous(expand = c(0, 0)) +
+      labs(x = "Iteration", y = "Value") +
+      theme_trace(legend = "none")
+  }
+
+  return(gg)
+}
+
 #' @title Gather Parameters into a Long Format Tibble
 #'
 #' @description
@@ -72,56 +200,6 @@ gather.spifa <- function (samples_wide, each = NULL,
   }
 
   return(samples_long)
-}
-
-#' @title Traceplot of Samples
-#'
-#' @description
-#' Draws MCMC traceplots (iteration vs. value, one line per parameter) from
-#' a long-format samples tibble, as produced by \code{\link{gather.spifa}}.
-#'
-#' @param df A wide \code{spifa} samples tibble (e.g. from
-#' \code{\link{as_tibble.spifa}}), or a subset of its columns selected
-#' via \code{select} in \code{\link{as_tibble.spifa}}.
-#' @param wrap Logical; if \code{TRUE}, draw one facet per parameter instead
-#' of overlaying them on a single panel.
-#' @param legend Legend position passed to
-#' \code{\link[ggplot2]{theme}(legend.position = ...)}.
-#' @param ... Further arguments passed to \code{\link[ggplot2]{geom_path}}.
-#'
-#' @return A \code{ggplot} object.
-#'
-#' @author Erick A. Chacon-Montalvan
-#'
-#' @examples
-#' \donttest{
-#' data(ipixuna)
-#' parameters <- attr(ipixuna, "parameters")
-#' L_a <- (parameters$discrimination != 0) * 1
-#' nfactors <- ncol(parameters$discrimination)
-#' samples <- spifa(
-#'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-#'   niter = 20, thin = 1, standardize = FALSE,
-#'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
-#' as_tibble(samples, select = "c") %>% gg_trace(wrap = TRUE, alpha = 0.6)
-#' }
-#'
-#' @import ggplot2
-#' @import dplyr
-#'
-#' @export
-gg_trace <- function (df, wrap = FALSE, legend = "bottom", ...) {
-  df <- gather.spifa(df)
-  gg <- df %>%
-    ggplot(aes(iteration, Value, group = Parameters, col = Parameters)) +
-      geom_path(...)
-  # in splits if required
-  if (wrap) {
-    gg <- gg + facet_wrap(~ Parameters, ncol = 1, scales = "free")
-  }
-  # theme
-  gg <- gg + theme(legend.position = legend)
-  return(gg)
 }
 
 #' @title Densities of Samples

@@ -27,7 +27,8 @@ Imports: Rcpp (>= 0.12.13),
          tidyr,
          sf,
          ggplot2,
-         posterior
+         posterior,
+         bayesplot
 LinkingTo: Rcpp,
            RcppArmadillo,
            RcppTN

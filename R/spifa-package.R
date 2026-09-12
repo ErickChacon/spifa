@@ -21,6 +21,8 @@
 #' @useDynLib spifa, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @import RcppTN
+#' @import ggplot2
+#' @import dplyr
 "_PACKAGE"
 
 #' @title Simulated Food Insecurity Survey Data for Ipixuna
@@ -68,7 +70,8 @@ NULL
 ## variables used in NSE contexts
 utils::globalVariables(c(
   ".", "Parameters", "Value", "iteration", "level",
-  "variable", "median", "q2.5", "q10", "q90", "q97.5"
+  "variable", "median", "q2.5", "q10", "q90", "q97.5",
+  "parameter", "value", "total"
   ))
 
 #' @importFrom magrittr %>%
