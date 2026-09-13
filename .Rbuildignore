@@ -9,3 +9,6 @@
 ^dev$
 ^Rplots\.pdf$
 ^data-raw$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

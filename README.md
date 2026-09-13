@@ -4,7 +4,7 @@
 [![R-CMD-check](https://github.com/ErickChacon/spifa/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ErickChacon/spifa/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-## Spatial Item Factor Analysis
+## Introduction
 
 **spifa** fits item factor analysis (IFA) models for binary responses using
 full Bayesian inference (Gibbs sampling with adaptive Metropolis-Hastings),
@@ -25,23 +25,28 @@ complements rather than replaces.
 remotes::install_github("ErickChacon/spifa")
 ```
 
-## Usage
+## Basic usage
+
+A minimal *spatial* item factor analysis fit on the bundled `ipixuna`
+dataset (an `sf` object, so a spatial Gaussian process is added
+automatically -- see `?spifa`):
 
 ```r
 library(spifa)
 
 data(ipixuna)
-parameters <- attr(ipixuna, "parameters")
-L_a <- (parameters$discrimination != 0) * 1
-nfactors <- ncol(parameters$discrimination)
+samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, niter = 1000)
 
-samples <- spifa(
-  items ~ wealth, data = ipixuna, nfactors = nfactors,
-  niter = 1000, thin = 1, standardize = FALSE,
-  constraints = list(discrimination = L_a, mgp = diag(nfactors),
-    resid_sd = parameters$resid_params$sd))
-
+samples
 summary(samples, burnin = 500, select = "c")
+plot(samples, select = "c", burnin = 500)
 ```
 
-See `vignette("spifa-ipixuna")` for a full worked example.
+Printing `samples` directly (`print.spifa()`) gives model type, dimensions,
+and a grouped posterior summary table at a glance; `summary()` computes the
+full set of statistics for a specific parameter block; `plot()` gives a
+quick trace + density overview. `plot_trace()`/`plot_density()`/
+`plot_interval()` cover trace, density, and credible-interval views
+individually, for any parameter block. See `vignette("spifa-ipixuna")` for
+a full worked example with predictors and a theory-driven discrimination
+structure.
