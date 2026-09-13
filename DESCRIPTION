@@ -21,20 +21,19 @@ Depends: R (>= 4.1.0)
 BugReports: https://github.com/ErickChacon/spifa/issues
 Imports: Rcpp (>= 0.12.13),
          RcppTN,
-         magrittr,
          tibble,
          dplyr,
          tidyr,
          sf,
          ggplot2,
          posterior,
-         bayesplot
+         bayesplot,
+         ggridges
 LinkingTo: Rcpp,
            RcppArmadillo,
            RcppTN
 Suggests: knitr,
     rmarkdown,
-    ggridges,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3

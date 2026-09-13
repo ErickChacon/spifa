@@ -14,7 +14,6 @@
 #' @author Emanuele Giorgi, \email{e.giorgi@lancaster.ac.uk}
 #' @author Benjamin M. Taylor, \email{b.taylor1@lancaster.ac.uk}
 #'
-#' @importFrom magrittr %>%
 #' @importFrom stats delete.response dist model.frame model.matrix
 #' @importFrom stats model.response quantile rnorm setNames terms update
 #' @importFrom grDevices rgb
@@ -73,10 +72,6 @@ utils::globalVariables(c(
   "variable", "median", "q2.5", "q10", "q90", "q97.5",
   "parameter", "value", "total"
   ))
-
-#' @importFrom magrittr %>%
-#' @export
-magrittr::`%>%`
 
 #' @importFrom tibble as_tibble
 #' @export

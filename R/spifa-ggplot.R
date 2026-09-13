@@ -14,6 +14,17 @@ drop_restricted <- function (x) {
   return(x)
 }
 
+# plotmath-parse "A[7,2]" as "A[list(7,2)]" so a two-index name parses
+# correctly (unparsed, plotmath silently drops the second index -- see
+# plot_trace()/plot_density()). `parameter` comes in as a factor already
+# in the correct (natural, e.g. "c[1]", "c[2]", ..., "c[10]") order from
+# bayesplot -- gsub() would coerce it to character and lose that order, so
+# this reapplies the same transform to the factor's levels to keep it.
+parse_parameter <- function (parameter) {
+  to_math <- function (p) gsub("\\[(.+),(.+)\\]", "[list(\\1,\\2)]", p)
+  factor(to_math(as.character(parameter)), levels = to_math(levels(parameter)))
+}
+
 theme_trace <- function (legend = "none") {
   theme_minimal() +
     theme(panel.border = element_blank(),
@@ -29,30 +40,32 @@ theme_trace <- function (legend = "none") {
 #'
 #' @description
 #' Draws MCMC traceplots (iteration vs. value) directly from a fitted
-#' \code{spifa} model, in one of two formats: \code{"facet"} (one panel per
-#' parameter, with its own free y-scale, so a slow-mixing or small-variance
-#' parameter isn't visually flattened by others sharing the same axis) or
-#' \code{"overlay"} (all series on a single panel, for a quick glance at
-#' overall convergence). Replaces the older \code{\link{gg_trace}}/
-#' \code{\link{gather.spifa}} pair: it reshapes draws via
-#' \code{\link[bayesplot]{mcmc_trace_data}} instead, so it works directly
-#' on \code{x} with no intermediate conversion.
+#' \code{spifa} model, in one of two formats: faceted (\code{facet = TRUE},
+#' the default; one panel per parameter, with its own free y-scale, so a
+#' slow-mixing or small-variance parameter isn't visually flattened by
+#' others sharing the same axis) or overlaid (\code{facet = FALSE}; all
+#' series on a single panel, for a quick glance at overall convergence).
+#' Replaces the older \code{\link{gg_trace}}/\code{\link{gather.spifa}}
+#' pair: it reshapes draws via \code{\link[bayesplot]{mcmc_trace_data}}
+#' instead, so it works directly on \code{x} with no intermediate
+#' conversion.
 #'
 #' @param x A fitted \code{spifa} model.
 #' @param select Parameters to plot, passed to the \code{variable} argument
 #' of \code{\link[posterior]{subset_draws}}: either a block name (e.g.
 #' \code{"A"}, matching every parameter in that block) or one or more full
 #' indexed names (e.g. \code{"c[1]"}, \code{paste0("A[", 1:10, ",1]")}).
-#' @param format Either \code{"facet"} (default) or \code{"overlay"}; see
+#' @param facet Logical; if \code{TRUE} (default), draw one panel per
+#' parameter; if \code{FALSE}, overlay every series on a single panel. See
 #' Description.
 #' @param burnin Number of initial iterations to discard.
 #' @param thin Thinning interval applied after \code{burnin}.
 #' @param nshow If \code{select} matches more than \code{nshow} parameters,
 #' a random (sorted) subsample of \code{nshow} of them is shown instead of
 #' all of them. Set to \code{NULL} to always show every matched parameter.
-#' @param ncol Number of columns in the facet grid (\code{format = "facet"}
+#' @param ncol Number of columns in the facet grid (\code{facet = TRUE}
 #' only); defaults to a single column.
-#' @param legend Legend position (\code{format = "overlay"} only): one of
+#' @param legend Legend position (\code{facet = FALSE} only): one of
 #' \code{"bottom"}, \code{"right"}, \code{"none"}, or a logical. Defaults to
 #' \code{NULL}, which shows the legend unless there are more than 10
 #' series, since a legend that large stops being readable and can dwarf the
@@ -68,22 +81,21 @@ theme_trace <- function (legend = "none") {
 #' data(ipixuna)
 #' samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 1000)
 #'
-#' plot_trace(samples, select = "c", format = "facet")
-#' plot_trace(samples, select = "c", format = "overlay")
+#' plot_trace(samples, select = "c", facet = TRUE)
+#' plot_trace(samples, select = "c", facet = FALSE)
 #'
 #' # more than nshow (10) parameters: a random subsample is shown
-#' plot_trace(samples, select = "A", format = "facet", nshow = 6)
+#' plot_trace(samples, select = "A", facet = TRUE, nshow = 6)
 #'
 #' # explicit selection instead of a random subsample
-#' plot_trace(samples, select = paste0("A[", 1:10, ",1]"), format = "facet")
+#' plot_trace(samples, select = paste0("A[", 1:10, ",1]"), facet = TRUE)
 #' }
 #'
 #' @export
-plot_trace <- function (x, select, format = c("facet", "overlay"),
+plot_trace <- function (x, select, facet = TRUE,
                         burnin = 0, thin = 1, nshow = 10, ncol = 1,
                         legend = NULL, ...) {
   x <- drop_restricted(x)
-  format <- match.arg(format)
 
   # create data
   niter <- posterior::niterations(x)
@@ -91,7 +103,7 @@ plot_trace <- function (x, select, format = c("facet", "overlay"),
     posterior::subset_draws(variable = select, iteration = (burnin + 1):niter) |>
     posterior::thin_draws(thin) |>
     bayesplot::mcmc_trace_data() |>
-    dplyr::mutate(parameter = gsub("\\[(.+),(.+)\\]", "[list(\\1,\\2)]", parameter))
+    dplyr::mutate(parameter = parse_parameter(parameter))
 
   # random sorted subsample when there are more parameters than nshow
   pars <- unique(df$parameter)
@@ -100,7 +112,8 @@ plot_trace <- function (x, select, format = c("facet", "overlay"),
     df <- dplyr::filter(df, parameter %in% pars_keep)
   }
 
-  if (format == "overlay") {
+  # two figure types
+  if (!facet) {
     # remove legend if more than 10 parameters
     if (is.null(legend)) {
       legend <- if (length(unique(df$parameter)) > 10) "none" else "bottom"
@@ -120,6 +133,100 @@ plot_trace <- function (x, select, format = c("facet", "overlay"),
                  labeller = label_parsed) +
       scale_x_continuous(expand = c(0, 0)) +
       labs(x = "Iteration", y = "Value") +
+      theme_trace(legend = "none")
+  }
+
+  return(gg)
+}
+
+#' @title Density Plot of Samples
+#'
+#' @description
+#' Draws posterior density curves directly from a fitted \code{spifa}
+#' model, in one of two formats: overlaid (\code{facet = FALSE}, the
+#' default; stacked, slightly-overlapping ridgeline plot via
+#' \code{\link[ggridges]{geom_ridgeline}} -- the more insightful default
+#' for comparing many parameters' shapes and locations at a glance) or
+#' faceted (\code{facet = TRUE}; one panel per parameter). Shows the
+#' density shape only -- for credible intervals and point estimates, see
+#' \code{plot_interval} (planned; not yet implemented). Built on
+#' \code{\link[bayesplot]{mcmc_areas_data}} for the density curve itself.
+#'
+#' @param x A fitted \code{spifa} model.
+#' @param select Parameters to plot, as in \code{\link{plot_trace}}.
+#' @param facet Logical; if \code{TRUE}, draw one panel per parameter; if
+#' \code{FALSE} (default), overlay every parameter as a ridgeline plot. See
+#' Description.
+#' @param burnin Number of initial iterations to discard.
+#' @param thin Thinning interval applied after \code{burnin}.
+#' @param nshow As in \code{\link{plot_trace}}.
+#' @param ncol Number of columns in the facet grid (\code{facet = TRUE}
+#' only); defaults to a single column.
+#' @param facet_scales The \code{scales} argument of
+#' \code{\link[ggplot2]{facet_wrap}} (\code{facet = TRUE} only): one of
+#' \code{"free"} (default; each panel gets its own x/y-axis), \code{"free_y"}
+#' (one shared x-axis, line shown only on the bottom panel of each column,
+#' matching \code{\link{plot_trace}}'s facet -- useful for comparing
+#' parameters on a similar scale), \code{"free_x"}, or \code{"fixed"}.
+#' Parameters with very different value ranges can render compressed/hard
+#' to read with a shared x-axis.
+#' @param scale Amount of vertical overlap between ridges (\code{facet =
+#' FALSE} only), passed to \code{\link[ggridges]{geom_ridgeline}}.
+#' Defaults to \code{1.2}.
+#' @param ... Currently unused.
+#'
+#' @return A \code{ggplot} object.
+#'
+#' @author Erick A. Chacón-Montalván
+#'
+#' @examples
+#' \donttest{
+#' data(ipixuna)
+#' samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 1000)
+#'
+#' plot_density(samples, select = "c", facet = FALSE)
+#' plot_density(samples, select = "c", facet = TRUE)
+#'
+#' # more than nshow (10) parameters: a random subsample is shown
+#' plot_density(samples, select = "A", facet = FALSE, nshow = 6)
+#' }
+#'
+#' @export
+plot_density <- function (x, select, facet = FALSE,
+                           burnin = 0, thin = 1, nshow = 10, ncol = 1,
+                           facet_scales = "free", scale = 1.2, ...) {
+  x <- drop_restricted(x)
+
+  # create data: bayesplot doesn't have mcmc_dens_data
+  niter <- posterior::niterations(x)
+  df <- x |>
+    posterior::subset_draws(variable = select, iteration = (burnin + 1):niter) |>
+    posterior::thin_draws(thin) |>
+    bayesplot::mcmc_areas_data() |>
+    dplyr::filter(interval == "outer") |>
+    dplyr::mutate(parameter = parse_parameter(parameter))
+
+  # random sorted subsample when there are more parameters than nshow
+  pars <- unique(df$parameter)
+  if (!is.null(nshow) && length(pars) > nshow) {
+    pars_keep <- sort(sample(pars, nshow))
+    df <- dplyr::filter(df, parameter %in% pars_keep)
+  }
+
+  # two figure types
+  if (!facet) {
+    gg <- ggplot(df, aes(x, parameter, height = plotting_density, fill = parameter)) +
+      ggridges::geom_ridgeline(alpha = 0.5, scale = scale, linewidth = 0.4) +
+      scale_y_discrete(labels = function(x) parse(text = x)) +
+      labs(x = "Value", y = NULL) +
+      theme_trace(legend = "none")
+  } else {
+    gg <- ggplot(df, aes(x, ymin = 0, ymax = plotting_density, fill = parameter)) +
+      geom_ribbon(alpha = 0.5, colour = NA) +
+      geom_line(aes(y = plotting_density), colour = "black", linewidth = 0.4) +
+      facet_wrap(~ parameter, ncol = ncol, scales = facet_scales,
+                 strip.position = "right", labeller = label_parsed) +
+      labs(x = "Value", y = "Density") +
       theme_trace(legend = "none")
   }
 
@@ -230,25 +337,25 @@ gather.spifa <- function (samples_wide, each = NULL,
 #'   items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
 #'   niter = 20, thin = 1, standardize = FALSE,
 #'   constraints = list(discrimination = L_a, sd = rep(0.5, nfactors)))
-#' as_tibble(samples, select = "c") %>% gg_density()
+#' as_tibble(samples, select = "c") |> gg_density()
 #' }
 #'
 #' @export
 gg_density <- function (df, ..., ridges = FALSE) {
   df <- gather.spifa(df)
-  df <- df %>%
-    group_by(Parameters) %>%
+  df <- df |>
+    group_by(Parameters) |>
     mutate(median = quantile(Value, 0.5))
   if (ridges) {
     if (!requireNamespace("ggridges", quietly = TRUE)) {
       stop("Package 'ggridges' is required for ridges = TRUE. ",
            "Install it with install.packages('ggridges').")
     }
-    gg <- df %>%
+    gg <- df |>
       ggplot(aes(Value, Parameters, group = Parameters)) +
         ggridges::geom_density_ridges(...)
   } else  {
-    gg <- df %>%
+    gg <- df |>
       ggplot(aes(Value, fill = Parameters)) +
       geom_density(...) +
       facet_wrap(~ Parameters, scales = "free")
@@ -459,9 +566,9 @@ gg_errorbarh <- function (df_summary, sorted = FALSE,
                           colors = c(rgb(1,0.5,0.1), "black"), ...) {
 
   if (sorted) {
-    gg <- df_summary %>% ggplot(., aes(median, median))
+    gg <- df_summary |> ggplot(aes(median, median))
   } else {
-    gg <- df_summary %>% ggplot(., aes(median, variable))
+    gg <- df_summary |> ggplot(aes(median, variable))
   }
 
   gg <- gg +
@@ -516,9 +623,9 @@ gg_errorbar <- function (df_summary, sorted = TRUE,
                          colors = c(rgb(1,0.5,0.1), "black"), ...) {
 
   if (sorted) {
-    gg <- df_summary %>% ggplot(., aes(median, median))
+    gg <- df_summary |> ggplot(aes(median, median))
   } else {
-    gg <- df_summary %>% ggplot(., aes(variable, median))
+    gg <- df_summary |> ggplot(aes(variable, median))
   }
 
   gg <- gg +

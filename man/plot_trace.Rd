@@ -7,7 +7,7 @@
 plot_trace(
   x,
   select,
-  format = c("facet", "overlay"),
+  facet = TRUE,
   burnin = 0,
   thin = 1,
   nshow = 10,
@@ -24,7 +24,8 @@ of \code{\link[posterior]{subset_draws}}: either a block name (e.g.
 \code{"A"}, matching every parameter in that block) or one or more full
 indexed names (e.g. \code{"c[1]"}, \code{paste0("A[", 1:10, ",1]")}).}
 
-\item{format}{Either \code{"facet"} (default) or \code{"overlay"}; see
+\item{facet}{Logical; if \code{TRUE} (default), draw one panel per
+parameter; if \code{FALSE}, overlay every series on a single panel. See
 Description.}
 
 \item{burnin}{Number of initial iterations to discard.}
@@ -35,10 +36,10 @@ Description.}
 a random (sorted) subsample of \code{nshow} of them is shown instead of
 all of them. Set to \code{NULL} to always show every matched parameter.}
 
-\item{ncol}{Number of columns in the facet grid (\code{format = "facet"}
+\item{ncol}{Number of columns in the facet grid (\code{facet = TRUE}
 only); defaults to a single column.}
 
-\item{legend}{Legend position (\code{format = "overlay"} only): one of
+\item{legend}{Legend position (\code{facet = FALSE} only): one of
 \code{"bottom"}, \code{"right"}, \code{"none"}, or a logical. Defaults to
 \code{NULL}, which shows the legend unless there are more than 10
 series, since a legend that large stops being readable and can dwarf the
@@ -51,28 +52,29 @@ A \code{ggplot} object.
 }
 \description{
 Draws MCMC traceplots (iteration vs. value) directly from a fitted
-\code{spifa} model, in one of two formats: \code{"facet"} (one panel per
-parameter, with its own free y-scale, so a slow-mixing or small-variance
-parameter isn't visually flattened by others sharing the same axis) or
-\code{"overlay"} (all series on a single panel, for a quick glance at
-overall convergence). Replaces the older \code{\link{gg_trace}}/
-\code{\link{gather.spifa}} pair: it reshapes draws via
-\code{\link[bayesplot]{mcmc_trace_data}} instead, so it works directly
-on \code{x} with no intermediate conversion.
+\code{spifa} model, in one of two formats: faceted (\code{facet = TRUE},
+the default; one panel per parameter, with its own free y-scale, so a
+slow-mixing or small-variance parameter isn't visually flattened by
+others sharing the same axis) or overlaid (\code{facet = FALSE}; all
+series on a single panel, for a quick glance at overall convergence).
+Replaces the older \code{\link{gg_trace}}/\code{\link{gather.spifa}}
+pair: it reshapes draws via \code{\link[bayesplot]{mcmc_trace_data}}
+instead, so it works directly on \code{x} with no intermediate
+conversion.
 }
 \examples{
 \donttest{
 data(ipixuna)
 samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 1000)
 
-plot_trace(samples, select = "c", format = "facet")
-plot_trace(samples, select = "c", format = "overlay")
+plot_trace(samples, select = "c", facet = TRUE)
+plot_trace(samples, select = "c", facet = FALSE)
 
 # more than nshow (10) parameters: a random subsample is shown
-plot_trace(samples, select = "A", format = "facet", nshow = 6)
+plot_trace(samples, select = "A", facet = TRUE, nshow = 6)
 
 # explicit selection instead of a random subsample
-plot_trace(samples, select = paste0("A[", 1:10, ",1]"), format = "facet")
+plot_trace(samples, select = paste0("A[", 1:10, ",1]"), facet = TRUE)
 }
 
 }

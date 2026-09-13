@@ -55,9 +55,9 @@ data(ipixuna)
 `geometry`:
 
 ```{r}
-ipixuna %>%
-  dplyr::select(-geometry, -items) %>%
-  head(10) %>%
+ipixuna |>
+  dplyr::select(-geometry, -items) |>
+  head(10) |>
   knitr::kable(digits = 2)
 ```
 
@@ -127,8 +127,8 @@ Credible intervals for the discrimination parameters, against the true
 simulated values:
 
 ```{r, fig.height = 5}
-summary(samples, burnin = 100, select = "A") %>%
-  mutate(param = as.numeric(parameters$discrimination)) %>%
+summary(samples, burnin = 100, select = "A") |>
+  mutate(param = as.numeric(parameters$discrimination)) |>
   gg_errorbarh(sorted = FALSE) +
   geom_point(aes(x = param), col = 3)
 ```
