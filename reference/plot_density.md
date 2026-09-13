@@ -105,14 +105,14 @@ data(ipixuna)
 samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 1000)
 
 plot_density(samples, select = "c", facet = FALSE)
-#> Picking joint bandwidth of 0.0509
+#> Picking joint bandwidth of 0.0549
 
 plot_density(samples, select = "c", facet = TRUE)
 
 
 # more than nshow (10) parameters: a random subsample is shown
 plot_density(samples, select = "A", facet = FALSE, nshow = 6)
-#> Picking joint bandwidth of 0.0973
+#> Picking joint bandwidth of 0.0867
 
 # }
 ```
