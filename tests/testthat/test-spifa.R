@@ -254,3 +254,101 @@ test_that("spifa(): malformed constraints/priors", {
     spifa(wealth ~ 1, data = ipixuna, nfactors = nfactors, niter = 2, thin = 1),
     "must be a matrix")
 })
+
+# ---------------------------------------------------------------------------
+# update.spifa()
+# ---------------------------------------------------------------------------
+
+test_that("update.spifa() warm-starts from the last draw, across model types", {
+  data(ipixuna, package = "spifa")
+  nitems <- ncol(ipixuna$items)
+  nfactors <- 3
+  A <- matrix(1, nitems, nfactors)
+  A[c(4, 8), 1] <- 0
+  A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+  A[c(5, 6), 3] <- 0
+
+  # warm-start values must match the previous fit's last draw exactly (a
+  # single subsequent Gibbs step would already move them, so check the
+  # *initial* values actually passed to spifa_cpp(), not the first new draw)
+  expect_warm_started <- function (samples, blocks = c("c", "A")) {
+    samples2 <- update(samples, niter = 3)
+    for (block in blocks) {
+      last <- as.numeric(as_draws_matrix(subset_draws(samples, variable = block))[
+        niterations(samples), ])
+      used <- if (block == "c") {
+        attr(samples2, "fit_args")$c_initial
+      } else if (block == "A") {
+        as.numeric(attr(samples2, "fit_args")$A_initial)
+      }
+      expect_equal(unname(used), last)
+    }
+    expect_equal(niterations(samples2), 3)
+    samples2
+  }
+
+  # eifa: Corr/Chol absent -- reused fixed value, not "warm-started"
+  eifa <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+    niter = 10, thin = 1)
+  eifa2 <- expect_warm_started(eifa)
+  expect_equal(attr(eifa2, "fit_args")$R_initial, attr(eifa, "fit_args")$R_initial)
+  expect_setequal(variables(eifa2, with_indices = FALSE), c("c", "A", "Theta", "Z"))
+
+  # cifa: Corr/Chol present and genuinely warm-started
+  cifa <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+    niter = 10, thin = 1, constraints = list(discrimination = A))
+  cifa2 <- expect_warm_started(cifa)
+  last_corr <- unname(as_draws_matrix(subset_draws(cifa, variable = "Corr"))[10, ])
+  expect_true(any(diag(attr(cifa2, "fit_args")$R_initial) == 1))
+  expect_false(isTRUE(all.equal(attr(cifa2, "fit_args")$R_initial, diag(nfactors))))
+
+  # cifa_pred: B present
+  cifa_pred <- spifa(items ~ wealth, data = ipixuna, nfactors = nfactors, ngp = 0,
+    niter = 10, thin = 1, constraints = list(discrimination = A))
+  cifa_pred2 <- expect_warm_started(cifa_pred)
+  expect_equal(dim(attr(cifa_pred2, "fit_args")$B_initial), c(1, nfactors))
+
+  # spifa: T/phi present
+  spifa_fit <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, niter = 10,
+    thin = 1, constraints = list(discrimination = A, loading = diag(nfactors)),
+    priors = list(
+      loading = list(initial = 0.6, mean = 0.6, sd = 0.4),
+      range = list(initial = 200, mean = 200, sd = 0.4)))
+  spifa2 <- expect_warm_started(spifa_fit)
+  expect_length(attr(spifa2, "fit_args")$sigmas_gp_initial, nfactors)
+  expect_length(attr(spifa2, "fit_args")$phi_gp_initial, nfactors)
+})
+
+test_that("update.spifa() errors clearly for an unexecuted fit", {
+  data(ipixuna, package = "spifa")
+  samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, niter = 5,
+    execute = FALSE)
+  expect_error(update(samples, niter = 5), "not executed")
+})
+
+test_that("update.spifa() resumes the adaptive-MH proposal instead of restarting it", {
+  data(ipixuna, package = "spifa")
+  nitems <- ncol(ipixuna$items)
+  nfactors <- 3
+  A <- matrix(1, nitems, nfactors)
+  A[c(4, 8), 1] <- 0
+  A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+  A[c(5, 6), 3] <- 0
+
+  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+    niter = 50, thin = 1, constraints = list(discrimination = A))
+  mcmc_state <- attr(samples, "mcmc_state")
+  expect_equal(dim(mcmc_state$adap_Sigma), c(3, 3))
+  expect_type(mcmc_state$adap_scale, "double")
+
+  samples2 <- update(samples, niter = 10)
+  # the continuation is warm-started from the previous run's ending
+  # adaptive state, not object's own *original* adap_Sigma/adap_scale
+  expect_equal(attr(samples2, "fit_args")$adap_Sigma, mcmc_state$adap_Sigma)
+  expect_equal(attr(samples2, "fit_args")$adap_scale, mcmc_state$adap_scale)
+
+  # and samples2 carries its own (further-adapted) ending state forward, so
+  # a chain of update() calls keeps refining rather than resetting each time
+  mcmc_state2 <- attr(samples2, "mcmc_state")
+  expect_false(isTRUE(all.equal(mcmc_state2$adap_Sigma, mcmc_state$adap_Sigma)))
+})

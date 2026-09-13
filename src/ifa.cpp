@@ -468,6 +468,9 @@ Rcpp::List Ifa::sample(
   myclass(1) = "list";
   output.attr("class") = myclass;
   output.attr("V_sd") = V_sd;
+  // expose final adaptive-MH proposal state
+  output.attr("adap_Sigma_final") = params_cov;
+  output.attr("adap_scale_final") = exp(logscale);
 
   return output;
 }

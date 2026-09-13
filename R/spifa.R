@@ -372,9 +372,12 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
     )
 
   # Execute c++ if requested
+  mcmc_state <- NULL
   if (execute) {
     samples <- do.call(spifa_cpp, fit_args)
     fit_args$constrain_V_sd <- attr(samples, "V_sd")
+    mcmc_state <- list(adap_Sigma = attr(samples, "adap_Sigma_final"),
+                       adap_scale = attr(samples, "adap_scale_final"))
     samples <- do.call(cbind, samples) |> posterior::as_draws_array()
   } else {
     samples <- list()
@@ -385,6 +388,7 @@ spifa <- function(formula, data, nfactors, ngp = nfactors,
   attr(samples, "predict_setup") <- list(coordinates = coordinates,
     pred_terms = pred_terms, xlevels = get_xlevels(pred_terms, mf),
     formula = formula)
+  attr(samples, "mcmc_state") <- mcmc_state
 
   class(samples) <- unique(c("spifa", class(samples)))
   return(samples)
@@ -468,4 +472,114 @@ get_xlevels <- function (pred_terms, mf) {
     function (v) if (is.factor(v)) levels(v) else NULL)
   xlevels <- xlevels[!vapply(xlevels, is.null, logical(1))]
   if (length(xlevels) == 0) NULL else xlevels
+}
+
+#' @title Continue Sampling from the Posterior of a spifa Model
+#'
+#' @description
+#' Runs \code{niter} additional MCMC iterations, warm-started from the last
+#' posterior draw of \code{object} (the easiness/discrimination/residual
+#' correlation/predictor-effect/Gaussian process parameters), reusing the
+#' data, priors, and constraints of the original fit. Returns only the new
+#' draws, not concatenated with \code{object}'s -- see Details.
+#'
+#' @details
+#' The adaptive Metropolis-Hastings proposal tuning (for the residual
+#' correlation and, for \code{spifa}/\code{spifa_pred}, the Gaussian
+#' process parameters) resumes from wherever \code{object}'s own run left
+#' it off, rather than restarting from \code{object}'s original
+#' \code{adaptive} settings -- so a chain of \code{update()} calls keeps
+#' refining its proposal instead of re-paying for adaptation each time.
+#'
+#' \code{update()} always uses the same \code{standardize} setting
+#' \code{object} itself was originally fit with (see \code{\link{spifa}});
+#' it isn't an argument here. \code{standardize}'s rescale is still
+#' computed independently for each call, from that call's own posterior
+#' draws, so \code{object} and the object returned here can end up on
+#' slightly different absolute scales even though both represent the same
+#' continuous chain. Combine them yourself (e.g. \code{rbind()} on their
+#' \code{\link[posterior]{as_draws_matrix}} form) if you want one
+#' continuous chain; fit with \code{standardize = FALSE} in the first place
+#' if you want every continuation on a genuinely identical, unrescaled
+#' scale.
+#'
+#' @param object A fitted \code{spifa} object, as returned by
+#' \code{\link{spifa}} with \code{execute = TRUE}.
+#' @param niter Number of additional MCMC iterations to run and store.
+#' @param thin Thinning interval for the newly stored MCMC samples.
+#' @param burnin Number of initial iterations of this continuation to
+#' discard before storing (see \code{\link{spifa}}'s \code{burnin}).
+#' @param ... Further arguments (currently unused).
+#'
+#' @return A new \code{spifa} object holding only the continuation draws
+#' (see Description).
+#'
+#' @author Erick A. Chacón-Montalván
+#'
+#' @examples
+#' \donttest{
+#' data(ipixuna)
+#' samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 1000)
+#' more_samples <- update(samples, niter = 1000)
+#' }
+#'
+#' @export
+update.spifa <- function (object, niter = 100, thin = 1, burnin = 0, ...) {
+
+  if (length(object) == 0) {
+    stop("cannot update a spifa fit that was not executed (execute = FALSE)")
+  }
+
+  fit_args <- attr(object, "fit_args")
+
+  # Update initial values
+  warm_start <- function (template, param, symmetric = FALSE) {
+    if (!(param %in% posterior::variables(object, with_indices = FALSE))) {
+      return(template)
+    }
+    draws <- posterior::subset_draws(object, variable = param) |>
+        posterior::as_draws_matrix()
+    last <- stats::setNames(as.numeric(draws[nrow(draws), ]), colnames(draws))
+    # c/T/phi: plain vectors, already in the order spifa_cpp() expects
+    if (is.null(dim(template))) return(unname(last))
+    # A/B/Corr: matrices, reshaped from "Block[i,j]" names
+    pattern <- paste0("^", param, "\\[(\\d+),(\\d+)\\]$")
+    idx <- as.integer(sub(pattern, "\\1", names(last)))
+    jdx <- as.integer(sub(pattern, "\\2", names(last)))
+    template[cbind(idx, jdx)] <- last
+    # Corr only: mirror the other triangle
+    if (symmetric) template[cbind(jdx, idx)] <- last
+    template
+  }
+
+  fit_args$c_initial <- warm_start(fit_args$c_initial, "c")
+  fit_args$A_initial <- warm_start(fit_args$A_initial, "A")
+  fit_args$R_initial <- warm_start(fit_args$R_initial, "Corr", symmetric = TRUE)
+  fit_args$B_initial <- warm_start(fit_args$B_initial, "B")
+  fit_args$sigmas_gp_initial <- warm_start(fit_args$sigmas_gp_initial, "T")
+  fit_args$phi_gp_initial <- warm_start(fit_args$phi_gp_initial, "phi")
+
+  # MCMC RW state
+  mcmc_state <- attr(object, "mcmc_state")
+  fit_args$adap_Sigma <- mcmc_state$adap_Sigma
+  fit_args$adap_scale <- mcmc_state$adap_scale
+
+  # Iterations
+  fit_args$niter <- niter
+  fit_args$thin <- thin
+  fit_args$burnin <- burnin
+
+  # Execute c++
+  samples <- do.call(spifa_cpp, fit_args)
+  fit_args$constrain_V_sd <- attr(samples, "V_sd")
+  mcmc_state <- list(adap_Sigma = attr(samples, "adap_Sigma_final"),
+                      adap_scale = attr(samples, "adap_scale_final"))
+  samples <- do.call(cbind, samples) |> posterior::as_draws_array()
+
+  # Add attributes
+  attr(samples, "fit_args") <- fit_args
+  attr(samples, "predict_setup") <- attr(object, "predict_setup")
+  attr(samples, "mcmc_state") <- mcmc_state
+  class(samples) <- unique(c("spifa", class(samples)))
+  return(samples)
 }
