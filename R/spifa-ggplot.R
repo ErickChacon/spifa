@@ -213,7 +213,7 @@ plot_density <- function (x, select, facet = FALSE,
     df <- dplyr::filter(df, parameter %in% pars_keep)
   }
 
-  # two figure types
+  # figure types
   if (!facet) {
     gg <- ggplot(df, aes(x, parameter, height = plotting_density, fill = parameter)) +
       ggridges::geom_ridgeline(alpha = 0.5, scale = scale, linewidth = 0.4) +
@@ -227,6 +227,112 @@ plot_density <- function (x, select, facet = FALSE,
       facet_wrap(~ parameter, ncol = ncol, scales = facet_scales,
                  strip.position = "right", labeller = label_parsed) +
       labs(x = "Value", y = "Density") +
+      theme_trace(legend = "none")
+  }
+
+  return(gg)
+}
+
+#' @title Interval Plot of Samples
+#'
+#' @description
+#' Draws a caterpillar/forest plot of posterior credible intervals directly
+#' from a fitted \code{spifa} model: one row per parameter, with a thin
+#' line for the \code{prob_outer} interval, a thick line for the
+#' \code{prob} interval, and a point at the \code{point_est}. Built on
+#' \code{\link[bayesplot]{mcmc_intervals_data}}. Unlike
+#' \code{\link{plot_trace}}/\code{\link{plot_density}}, this is a single
+#' combined view by design -- comparing intervals side by side is the whole
+#' point, so there is no faceted alternative -- but \code{sort} can reorder
+#' parameters by their point estimate, which a facet can't do usefully
+#' across independent panels.
+#'
+#' @param x A fitted \code{spifa} model.
+#' @param select Parameters to plot, as in \code{\link{plot_trace}}.
+#' @param horizontal Logical; if \code{FALSE} (default), parameters run
+#' along the x-axis and values run along the y-axis, matching the
+#' \code{ci_intervals()} convention used in the SPIFA paper's own figures;
+#' if \code{TRUE}, the axes are swapped (the forest-plot layout used by
+#' \code{\link[bayesplot]{mcmc_intervals}}).
+#' @param burnin Number of initial iterations to discard.
+#' @param thin Thinning interval applied after \code{burnin}.
+#' @param nshow As in \code{\link{plot_trace}} (a random subsample when
+#' \code{select} matches more than \code{nshow} parameters), but
+#' \code{NULL} (show every matched parameter) by default: unlike a faceted
+#' plot, a single interval plot stays readable with many more than 10 rows.
+#' @param prob Width of the thick (inner) credible interval, passed to
+#' \code{\link[bayesplot]{mcmc_intervals_data}}. Defaults to \code{0.5}.
+#' @param prob_outer Width of the thin (outer) credible interval, passed to
+#' \code{\link[bayesplot]{mcmc_intervals_data}}. Defaults to \code{0.9}.
+#' @param point_est Either \code{"median"} (default) or \code{"mean"},
+#' passed to \code{\link[bayesplot]{mcmc_intervals_data}}.
+#' @param sort Logical; if \code{TRUE}, reorder parameters by their point
+#' estimate instead of their natural order. Defaults to \code{FALSE}.
+#' @param ... Currently unused.
+#'
+#' @return A \code{ggplot} object.
+#'
+#' @author Erick A. Chacón-Montalván
+#'
+#' @examples
+#' \donttest{
+#' data(ipixuna)
+#' samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 1000)
+#'
+#' plot_interval(samples, select = "c")
+#' plot_interval(samples, select = "c", sort = TRUE)
+#' plot_interval(samples, select = "A", horizontal = TRUE)
+#' }
+#'
+#' @export
+plot_interval <- function (x, select, horizontal = FALSE,
+                            burnin = 0, thin = 1, nshow = NULL,
+                            prob = 0.5, prob_outer = 0.9,
+                            point_est = c("median", "mean"), sort = FALSE, ...) {
+  x <- drop_restricted(x)
+  point_est <- match.arg(point_est)
+
+  # create data
+  niter <- posterior::niterations(x)
+  df <- x |>
+    posterior::subset_draws(variable = select, iteration = (burnin + 1):niter) |>
+    posterior::thin_draws(thin) |>
+    bayesplot::mcmc_intervals_data(prob = prob, prob_outer = prob_outer,
+                                    point_est = point_est) |>
+    dplyr::mutate(parameter = parse_parameter(parameter))
+
+  # random sorted subsample when there are more parameters than nshow
+  pars <- unique(df$parameter)
+  if (!is.null(nshow) && length(pars) > nshow) {
+    pars_keep <- base::sort(sample(pars, nshow))
+    df <- dplyr::filter(df, parameter %in% pars_keep)
+  }
+
+  # sort by point estimate instead of the natural parameter order
+  if (sort) df <- dplyr::mutate(df, parameter = stats::reorder(parameter, m))
+
+  outer_colour <- "black"
+  inner_colour <- grDevices::rgb(1, 0.5, 0.1)
+  # figure types
+  if (horizontal) {
+    gg <- ggplot(df, aes(y = parameter)) +
+      geom_segment(aes(x = ll, xend = hh, yend = parameter), linewidth = 0.4,
+                   colour = outer_colour) +
+      geom_segment(aes(x = l, xend = h, yend = parameter), linewidth = 1.5,
+                   colour = inner_colour) +
+      geom_point(aes(x = m), size = 2, colour = outer_colour) +
+      scale_y_discrete(labels = function(x) parse(text = x)) +
+      labs(x = "Value", y = NULL) +
+      theme_trace(legend = "none")
+  } else {
+    gg <- ggplot(df, aes(x = parameter)) +
+      geom_segment(aes(y = ll, yend = hh, xend = parameter), linewidth = 0.4,
+                   colour = outer_colour) +
+      geom_segment(aes(y = l, yend = h, xend = parameter), linewidth = 1.5,
+                   colour = inner_colour) +
+      geom_point(aes(y = m), size = 2, colour = outer_colour) +
+      scale_x_discrete(labels = function(x) parse(text = x)) +
+      labs(x = NULL, y = "Value") +
       theme_trace(legend = "none")
   }
 
