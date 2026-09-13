@@ -1,4 +1,4 @@
-# spifa
+# spifa: Bayesian Spatial Item Factor Analysis
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/ErickChacon/spifa/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ErickChacon/spifa/actions/workflows/R-CMD-check.yaml)
@@ -41,6 +41,8 @@ samples
 summary(samples, burnin = 500, select = "c")
 plot(samples, select = "c", burnin = 500)
 ```
+
+<img src="man/figures/README-example.png" width="100%" />
 
 Printing `samples` directly (`print.spifa()`) gives model type, dimensions,
 and a grouped posterior summary table at a glance; `summary()` computes the
