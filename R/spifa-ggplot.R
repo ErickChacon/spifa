@@ -14,15 +14,21 @@ drop_restricted <- function (x) {
   return(x)
 }
 
-# plotmath-parse "A[7,2]" as "A[list(7,2)]" so a two-index name parses
-# correctly (unparsed, plotmath silently drops the second index -- see
-# plot_trace()/plot_density()). `parameter` comes in as a factor already
-# in the correct (natural, e.g. "c[1]", "c[2]", ..., "c[10]") order from
-# bayesplot -- gsub() would coerce it to character and lose that order, so
-# this reapplies the same transform to the factor's levels to keep it.
+# plotmath parse of parameters
 parse_parameter <- function (parameter) {
   to_math <- function (p) gsub("\\[(.+),(.+)\\]", "[list(\\1,\\2)]", p)
   factor(to_math(as.character(parameter)), levels = to_math(levels(parameter)))
+}
+
+# converts samples to long format
+draws_long <- function (x) {
+  wide <- x |> posterior::as_draws_df() |> tibble::as_tibble()
+  pars <- setdiff(names(wide), c(".chain", ".iteration", ".draw"))
+  wide |>
+    dplyr::mutate(iteration = .iteration) |>
+    tidyr::pivot_longer(dplyr::all_of(pars), names_to = "parameter", values_to = "value") |>
+    dplyr::mutate(parameter = factor(parameter, levels = pars)) |>
+    dplyr::select(iteration, parameter, value)
 }
 
 theme_trace <- function (legend = "none") {
@@ -46,9 +52,8 @@ theme_trace <- function (legend = "none") {
 #' others sharing the same axis) or overlaid (\code{facet = FALSE}; all
 #' series on a single panel, for a quick glance at overall convergence).
 #' Replaces the older \code{\link{gg_trace}}/\code{\link{gather.spifa}}
-#' pair: it reshapes draws via \code{\link[bayesplot]{mcmc_trace_data}}
-#' instead, so it works directly on \code{x} with no intermediate
-#' conversion.
+#' pair: it reshapes draws directly, so it works on \code{x} with no
+#' intermediate conversion.
 #'
 #' @param x A fitted \code{spifa} model.
 #' @param select Parameters to plot, passed to the \code{variable} argument
@@ -102,7 +107,7 @@ plot_trace <- function (x, select, facet = TRUE,
   df <- x |>
     posterior::subset_draws(variable = select, iteration = (burnin + 1):niter) |>
     posterior::thin_draws(thin) |>
-    bayesplot::mcmc_trace_data() |>
+    draws_long() |>
     dplyr::mutate(parameter = parse_parameter(parameter))
 
   # random sorted subsample when there are more parameters than nshow
@@ -145,12 +150,13 @@ plot_trace <- function (x, select, facet = TRUE,
 #' Draws posterior density curves directly from a fitted \code{spifa}
 #' model, in one of two formats: overlaid (\code{facet = FALSE}, the
 #' default; stacked, slightly-overlapping ridgeline plot via
-#' \code{\link[ggridges]{geom_ridgeline}} -- the more insightful default
-#' for comparing many parameters' shapes and locations at a glance) or
+#' \code{\link[ggridges]{geom_density_ridges}} -- the more insightful
+#' default for comparing many parameters' shapes and locations at a glance) or
 #' faceted (\code{facet = TRUE}; one panel per parameter). Shows the
 #' density shape only -- for credible intervals and point estimates, see
-#' \code{plot_interval} (planned; not yet implemented). Built on
-#' \code{\link[bayesplot]{mcmc_areas_data}} for the density curve itself.
+#' \code{\link{plot_interval}}. The density itself is computed directly by
+#' \code{\link[ggplot2]{geom_density}}/\code{\link[ggridges]{geom_density_ridges}}
+#' from the raw draws, reshaped via \code{\link[posterior]{as_draws_df}}.
 #'
 #' @param x A fitted \code{spifa} model.
 #' @param select Parameters to plot, as in \code{\link{plot_trace}}.
@@ -171,7 +177,7 @@ plot_trace <- function (x, select, facet = TRUE,
 #' Parameters with very different value ranges can render compressed/hard
 #' to read with a shared x-axis.
 #' @param scale Amount of vertical overlap between ridges (\code{facet =
-#' FALSE} only), passed to \code{\link[ggridges]{geom_ridgeline}}.
+#' FALSE} only), passed to \code{\link[ggridges]{geom_density_ridges}}.
 #' Defaults to \code{1.2}.
 #' @param ... Currently unused.
 #'
@@ -197,13 +203,12 @@ plot_density <- function (x, select, facet = FALSE,
                            facet_scales = "free", scale = 1.2, ...) {
   x <- drop_restricted(x)
 
-  # create data: bayesplot doesn't have mcmc_dens_data
+  # create data
   niter <- posterior::niterations(x)
   df <- x |>
     posterior::subset_draws(variable = select, iteration = (burnin + 1):niter) |>
     posterior::thin_draws(thin) |>
-    bayesplot::mcmc_areas_data() |>
-    dplyr::filter(interval == "outer") |>
+    draws_long() |>
     dplyr::mutate(parameter = parse_parameter(parameter))
 
   # random sorted subsample when there are more parameters than nshow
@@ -215,15 +220,15 @@ plot_density <- function (x, select, facet = FALSE,
 
   # figure types
   if (!facet) {
-    gg <- ggplot(df, aes(x, parameter, height = plotting_density, fill = parameter)) +
-      ggridges::geom_ridgeline(alpha = 0.5, scale = scale, linewidth = 0.4) +
+    gg <- ggplot(df, aes(value, parameter, fill = parameter)) +
+      ggridges::geom_density_ridges(alpha = 0.5, scale = scale, linewidth = 0.4,
+                                     rel_min_height = 0.01) +
       scale_y_discrete(labels = function(x) parse(text = x)) +
       labs(x = "Value", y = NULL) +
       theme_trace(legend = "none")
   } else {
-    gg <- ggplot(df, aes(x, ymin = 0, ymax = plotting_density, fill = parameter)) +
-      geom_ribbon(alpha = 0.5, colour = NA) +
-      geom_line(aes(y = plotting_density), colour = "black", linewidth = 0.4) +
+    gg <- ggplot(df, aes(value, fill = parameter)) +
+      geom_density(alpha = 0.5, linewidth = 0.4, trim = TRUE) +
       facet_wrap(~ parameter, ncol = ncol, scales = facet_scales,
                  strip.position = "right", labeller = label_parsed) +
       labs(x = "Value", y = "Density") +
@@ -239,8 +244,8 @@ plot_density <- function (x, select, facet = FALSE,
 #' Draws a caterpillar/forest plot of posterior credible intervals directly
 #' from a fitted \code{spifa} model: one row per parameter, with a thin
 #' line for the \code{prob_outer} interval, a thick line for the
-#' \code{prob} interval, and a point at the \code{point_est}. Built on
-#' \code{\link[bayesplot]{mcmc_intervals_data}}. Unlike
+#' \code{prob} interval, and a point at the \code{point_est}, computed
+#' directly from the raw draws (quantiles/median/mean). Unlike
 #' \code{\link{plot_trace}}/\code{\link{plot_density}}, this is a single
 #' combined view by design -- comparing intervals side by side is the whole
 #' point, so there is no faceted alternative -- but \code{sort} can reorder
@@ -252,20 +257,18 @@ plot_density <- function (x, select, facet = FALSE,
 #' @param horizontal Logical; if \code{FALSE} (default), parameters run
 #' along the x-axis and values run along the y-axis, matching the
 #' \code{ci_intervals()} convention used in the SPIFA paper's own figures;
-#' if \code{TRUE}, the axes are swapped (the forest-plot layout used by
-#' \code{\link[bayesplot]{mcmc_intervals}}).
+#' if \code{TRUE}, the axes are swapped (a forest-plot layout).
 #' @param burnin Number of initial iterations to discard.
 #' @param thin Thinning interval applied after \code{burnin}.
 #' @param nshow As in \code{\link{plot_trace}} (a random subsample when
 #' \code{select} matches more than \code{nshow} parameters), but
 #' \code{NULL} (show every matched parameter) by default: unlike a faceted
 #' plot, a single interval plot stays readable with many more than 10 rows.
-#' @param prob Width of the thick (inner) credible interval, passed to
-#' \code{\link[bayesplot]{mcmc_intervals_data}}. Defaults to \code{0.5}.
-#' @param prob_outer Width of the thin (outer) credible interval, passed to
-#' \code{\link[bayesplot]{mcmc_intervals_data}}. Defaults to \code{0.9}.
-#' @param point_est Either \code{"median"} (default) or \code{"mean"},
-#' passed to \code{\link[bayesplot]{mcmc_intervals_data}}.
+#' @param prob Width of the thick (inner) credible interval (a central
+#' quantile interval). Defaults to \code{0.5}.
+#' @param prob_outer Width of the thin (outer) credible interval. Defaults
+#' to \code{0.9}.
+#' @param point_est Either \code{"median"} (default) or \code{"mean"}.
 #' @param sort Logical; if \code{TRUE}, reorder parameters by their point
 #' estimate instead of their natural order. Defaults to \code{FALSE}.
 #' @param ... Currently unused.
@@ -292,14 +295,21 @@ plot_interval <- function (x, select, horizontal = FALSE,
   x <- drop_restricted(x)
   point_est <- match.arg(point_est)
 
-  # create data
+  # create data: one row per parameter
   niter <- posterior::niterations(x)
   df <- x |>
     posterior::subset_draws(variable = select, iteration = (burnin + 1):niter) |>
     posterior::thin_draws(thin) |>
-    bayesplot::mcmc_intervals_data(prob = prob, prob_outer = prob_outer,
-                                    point_est = point_est) |>
-    dplyr::mutate(parameter = parse_parameter(parameter))
+    draws_long() |>
+    dplyr::mutate(parameter = parse_parameter(parameter)) |>
+    dplyr::group_by(parameter) |>
+    dplyr::summarise(
+      ll = stats::quantile(value, (1 - prob_outer) / 2, names = FALSE),
+      l = stats::quantile(value, (1 - prob) / 2, names = FALSE),
+      m = if (point_est == "median") stats::median(value) else mean(value),
+      h = stats::quantile(value, 1 - (1 - prob) / 2, names = FALSE),
+      hh = stats::quantile(value, 1 - (1 - prob_outer) / 2, names = FALSE),
+      .groups = "drop")
 
   # random sorted subsample when there are more parameters than nshow
   pars <- unique(df$parameter)

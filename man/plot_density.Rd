@@ -45,7 +45,7 @@ Parameters with very different value ranges can render compressed/hard
 to read with a shared x-axis.}
 
 \item{scale}{Amount of vertical overlap between ridges (\code{facet =
-FALSE} only), passed to \code{\link[ggridges]{geom_ridgeline}}.
+FALSE} only), passed to \code{\link[ggridges]{geom_density_ridges}}.
 Defaults to \code{1.2}.}
 
 \item{...}{Currently unused.}
@@ -57,12 +57,13 @@ A \code{ggplot} object.
 Draws posterior density curves directly from a fitted \code{spifa}
 model, in one of two formats: overlaid (\code{facet = FALSE}, the
 default; stacked, slightly-overlapping ridgeline plot via
-\code{\link[ggridges]{geom_ridgeline}} -- the more insightful default
-for comparing many parameters' shapes and locations at a glance) or
+\code{\link[ggridges]{geom_density_ridges}} -- the more insightful
+default for comparing many parameters' shapes and locations at a glance) or
 faceted (\code{facet = TRUE}; one panel per parameter). Shows the
 density shape only -- for credible intervals and point estimates, see
-\code{plot_interval} (planned; not yet implemented). Built on
-\code{\link[bayesplot]{mcmc_areas_data}} for the density curve itself.
+\code{\link{plot_interval}}. The density itself is computed directly by
+\code{\link[ggplot2]{geom_density}}/\code{\link[ggridges]{geom_density_ridges}}
+from the raw draws, reshaped via \code{\link[posterior]{as_draws_df}}.
 }
 \examples{
 \donttest{

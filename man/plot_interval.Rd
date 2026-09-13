@@ -26,8 +26,7 @@ plot_interval(
 \item{horizontal}{Logical; if \code{FALSE} (default), parameters run
 along the x-axis and values run along the y-axis, matching the
 \code{ci_intervals()} convention used in the SPIFA paper's own figures;
-if \code{TRUE}, the axes are swapped (the forest-plot layout used by
-\code{\link[bayesplot]{mcmc_intervals}}).}
+if \code{TRUE}, the axes are swapped (a forest-plot layout).}
 
 \item{burnin}{Number of initial iterations to discard.}
 
@@ -38,14 +37,13 @@ if \code{TRUE}, the axes are swapped (the forest-plot layout used by
 \code{NULL} (show every matched parameter) by default: unlike a faceted
 plot, a single interval plot stays readable with many more than 10 rows.}
 
-\item{prob}{Width of the thick (inner) credible interval, passed to
-\code{\link[bayesplot]{mcmc_intervals_data}}. Defaults to \code{0.5}.}
+\item{prob}{Width of the thick (inner) credible interval (a central
+quantile interval). Defaults to \code{0.5}.}
 
-\item{prob_outer}{Width of the thin (outer) credible interval, passed to
-\code{\link[bayesplot]{mcmc_intervals_data}}. Defaults to \code{0.9}.}
+\item{prob_outer}{Width of the thin (outer) credible interval. Defaults
+to \code{0.9}.}
 
-\item{point_est}{Either \code{"median"} (default) or \code{"mean"},
-passed to \code{\link[bayesplot]{mcmc_intervals_data}}.}
+\item{point_est}{Either \code{"median"} (default) or \code{"mean"}.}
 
 \item{sort}{Logical; if \code{TRUE}, reorder parameters by their point
 estimate instead of their natural order. Defaults to \code{FALSE}.}
@@ -59,8 +57,8 @@ A \code{ggplot} object.
 Draws a caterpillar/forest plot of posterior credible intervals directly
 from a fitted \code{spifa} model: one row per parameter, with a thin
 line for the \code{prob_outer} interval, a thick line for the
-\code{prob} interval, and a point at the \code{point_est}. Built on
-\code{\link[bayesplot]{mcmc_intervals_data}}. Unlike
+\code{prob} interval, and a point at the \code{point_est}, computed
+directly from the raw draws (quantiles/median/mean). Unlike
 \code{\link{plot_trace}}/\code{\link{plot_density}}, this is a single
 combined view by design -- comparing intervals side by side is the whole
 point, so there is no faceted alternative -- but \code{sort} can reorder
