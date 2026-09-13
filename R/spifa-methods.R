@@ -51,6 +51,7 @@ print.spifa <- function (x, ...) {
 
 print_summary <- function (x, params, label) {
   params <- intersect(params, posterior::variables(x, with_indices = FALSE))
+  if (length(params) == 0) return(invisible())
   sx <- summary(x, select = params) |>
     tibble::column_to_rownames("variable") |>
     subset(select = c("mean", "median", "sd", "q10", "q90", "ess_bulk", "rhat")) |>

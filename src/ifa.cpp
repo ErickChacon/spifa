@@ -17,7 +17,7 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
     std::string mod_type):
   model_type(mod_type),
   y(response), dist(distances), X(predictors),
-  n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols), ncorr((m-1)*m / 2),
+  n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols),
   ones_n(arma::ones(n)),
   zeros_nm(arma::zeros(n*m)),
   eye_q(arma::eye(q,q)),
@@ -113,7 +113,7 @@ Ifa::Ifa(Rcpp::NumericVector response, arma::mat predictors, arma::mat distances
       std::string mod_type):
   model_type(mod_type),
   y(response), dist(distances), X(predictors),
-  n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols), ncorr((m-1)*m / 2),
+  n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols),
   ones_n(arma::ones(n)),
   zeros_nm(arma::zeros(n*m)),
   eye_q(arma::eye(q,q)),
@@ -364,13 +364,17 @@ Rcpp::List Ifa::sample(
   // Transformation of prior parameters
   arma::vec a_prior_mean = arma::vectorise(A_prior_mean.t());
 
-  int n_chol_corr = m*(m+1)/2;
+  // Correlation is fixed in the eifa case
+  int m_corr = (model_type == "eifa") ? 0 : m;
+  int n_chol_corr = m_corr*(m_corr+1)/2;
+  int n_corr = m_corr*(m_corr-1)/2;
+
   // Define matrices to save samples
   arma::mat c_samples(q, nsave);
   arma::mat a_samples(q*m, nsave);
   arma::mat theta_samples(n*m, nsave);
   arma::mat z_samples(q*n, nsave);
-  arma::mat corr_samples(ncorr, nsave);
+  arma::mat corr_samples(n_corr, nsave);
   arma::mat corr_chol_samples(n_chol_corr, nsave);
   arma::mat mgp_sd_samples(mgp_sd.n_elem, nsave);
   arma::mat mgp_phi_samples(ngp, nsave);
@@ -394,8 +398,10 @@ Rcpp::List Ifa::sample(
       c_samples.col(j) = c;
       a_samples.col(j) = arma::vectorise(LA);
       z_samples.col(j) = z;
-      corr_chol_samples.col(j) = trimatl2vec(Corr_chol, true);
-      corr_samples.col(j) = trimatl2vec(Corr_chol * Corr_chol.t(), false);
+      if (model_type != "eifa") {
+        corr_chol_samples.col(j) = trimatl2vec(Corr_chol, true);
+        corr_samples.col(j) = trimatl2vec(Corr_chol * Corr_chol.t(), false);
+      }
       mgp_sd_samples.col(j) = mgp_sd;
       mgp_phi_samples.col(j) = mgp_phi;
       betas_samples.col(j) = arma::vectorise(B);
@@ -434,9 +440,9 @@ Rcpp::List Ifa::sample(
   Rcpp::NumericMatrix z_samples_rcpp = Rcpp::wrap(z_samples.t());
   Rcpp::colnames(z_samples_rcpp) = name_samples_mat(n, q, "Z");
   Rcpp::NumericMatrix corr_chol_samples_rcpp = Rcpp::wrap(corr_chol_samples.t());
-  Rcpp::colnames(corr_chol_samples_rcpp) = name_samples_lower(m, m, "Chol", true);
+  Rcpp::colnames(corr_chol_samples_rcpp) = name_samples_lower(m_corr, m_corr, "Chol", true);
   Rcpp::NumericMatrix corr_samples_rcpp = Rcpp::wrap(corr_samples.t());
-  Rcpp::colnames(corr_samples_rcpp) = name_samples_lower(m, m, "Corr", false);
+  Rcpp::colnames(corr_samples_rcpp) = name_samples_lower(m_corr, m_corr, "Corr", false);
   Rcpp::NumericMatrix mgp_sd_samples_rcpp = Rcpp::wrap(mgp_sd_samples.t());
   Rcpp::colnames(mgp_sd_samples_rcpp) =
     name_samples_mat(m, ngp, "T")[Rcpp::as<Rcpp::IntegerVector>(Rcpp::wrap(T_index))];

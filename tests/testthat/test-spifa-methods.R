@@ -53,8 +53,18 @@ test_that("summary(): burnin >= niter gives a clear error, not a raw seq() crash
 
 test_that("print.spifa() shows formula, dimensions, and a posterior summary table", {
   data(ipixuna, package = "spifa")
-  samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0,
-    niter = 5, thin = 1)
+  nitems <- ncol(ipixuna$items)
+  nfactors <- 3
+  A <- matrix(1, nitems, nfactors)
+  A[c(4, 8), 1] <- 0
+  A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+  A[c(5, 6), 3] <- 0
+
+  # cifa (a restricted constraints$discrimination): unlike eifa, its Corr is
+  # actually estimated, so it has something to show in "Factor model
+  # parameters:" below
+  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+    niter = 5, thin = 1, constraints = list(discrimination = A))
 
   out <- capture.output(print(samples))
   out1 <- paste(out, collapse = "\n")
@@ -74,6 +84,14 @@ test_that("print.spifa() shows formula, dimensions, and a posterior summary tabl
   expect_match(out1, "Corr\\[2,1\\]")
   expect_true(which(out == "Factor model parameters:") >
     which(grepl("^A\\[", out))[1])
+
+  # eifa has no B/T/phi/Corr at all (see the "eifa" test in test-spifa.R):
+  # "Factor model parameters:" is omitted entirely rather than printed empty
+  samples_eifa <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
+    niter = 5, thin = 1)
+  out_eifa <- paste(capture.output(print(samples_eifa)), collapse = "\n")
+  expect_match(out_eifa, "Item model parameters:", fixed = TRUE)
+  expect_no_match(out_eifa, "Factor model parameters:")
 
   # execute = FALSE: no posterior samples to summarise, shouldn't error
   samples_unexecuted <- spifa(items ~ 1, data = ipixuna, nfactors = 3,

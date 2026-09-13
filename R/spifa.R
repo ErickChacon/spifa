@@ -17,8 +17,11 @@
 #' 1}) with \code{constraints$discrimination} left unspecified gives
 #' exploratory IFA (EIFA) -- a default lower-triangular restriction on
 #' \code{discrimination} is applied automatically for identifiability in
-#' this case, not something the user chooses (see \code{constraints} below);
-#' supplying your own (typically theory-driven) restricted
+#' this case, not something the user chooses (see \code{constraints} below).
+#' EIFA also never estimates the correlation between the latent factors: it
+#' stays fixed at \code{priors$corr$initial} (identity by default) for the
+#' whole fit -- see \code{priors} below. Supplying your own (typically
+#' theory-driven) restricted
 #' \code{constraints$discrimination} instead gives confirmatory IFA (CIFA);
 #' adding predictors to the right-hand side (e.g. \code{items ~ x1}) gives
 #' CIFA with predictors; \code{data} being an \code{\link[sf]{sf}} object
@@ -141,6 +144,12 @@
 #' `corr` accepts `initial` and `eta` (the LKJ prior shape parameter).
 #' See the parameter glossary above for how these names map to the
 #' fitted model's sampled output.
+#'
+#' For `eifa` specifically, `corr` is never estimated (see Details) --
+#' `priors$corr$initial` (an `nfactors x nfactors` correlation matrix, 1s
+#' on the diagonal; identity if left unspecified) instead fixes the
+#' correlation between the latent factors at that value for the whole fit,
+#' and `priors$corr$eta` has no effect at all.
 #'
 #' @param adaptive Named list of hyperparameters associated with the adaptive sampling.
 #' The adaptive sampling is done jointly for the `correlation` parameters, `standard

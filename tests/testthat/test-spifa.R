@@ -15,7 +15,7 @@ test_that("eifa", {
     lower.tri(matrix(NA, nitems, nfactors), diag = TRUE) * 1)
   expect_equal(length(attr(samples, "fit_args")$response), nrow(ipixuna) * nitems)
   expect_setequal(variables(samples, with_indices = FALSE),
-    c("c", "A", "Theta", "Z", "Chol", "Corr"))
+    c("c", "A", "Theta", "Z"))
 
   # standardize does not affect eifa models
   set.seed(42)
