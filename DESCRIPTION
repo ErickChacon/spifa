@@ -27,7 +27,8 @@ Imports: Rcpp (>= 0.12.13),
          sf,
          ggplot2,
          posterior,
-         ggridges
+         ggridges,
+         patchwork
 LinkingTo: Rcpp,
            RcppArmadillo,
            RcppTN

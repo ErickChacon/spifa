@@ -31,7 +31,7 @@ draws_long <- function (x) {
     dplyr::select(iteration, parameter, value)
 }
 
-theme_trace <- function (legend = "none") {
+theme_spifa <- function (legend = "none") {
   theme_minimal() +
     theme(panel.border = element_blank(),
           panel.grid.minor = element_blank(),
@@ -129,7 +129,7 @@ plot_trace <- function (x, select, facet = TRUE,
       scale_x_continuous(expand = c(0, 0)) +
       scale_colour_discrete(labels = function(x) parse(text = x)) +
       labs(x = "Iteration", y = "Value", col = "Parameter") +
-      theme_trace(legend = legend)
+      theme_spifa(legend = legend)
   } else {
     gg <- ggplot(df, aes(iteration, value, col = parameter)) +
       geom_path(linewidth = 0.2) +
@@ -137,7 +137,7 @@ plot_trace <- function (x, select, facet = TRUE,
                  labeller = label_parsed) +
       scale_x_continuous(expand = c(0, 0)) +
       labs(x = "Iteration", y = "Value") +
-      theme_trace(legend = "none")
+      theme_spifa(legend = "none")
   }
 
   return(gg)
@@ -224,14 +224,14 @@ plot_density <- function (x, select, facet = FALSE,
                                      rel_min_height = 0.01) +
       scale_y_discrete(labels = function(x) parse(text = x)) +
       labs(x = "Value", y = NULL) +
-      theme_trace(legend = "none")
+      theme_spifa(legend = "none")
   } else {
     gg <- ggplot(df, aes(value, fill = parameter)) +
       geom_density(alpha = 0.5, linewidth = 0.4, trim = TRUE) +
       facet_wrap(~ parameter, ncol = ncol, scales = facet_scales,
                  strip.position = "right", labeller = label_parsed) +
       labs(x = "Value", y = "Density") +
-      theme_trace(legend = "none")
+      theme_spifa(legend = "none")
   }
 
   return(gg)
@@ -365,7 +365,7 @@ plot_interval <- function (x, select, horizontal = FALSE,
       geom_point(aes(x = m), size = 2, colour = outer_colour) +
       scale_y_discrete(labels = function(x) parse(text = x)) +
       labs(x = "Value", y = NULL) +
-      theme_trace(legend = "none")
+      theme_spifa(legend = "none")
   } else {
     gg <- ggplot(df, aes(x = parameter)) +
       geom_segment(aes(y = ll, yend = hh, xend = parameter), linewidth = 0.4,
@@ -375,7 +375,7 @@ plot_interval <- function (x, select, horizontal = FALSE,
       geom_point(aes(y = m), size = 2, colour = outer_colour) +
       scale_x_discrete(labels = function(x) parse(text = x)) +
       labs(x = NULL, y = "Value") +
-      theme_trace(legend = "none")
+      theme_spifa(legend = "none")
   }
 
   # add reference points
@@ -388,5 +388,56 @@ plot_interval <- function (x, select, horizontal = FALSE,
   }
 
   return(gg)
+}
+
+#' @title Default Plot of spifa Posterior Samples
+#'
+#' @description
+#' The \code{\link[base]{plot}} default for a fitted \code{spifa} object: a
+#' combined trace + density view, \code{\link{plot_trace}} on the left and
+#' \code{\link{plot_density}} on the right, one row per parameter and
+#' matched row for row, via \code{\link[patchwork]{wrap_plots}} --
+#' convergence and posterior shape at a glance, right after fitting.
+#' Defaults to the easiness (\code{c}) and discrimination (\code{A})
+#' parameters. For a credible-interval view, or for any other parameter
+#' block, call \code{\link{plot_trace}}/\code{\link{plot_density}}/
+#' \code{\link{plot_interval}} directly instead.
+#'
+#' @param x A fitted \code{spifa} object, as returned by \code{\link{spifa}}.
+#' @param select Parameters to plot, as in \code{\link{plot_trace}}.
+#' Defaults to \code{c("c", "A")}.
+#' @param nshow As in \code{\link{plot_trace}}, but applied once up front so
+#' both panels show the same parameters: calling \code{\link{plot_trace}}/
+#' \code{\link{plot_density}} separately with the same \code{select} can
+#' otherwise each pick a different random subsample.
+#' @param ... Further arguments passed to both \code{\link{plot_trace}} and
+#' \code{\link{plot_density}}.
+#'
+#' @return A \code{patchwork} object (a \code{ggplot}-like object).
+#'
+#' @author Erick A. Chacón-Montalván
+#'
+#' @examples
+#' \donttest{
+#' data(ipixuna)
+#' samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 1000)
+#'
+#' plot(samples)
+#' plot(samples, select = "c")
+#' }
+#'
+#' @export
+plot.spifa <- function (x, select = c("c", "A"), nshow = 10, ...) {
+  x <- drop_restricted(x)
+  matched <- posterior::variables(posterior::subset_draws(x, variable = select))
+  if (!is.null(nshow) && length(matched) > nshow) {
+    matched <- sort(sample(matched, nshow))
+  }
+
+  gg_trace <- plot_trace(x, select = matched, nshow = NULL, ...)
+  gg_density <- plot_density(x, select = matched, facet = TRUE,
+    facet_scales = "free_y", nshow = NULL, ...)
+
+  patchwork::wrap_plots(gg_trace, gg_density)
 }
 

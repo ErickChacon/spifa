@@ -21,6 +21,7 @@ RUN install2.r -e -s \
     ggridges \
     posterior \
     bayesplot \
+    patchwork \
     knitr \
     rmarkdown \
     testthat \
