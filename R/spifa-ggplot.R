@@ -355,6 +355,7 @@ plot_interval <- function (x, select, horizontal = FALSE,
   # figure types
   outer_colour <- "black"
   inner_colour <- grDevices::rgb(1, 0.5, 0.1)
+  ref_color <- 4
   if (horizontal) {
     gg <- ggplot(df, aes(y = parameter)) +
       geom_segment(aes(x = ll, xend = hh, yend = parameter), linewidth = 0.4,
@@ -380,9 +381,9 @@ plot_interval <- function (x, select, horizontal = FALSE,
   # add reference points
   if (!is.null(reference)) {
     gg <- gg + if (horizontal) {
-      geom_point(aes(x = reference), shape = 4, size = 2, colour = "forestgreen")
+      geom_point(aes(x = reference), shape = 10, size = 2, colour = ref_color)
     } else {
-      geom_point(aes(y = reference), shape = 4, size = 2, colour = "forestgreen")
+      geom_point(aes(y = reference), shape = 10, size = 2, colour = ref_color)
     }
   }
 
