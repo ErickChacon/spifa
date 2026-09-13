@@ -1,4 +1,4 @@
-# spifa
+# spifa: Bayesian Spatial Item Factor Analysis
 
 ## Introduction
 
@@ -41,6 +41,8 @@ samples
 summary(samples, burnin = 500, select = "c")
 plot(samples, select = "c", burnin = 500)
 ```
+
+![](reference/figures/README-example.png)
 
 Printing `samples` directly
 ([`print.spifa()`](https://ErickChacon.github.io/spifa/reference/print.spifa.md))

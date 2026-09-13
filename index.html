@@ -52,7 +52,7 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="spifa">spifa<a class="anchor" aria-label="anchor" href="#spifa"></a>
+<div class="page-header"><h1 id="spifa-bayesian-spatial-item-factor-analysis">spifa: Bayesian Spatial Item Factor Analysis<a class="anchor" aria-label="anchor" href="#spifa-bayesian-spatial-item-factor-analysis"></a>
 </h1></div>
 <!-- badges: start -->
 
@@ -82,6 +82,7 @@
 <span><span class="va">samples</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">samples</span>, burnin <span class="op">=</span> <span class="fl">500</span>, select <span class="op">=</span> <span class="st">"c"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"c"</span>, burnin <span class="op">=</span> <span class="fl">500</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-example.png" width="100%"></p>
 <p>Printing <code>samples</code> directly (<code><a href="reference/print.spifa.html">print.spifa()</a></code>) gives model type, dimensions, and a grouped posterior summary table at a glance; <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> computes the full set of statistics for a specific parameter block; <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> gives a quick trace + density overview. <code><a href="reference/plot_trace.html">plot_trace()</a></code>/<code><a href="reference/plot_density.html">plot_density()</a></code>/ <code><a href="reference/plot_interval.html">plot_interval()</a></code> cover trace, density, and credible-interval views individually, for any parameter block. See <code><a href="articles/spifa-ipixuna.html">vignette("spifa-ipixuna")</a></code> for a full worked example with predictors and a theory-driven discrimination structure.</p>
 </div>
 </div>
