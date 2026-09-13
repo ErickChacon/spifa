@@ -105,3 +105,67 @@ test_that("plot_interval() plotmath-parses two-index and single-index parameter 
   gg_phi <- plot_interval(samples, select = "phi")
   expect_equal(as.character(unique(gg_phi$data$parameter)), "phi[1]")
 })
+
+test_that("plot_interval() reference accepts a matrix matching a block's own shape", {
+  data(ipixuna, package = "spifa")
+  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
+  nitems <- ncol(ipixuna_flat$items)
+  nfactors <- 3
+  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors, ngp = 0,
+    niter = 20, thin = 1)
+
+  ref_mat <- matrix(seq_len(nitems * nfactors), nitems, nfactors)
+  gg <- plot_interval(samples, select = "A", reference = ref_mat)
+
+  expect_true("reference" %in% names(gg$data))
+  # data.frame is keyed by raw "A[i,j]" names before plotmath parsing, so
+  # check the join picked up the right matrix entry per parameter
+  raw <- gsub("list\\((.+),(.+)\\)", "\\1,\\2", as.character(gg$data$parameter))
+  raw <- gsub("^A\\[|\\]$", "", raw)
+  idx <- do.call(rbind, strsplit(raw, ","))
+  expected <- ref_mat[cbind(as.integer(idx[, 1]), as.integer(idx[, 2]))]
+  expect_equal(gg$data$reference, expected)
+})
+
+test_that("plot_interval() reference accepts a plain vector matching a block's own shape", {
+  data(ipixuna, package = "spifa")
+  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
+  nitems <- ncol(ipixuna_flat$items)
+  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = 3, ngp = 0,
+    niter = 20, thin = 1)
+
+  ref <- seq_len(nitems) / 2
+  gg <- plot_interval(samples, select = "c", reference = ref)
+
+  by_param <- setNames(gg$data$reference, as.character(gg$data$parameter))
+  expect_equal(unname(by_param[paste0("c[", seq_len(nitems), "]")]), ref)
+})
+
+test_that("plot_interval() reference requires select to be a single block name", {
+  data(ipixuna, package = "spifa")
+  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
+  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = 3, ngp = 0,
+    niter = 20, thin = 1)
+
+  expect_error(
+    plot_interval(samples, select = "c[1]", reference = 0.5),
+    "single block")
+})
+
+test_that("plot_interval() reference interacts correctly with sort and horizontal", {
+  data(ipixuna, package = "spifa")
+  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
+  nitems <- ncol(ipixuna_flat$items)
+  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = 3, ngp = 0,
+    niter = 20, thin = 1)
+
+  ref <- seq_len(nitems)
+  gg <- plot_interval(samples, select = "c", reference = ref, sort = TRUE,
+    horizontal = TRUE)
+
+  expect_s3_class(gg, "ggplot")
+  expect_equal(nrow(gg$data), nitems)
+  # reference values still line up with their own parameter after reordering
+  by_param <- setNames(gg$data$reference, as.character(gg$data$parameter))
+  expect_equal(unname(by_param[paste0("c[", seq_len(nitems), "]")]), ref)
+})

@@ -270,6 +270,13 @@ plot_density <- function (x, select, facet = FALSE,
 #' @param point_est Either \code{"median"} (default) or \code{"mean"}.
 #' @param sort Logical; if \code{TRUE}, reorder parameters by their point
 #' estimate instead of their natural order. Defaults to \code{FALSE}.
+#' @param reference Optional reference values to overlay (e.g. the true
+#' values in a simulation study), as a fourth marker alongside the interval
+#' and point estimate. Only valid when \code{select} is a single block name
+#' (e.g. \code{"A"}): an unnamed vector or matrix matching that block's own
+#' shape (e.g. \code{parameters$discrimination}, an \code{nitems x nfactors}
+#' matrix). Structurally-restricted parameters (dropped internally before
+#' plotting) are silently ignored if present in \code{reference}.
 #' @param ... Currently unused.
 #'
 #' @return A \code{ggplot} object.
@@ -284,13 +291,18 @@ plot_density <- function (x, select, facet = FALSE,
 #' plot_interval(samples, select = "c")
 #' plot_interval(samples, select = "c", sort = TRUE)
 #' plot_interval(samples, select = "A", horizontal = TRUE)
+#'
+#' # overlay the true simulated discrimination values
+#' parameters <- attr(ipixuna, "parameters")
+#' plot_interval(samples, select = "A", reference = parameters$discrimination)
 #' }
 #'
 #' @export
 plot_interval <- function (x, select, horizontal = FALSE,
                             burnin = 0, thin = 1, nshow = NULL,
                             prob = 0.5, prob_outer = 0.9,
-                            point_est = c("median", "mean"), sort = FALSE, ...) {
+                            point_est = c("median", "mean"), sort = FALSE,
+                            reference = NULL, ...) {
   x <- drop_restricted(x)
   point_est <- match.arg(point_est)
 
@@ -300,7 +312,6 @@ plot_interval <- function (x, select, horizontal = FALSE,
     posterior::subset_draws(variable = select, iteration = (burnin + 1):niter) |>
     posterior::thin_draws(thin) |>
     draws_long() |>
-    dplyr::mutate(parameter = parse_parameter(parameter)) |>
     dplyr::group_by(parameter) |>
     dplyr::summarise(
       ll = stats::quantile(value, (1 - prob_outer) / 2, names = FALSE),
@@ -309,6 +320,27 @@ plot_interval <- function (x, select, horizontal = FALSE,
       h = stats::quantile(value, 1 - (1 - prob) / 2, names = FALSE),
       hh = stats::quantile(value, 1 - (1 - prob_outer) / 2, names = FALSE),
       .groups = "drop")
+
+  # add reference data frame
+  if (!is.null(reference)) {
+    if (length(select) != 1 || grepl("[", select, fixed = TRUE)) {
+      stop("`reference` is only supported when `select` is a single block ",
+           "name (e.g. \"A\"), matched against an unnamed vector or matrix ",
+           "of the same shape as that block.")
+    } else if (is.matrix(reference)) {
+      idx <- expand.grid(row = seq_len(nrow(reference)), col = seq_len(ncol(reference)))
+      ref_names <- paste0(select, "[", idx$row, ",", idx$col, "]")
+    } else {
+      ref_names <- paste0(select, "[", seq_along(reference), "]")
+    }
+    ref_df <- data.frame(parameter = ref_names, reference = as.numeric(reference))
+    # left_join and restore the pre-join factor levels
+    df <- dplyr::left_join(df, ref_df, by = "parameter") |>
+      dplyr::mutate(parameter = factor(parameter, levels = levels(df$parameter)))
+  }
+
+  # parsing parameter levels
+  df <- dplyr::mutate(df, parameter = parse_parameter(parameter))
 
   # random sorted subsample when there are more parameters than nshow
   pars <- unique(df$parameter)
@@ -320,9 +352,9 @@ plot_interval <- function (x, select, horizontal = FALSE,
   # sort by point estimate instead of the natural parameter order
   if (sort) df <- dplyr::mutate(df, parameter = stats::reorder(parameter, m))
 
+  # figure types
   outer_colour <- "black"
   inner_colour <- grDevices::rgb(1, 0.5, 0.1)
-  # figure types
   if (horizontal) {
     gg <- ggplot(df, aes(y = parameter)) +
       geom_segment(aes(x = ll, xend = hh, yend = parameter), linewidth = 0.4,
@@ -343,6 +375,15 @@ plot_interval <- function (x, select, horizontal = FALSE,
       scale_x_discrete(labels = function(x) parse(text = x)) +
       labs(x = NULL, y = "Value") +
       theme_trace(legend = "none")
+  }
+
+  # add reference points
+  if (!is.null(reference)) {
+    gg <- gg + if (horizontal) {
+      geom_point(aes(x = reference), shape = 4, size = 2, colour = "forestgreen")
+    } else {
+      geom_point(aes(y = reference), shape = 4, size = 2, colour = "forestgreen")
+    }
   }
 
   return(gg)

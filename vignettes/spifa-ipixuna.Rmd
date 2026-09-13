@@ -85,13 +85,14 @@ nfactors <- ncol(parameters$discrimination)
 system.time(
   samples <- spifa(
     items ~ wealth, data = ipixuna, nfactors = nfactors,
-    niter = 200, thin = 1, standardize = FALSE,
+    niter = 1000, thin = 1, standardize = FALSE,
     constraints = list(discrimination = L_a, loading = diag(nfactors),
       sd = parameters$resid_params$sd),
     priors = list(
       loading = list(initial = 0.6, mean = 0.6, sd = 0.4),
       range = list(initial = 200, mean = 200, sd = 0.4)))
   )
+samples
 
 attr(samples, "fit_args")$model_type
 ```
@@ -127,8 +128,6 @@ Credible intervals for the discrimination parameters, against the true
 simulated values:
 
 ```{r, fig.height = 5}
-true_a <- parameters$discrimination[L_a == 1]
-
-plot_interval(samples, select = "A", burnin = 100) +
-  geom_point(aes(y = true_a), col = 3)
+plot_interval(samples, select = "A", burnin = 100,
+              reference = parameters$discrimination)
 ```

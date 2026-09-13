@@ -15,6 +15,7 @@ plot_interval(
   prob_outer = 0.9,
   point_est = c("median", "mean"),
   sort = FALSE,
+  reference = NULL,
   ...
 )
 }
@@ -48,6 +49,14 @@ to \code{0.9}.}
 \item{sort}{Logical; if \code{TRUE}, reorder parameters by their point
 estimate instead of their natural order. Defaults to \code{FALSE}.}
 
+\item{reference}{Optional reference values to overlay (e.g. the true
+values in a simulation study), as a fourth marker alongside the interval
+and point estimate. Only valid when \code{select} is a single block name
+(e.g. \code{"A"}): an unnamed vector or matrix matching that block's own
+shape (e.g. \code{parameters$discrimination}, an \code{nitems x nfactors}
+matrix). Structurally-restricted parameters (dropped internally before
+plotting) are silently ignored if present in \code{reference}.}
+
 \item{...}{Currently unused.}
 }
 \value{
@@ -73,6 +82,10 @@ samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 1000)
 plot_interval(samples, select = "c")
 plot_interval(samples, select = "c", sort = TRUE)
 plot_interval(samples, select = "A", horizontal = TRUE)
+
+# overlay the true simulated discrimination values
+parameters <- attr(ipixuna, "parameters")
+plot_interval(samples, select = "A", reference = parameters$discrimination)
 }
 
 }
