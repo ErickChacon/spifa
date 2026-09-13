@@ -68,9 +68,8 @@ NULL
 
 ## variables used in NSE contexts
 utils::globalVariables(c(
-  ".", "Parameters", "Value", "iteration", "level",
-  "variable", "median", "q2.5", "q10", "q90", "q97.5",
-  "parameter", "value", "total"
+  ".iteration", "iteration", "parameter", "value",
+  "ll", "l", "m", "h", "hh"
   ))
 
 #' @importFrom tibble as_tibble
