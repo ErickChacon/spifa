@@ -89,7 +89,7 @@ as_matrix_opt <- function (x, param) {
   }
 }
 
-#' @title Predict from a Fitted spifa Model
+#' @title Predict the Latent Factors of a spifa Model
 #'
 #' @description
 #' Predicts the latent factors of (spatial) item factor analysis

@@ -2,7 +2,7 @@
 % Please edit documentation in R/spifa-ggplot.R
 \name{plot_interval}
 \alias{plot_interval}
-\title{Interval Plot of Samples}
+\title{Interval Plot of spifa Posterior Samples}
 \usage{
 plot_interval(
   x,

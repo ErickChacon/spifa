@@ -2,7 +2,7 @@
 % Please edit documentation in R/spifa-ggplot.R
 \name{plot_trace}
 \alias{plot_trace}
-\title{Traceplot of Samples}
+\title{Trace Plot of spifa Posterior Samples}
 \usage{
 plot_trace(
   x,

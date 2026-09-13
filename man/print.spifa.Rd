@@ -2,7 +2,7 @@
 % Please edit documentation in R/spifa-methods.R
 \name{print.spifa}
 \alias{print.spifa}
-\title{Print a Fitted spifa Model}
+\title{Print spifa Posterior Samples}
 \usage{
 \method{print}{spifa}(x, ...)
 }

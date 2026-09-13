@@ -21,7 +21,7 @@ test_that("predict/dic: eifa/cifa", {
   samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
     niter = 5)
   pr <- predict(samples)
-  expect_equal(pr, as_draws_array(as.list(samples)$Theta))
+  expect_equal(pr, as_draws_array(subset_draws(samples, variable = "Theta")), ignore_attr = "class")
   expect_equal(predict(samples, newdata = sf::st_geometry(ipixuna)[1:2]), pr)
   expect_dic_ok(samples)
 
@@ -33,14 +33,15 @@ test_that("predict/dic: eifa/cifa", {
   samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
     niter = 5, constraints = list(discrimination = A))
   pr <- predict(samples)
-  expect_equal(pr, as_draws_array(as.list(samples)$Theta))
+  expect_equal(pr, as_draws_array(subset_draws(samples, variable = "Theta")), ignore_attr = "class")
   expect_equal(predict(samples, newdata = sf::st_geometry(ipixuna)[1:2]), pr)
   expect_dic_ok(samples)
 
   # burnin/thin subset the returned samples
   pr_burnin <- predict(samples, burnin = 2, thin = 2)
   expect_equal(pr_burnin,
-    as_draws_array(as.list(samples)$Theta[c(3, 5), , drop = FALSE]))
+    as_draws_array(subset_draws(samples, variable = "Theta", iteration = c(3, 5))),
+    ignore_attr = "class")
 })
 
 test_that("predict/dic: spifa", {
@@ -61,7 +62,7 @@ test_that("predict/dic: spifa", {
 
   # no newdata: latent abilities at observed locations
   pr <- predict(samples)
-  expect_equal(pr, as_draws_array(as.list(samples)$Theta))
+  expect_equal(pr, as_draws_array(subset_draws(samples, variable = "Theta")), ignore_attr = "class")
 
   # newdata (sfc): latent abilities at new locations
   newcoords <- sf::st_make_grid(ipixuna, n = c(5, 1), what = "centers")
@@ -91,7 +92,7 @@ test_that("predict/dic: cifa_pred", {
 
   # no newdata: latent abilities at observed subjects
   pr_none <- predict(samples)
-  expect_equal(pr_none, as_draws_array(as.list(samples)$Theta))
+  expect_equal(pr_none, as_draws_array(subset_draws(samples, variable = "Theta")), ignore_attr = "class")
 
   # incorrect newdata: missing predictors
   expect_error(predict(samples, newdata = data.frame(other_col = c(1, 2, 3))),
@@ -127,7 +128,7 @@ test_that("predict/dic: spifa_pred", {
 
   # no newdata: latent abilities at observed locations
   pr_none <- predict(samples)
-  expect_equal(pr_none, as_draws_array(as.list(samples)$Theta))
+  expect_equal(pr_none, as_draws_array(subset_draws(samples, variable = "Theta")), ignore_attr = "class")
 
   # incorrect newdata: missing predictors
   newcoords <- sf::st_make_grid(ipixuna, n = c(5, 1), what = "centers")

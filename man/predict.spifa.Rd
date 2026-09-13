@@ -2,7 +2,7 @@
 % Please edit documentation in R/spifa-dic-predict.R
 \name{predict.spifa}
 \alias{predict.spifa}
-\title{Predict from a Fitted spifa Model}
+\title{Predict the Latent Factors of a spifa Model}
 \usage{
 \method{predict}{spifa}(object, newdata = NULL, burnin = 0, thin = 1, joint = FALSE, ...)
 }

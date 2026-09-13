@@ -1,8 +1,8 @@
 # ---------------------------------------------------------------------------
-# summary/as_tibble/as.list/print: pure R reshaping of an already-fitted
-# draws array, tested once (see test-predict-dic.R for predict()/dic(),
-# which are tested against every model_type since they consume freshly-
-# computed, model-type-branching C++ output)
+# summary/print: pure R reshaping of an already-fitted draws array, tested
+# once (see test-predict-dic.R for predict()/dic(), which are tested
+# against every model_type since they consume freshly-computed,
+# model-type-branching C++ output)
 # ---------------------------------------------------------------------------
 
 test_that("summary.spifa() returns posterior summaries with burnin/thin/select", {
@@ -24,7 +24,7 @@ test_that("summary.spifa() returns posterior summaries with burnin/thin/select",
   expect_equal(nrow(smry), ncol(ipixuna_flat$items))
 
   smry_burnin <- summary(samples, burnin = 5, select = "c")
-  c_block <- as.list(samples)$c
+  c_block <- as_draws_matrix(subset_draws(samples, variable = "c"))
   expect_equal(smry_burnin$mean, unname(colMeans(c_block[6:10, , drop = FALSE])))
 
   # a select naming a block absent from this fit (ngp = 0, so no "T") is an
@@ -32,49 +32,7 @@ test_that("summary.spifa() returns posterior summaries with burnin/thin/select",
   expect_error(summary(samples, select = "T"), "missing")
 })
 
-test_that("as_tibble.spifa() converts to a wide tibble with burnin/thin/select", {
-  data(ipixuna, package = "spifa")
-  nitems <- ncol(ipixuna$items)
-  nfactors <- 3
-  A <- matrix(1, nitems, nfactors)
-  A[c(2, 7), 1] <- 0
-  A[c(1, 4, 9, 10), 2] <- 0
-  A[c(3, 6), 3] <- 0
-  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
-
-  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
-    niter = 10, thin = 1,
-    constraints = list(discrimination = A))
-
-  samples_tib <- as_tibble(samples)
-  expect_false(inherits(samples_tib, "spifa"))
-  expect_equal(nrow(samples_tib), 10)
-
-  samples_tib_sub <- as_tibble(samples, burnin = 5, thin = 2, select = "c")
-  expect_equal(nrow(samples_tib_sub), length(seq(6, 10, 2)))
-  expect_true(all(grepl("^c\\[", names(samples_tib_sub))))
-})
-
-test_that("as.list.spifa() splits samples back into block-shaped matrices", {
-  data(ipixuna, package = "spifa")
-  nitems <- ncol(ipixuna$items)
-  nfactors <- 3
-  A <- matrix(1, nitems, nfactors)
-  A[c(1, 6, 10), 1] <- 0
-  A[c(3, 5, 8), 2] <- 0
-  A[c(2, 9), 3] <- 0
-  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
-
-  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors, ngp = 0,
-    niter = 5, thin = 1,
-    constraints = list(discrimination = A))
-
-  samples_list <- as.list(samples)
-  expect_equal(nrow(samples_list$c), 5)
-  expect_equal(ncol(samples_list$c), ncol(ipixuna_flat$items))
-})
-
-test_that("summary()/as_tibble(): burnin >= niter gives a clear error, not a raw seq() crash", {
+test_that("summary(): burnin >= niter gives a clear error, not a raw seq() crash", {
   data(ipixuna, package = "spifa")
   nitems <- ncol(ipixuna$items)
   nfactors <- 3
@@ -91,7 +49,6 @@ test_that("summary()/as_tibble(): burnin >= niter gives a clear error, not a raw
   # "wrong sign in 'by' argument" error from seq(burnin+1, niter, thin);
   # now it hits posterior::subset_draws()'s own clear validation instead
   expect_error(summary(samples, burnin = 5), "iterations")
-  expect_error(as_tibble(samples, burnin = 5), "iterations")
 })
 
 test_that("print.spifa() shows formula, dimensions, and a posterior summary table", {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/spifa-ggplot.R
 \name{plot_density}
 \alias{plot_density}
-\title{Density Plot of Samples}
+\title{Density Plot of spifa Posterior Samples}
 \usage{
 plot_density(
   x,

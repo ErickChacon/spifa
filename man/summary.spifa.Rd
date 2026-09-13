@@ -2,7 +2,7 @@
 % Please edit documentation in R/spifa-methods.R
 \name{summary.spifa}
 \alias{summary.spifa}
-\title{Posterior Summary of MCMC Samples}
+\title{Summarise spifa Posterior Samples}
 \usage{
 \method{summary}{spifa}(object, burnin = 0, thin = 1, select = NULL, ...)
 }

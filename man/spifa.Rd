@@ -129,12 +129,14 @@ proposed in Andrieu and Thomas (2008).}
 \item{execute}{Logical value to run sampler or not. TRUE by default.}
 }
 \value{
-An object of (informal) class \code{spifa.list}: a named list of MCMC
-sample matrices (one entry per parameter block, e.g. \code{c}, \code{a},
-\code{theta}, \code{corr}, \code{betas}, ...), with an attribute
+An object of class \code{spifa}: a \code{\link[posterior]{draws_array}}
+of the MCMC samples (one variable per parameter, e.g. \code{c[1]},
+\code{A[1,1]}, \code{Theta[1,1]}, ...), with an attribute
 \code{"fit_args"} recording the data and options used to fit the model
-(needed by \code{\link{predict.spifa}} and \code{\link{dic}}). Convert it
-to a tidy \code{\link[tibble]{tibble}} with \code{\link{as_tibble.spifa}}.
+(needed by \code{\link{predict.spifa}} and \code{\link{dic}}). See
+\code{\link{summary.spifa}}, \code{\link{plot_trace}},
+\code{\link{plot_density}}, and \code{\link{plot_interval}} for working
+with it.
 }
 \description{
 Fits exploratory, confirmatory, and spatial item factor analysis (IFA)
@@ -174,12 +176,12 @@ spifa(items ~ x1, data = data, nfactors = 2)
 }
 
 \strong{Parameter glossary.} \code{priors}/\code{constraints} use
-descriptive names; the fitted model's sampled output (from
-\code{\link{as.list.spifa}}, \code{\link{summary.spifa}}, and
-\code{\link{as_tibble.spifa}}) instead uses short internal names
-matching the underlying model notation. The two are deliberately
-different vocabularies (what you configure vs. what the sampler
-produced) -- this table maps between them:
+descriptive names; the fitted model's sampled output (as seen via
+\code{\link{summary.spifa}}, \code{\link{plot_trace}}, and friends)
+instead uses short internal names matching the underlying model
+notation. The two are deliberately different vocabularies (what you
+configure vs. what the sampler produced) -- this table maps between
+them:
 \tabular{lll}{
 \code{priors}/\code{constraints} name \tab output block name \tab meaning \cr
 \code{easiness} \tab \code{c} \tab item easiness (intercept) \cr

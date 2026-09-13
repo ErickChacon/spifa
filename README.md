@@ -41,7 +41,6 @@ samples <- spifa(
   constraints = list(discrimination = L_a, mgp = diag(nfactors),
     resid_sd = parameters$resid_params$sd))
 
-samples_tib <- as_tibble(samples, burnin = 500)
 summary(samples, burnin = 500, select = "c")
 ```
 

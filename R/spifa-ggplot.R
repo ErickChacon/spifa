@@ -42,7 +42,7 @@ theme_trace <- function (legend = "none") {
           legend.position = legend)
 }
 
-#' @title Traceplot of Samples
+#' @title Trace Plot of spifa Posterior Samples
 #'
 #' @description
 #' Draws MCMC traceplots (iteration vs. value) directly from a fitted
@@ -143,7 +143,7 @@ plot_trace <- function (x, select, facet = TRUE,
   return(gg)
 }
 
-#' @title Density Plot of Samples
+#' @title Density Plot of spifa Posterior Samples
 #'
 #' @description
 #' Draws posterior density curves directly from a fitted \code{spifa}
@@ -237,7 +237,7 @@ plot_density <- function (x, select, facet = FALSE,
   return(gg)
 }
 
-#' @title Interval Plot of Samples
+#' @title Interval Plot of spifa Posterior Samples
 #'
 #' @description
 #' Draws a caterpillar/forest plot of posterior credible intervals directly

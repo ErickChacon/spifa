@@ -14,18 +14,18 @@ test_that("eifa", {
   expect_equal(attr(samples, "fit_args")$constrain_L,
     lower.tri(matrix(NA, nitems, nfactors), diag = TRUE) * 1)
   expect_equal(length(attr(samples, "fit_args")$response), nrow(ipixuna) * nitems)
-  expect_setequal(names(as.list(samples)), c("c", "A", "Theta", "Z", "Chol", "Corr"))
+  expect_setequal(variables(samples, with_indices = FALSE),
+    c("c", "A", "Theta", "Z", "Chol", "Corr"))
 
   # standardize does not affect eifa models
   set.seed(42)
   samples_raw <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
      niter = 5, thin = 1, standardize = FALSE)
-  attr(samples_raw, "fit_args")$standardize <- NULL
   set.seed(42)
   samples_std <- spifa(items ~ 1, data = sf::st_set_geometry(ipixuna, NULL),
     nfactors = nfactors, niter = 5, thin = 1, standardize = TRUE)
-  attr(samples_std, "fit_args")$standardize <- NULL
-  expect_equal(as.list(samples_raw), as.list(samples_std))
+  expect_equal(as_draws_matrix(samples_raw),
+    as_draws_matrix(samples_std), ignore_attr = "fit_args")
 })
 
 test_that("cifa", {
@@ -43,11 +43,11 @@ test_that("cifa", {
     constraints = list(discrimination = A))
 
   expect_equal(attr(samples, "fit_args")$model_type, "cifa")
-  expect_setequal(names(as.list(samples)),
+  expect_setequal(variables(samples, with_indices = FALSE),
     c("c", "A", "Theta", "Z", "Chol", "Corr"))
 
   # verify zero loadings based on constraints
-  a_samples <- as.list(samples)$A
+  a_samples <- as_draws_matrix(subset_draws(samples, variable = "A"))
   idx <- as.integer(sub("A\\[(\\d+),(\\d+)\\]", "\\1", colnames(a_samples)))
   jdx <- as.integer(sub("A\\[(\\d+),(\\d+)\\]", "\\2", colnames(a_samples)))
   zero_mask <- A[cbind(idx, jdx)] == 0
@@ -70,9 +70,11 @@ test_that("cifa_pred", {
 
   expect_equal(attr(samples, "fit_args")$model_type, "cifa_pred")
   expect_equal(dim(attr(samples, "fit_args")$predictors), c(nrow(ipixuna), 2))
-  blocks <- as.list(samples)
-  expect_setequal(names(blocks), c("c", "A", "Theta", "Z", "Chol", "Corr", "B"))
-  expect_equal(dim(blocks$B), c(5, 2 * nfactors))
+  expect_setequal(variables(samples, with_indices = FALSE),
+    c("c", "A", "Theta", "Z", "Chol", "Corr", "B"))
+  b_block <- subset_draws(samples, variable = "B")
+  expect_equal(ndraws(b_block), 5)
+  expect_equal(nvariables(b_block), 2 * nfactors)
 
   # standardize rescales theta (latent abilities) to unit variance
   set.seed(1)
@@ -80,7 +82,7 @@ test_that("cifa_pred", {
     items ~ wealth, data = ipixuna, nfactors = nfactors, ngp = 0,
     niter = 200, thin = 1, standardize = TRUE,
     constraints = list(discrimination = A))
-  theta <- as.list(samples_std)$Theta
+  theta <- as_draws_matrix(subset_draws(samples_std, variable = "Theta"))
   factor_idx <- as.integer(sub(".*,(\\d+)\\]$", "\\1", colnames(theta)))
   for (k in seq_len(nfactors)) {
     expect_true(abs(sd(as.numeric(theta[, factor_idx == k])) - 1) < 0.1)
@@ -105,11 +107,10 @@ test_that("spifa", {
   expect_equal(attr(samples, "fit_args")$ngp, nfactors)
   expect_equal(attr(samples, "fit_args")$constrain_T, diag(1, nfactors, nfactors))
   expect_equal(attr(samples, "predict_setup")$coordinates, sf::st_geometry(ipixuna))
-  blocks <- as.list(samples)
-  expect_setequal(names(blocks),
+  expect_setequal(variables(samples, with_indices = FALSE),
     c("c", "A", "Theta", "Z", "Chol", "Corr", "T", "phi"))
-  expect_equal(ncol(blocks$T), nfactors)
-  expect_equal(ncol(blocks$phi), nfactors)
+  expect_equal(nvariables(subset_draws(samples, variable = "T")), nfactors)
+  expect_equal(nvariables(subset_draws(samples, variable = "phi")), nfactors)
 
   # custom gps and factors relationship
   fit_spifa <- function (loading, ngp) {
@@ -125,16 +126,16 @@ test_that("spifa", {
   # 1 GP
   loading_shared <- matrix(c(1, 1, 0), nfactors, 1)
   samples_shared <- fit_spifa(loading_shared, 1)
-  blocks_shared <- as.list(samples_shared)
-  expect_equal(ncol(blocks_shared$T), sum(loading_shared))
-  expect_equal(ncol(blocks_shared$phi), 1)
+  expect_equal(nvariables(subset_draws(samples_shared, variable = "T")),
+    sum(loading_shared))
+  expect_equal(nvariables(subset_draws(samples_shared, variable = "phi")), 1)
 
   # 2 GP
   loading_partial <- matrix(c(1, 0, 0, 0, 1, 1), nfactors, 2)
   samples_partial <- fit_spifa(loading_partial, 2)
-  blocks_partial <- as.list(samples_partial)
-  expect_equal(ncol(blocks_partial$T), sum(loading_partial))
-  expect_equal(ncol(blocks_partial$phi), 2)
+  expect_equal(nvariables(subset_draws(samples_partial, variable = "T")),
+    sum(loading_partial))
+  expect_equal(nvariables(subset_draws(samples_partial, variable = "phi")), 2)
 })
 
 test_that("spifa(): standardize = TRUE (the default) works with no predictors", {
@@ -175,7 +176,7 @@ test_that("spifa_pred", {
 
   expect_equal(attr(samples, "fit_args")$model_type, "spifa_pred")
   expect_equal(dim(attr(samples, "fit_args")$predictors), c(nrow(ipixuna), 1))
-  expect_setequal(names(as.list(samples)),
+  expect_setequal(variables(samples, with_indices = FALSE),
     c("c", "A", "Theta", "Z", "Chol", "Corr", "T", "phi", "B"))
 })
 
