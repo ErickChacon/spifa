@@ -5,13 +5,19 @@ median, sd, mad, the 2.5%/10%/50%/90%/97.5% quantiles, effective
 sample size (bulk and tail), and rhat. rhat is computed via
 split-chain R-hat (Vehtari et al. 2021), which splits each chain in half
 and compares the halves – so it remains a meaningful convergence
-diagnostic even though spifa only ever fits a single chain."><meta property="og:description" content="Computes posterior summary statistics for every parameter in a fitted
+diagnostic even though spifa only ever fits a single chain.
+Discrimination parameters (A) structurally restricted to zero
+(via constraints$discrimination) are excluded, since they are
+fixed by construction rather than estimated."><meta property="og:description" content="Computes posterior summary statistics for every parameter in a fitted
 spifa object, via summarise_draws: mean,
 median, sd, mad, the 2.5%/10%/50%/90%/97.5% quantiles, effective
 sample size (bulk and tail), and rhat. rhat is computed via
 split-chain R-hat (Vehtari et al. 2021), which splits each chain in half
 and compares the halves – so it remains a meaningful convergence
-diagnostic even though spifa only ever fits a single chain."></head><body>
+diagnostic even though spifa only ever fits a single chain.
+Discrimination parameters (A) structurally restricted to zero
+(via constraints$discrimination) are excluded, since they are
+fixed by construction rather than estimated."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -27,10 +33,11 @@ diagnostic even though spifa only ever fits a single chain."></head><body>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/spifa.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/spifa-ipixuna.html">Spatial Item Factor Analysis</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/vg01-prepare-data.html">Preparing Your Data</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -55,7 +62,10 @@ median, sd, mad, the 2.5%/10%/50%/90%/97.5% quantiles, effective
 sample size (bulk and tail), and <code>rhat</code>. <code>rhat</code> is computed via
 split-chain R-hat (Vehtari et al. 2021), which splits each chain in half
 and compares the halves – so it remains a meaningful convergence
-diagnostic even though <code><a href="spifa.html">spifa</a></code> only ever fits a single chain.</p>
+diagnostic even though <code><a href="spifa.html">spifa</a></code> only ever fits a single chain.
+Discrimination parameters (<code>A</code>) structurally restricted to zero
+(via <code>constraints$discrimination</code>) are excluded, since they are
+fixed by construction rather than estimated.</p>
     </div>
 
     <div class="section level2">

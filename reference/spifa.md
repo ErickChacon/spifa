@@ -5,10 +5,11 @@ models for binary responses using full Bayesian inference. The model
 represents each binary response as a thresholded continuous auxiliary
 variable explained by `nfactors` latent abilities, optionally extended
 with linear predictors and/or a multivariate Gaussian process to capture
-spatial dependence in the latent factors (see the "spifa-ipixuna"
-vignette for a full worked example). Inference is done via Gibbs
-sampling with adaptive Metropolis-Hastings updates for the spatial range
-and correlation parameters.
+spatial dependence in the latent factors (see
+[`vignette( "spifa")`](https://ErickChacon.github.io/spifa/articles/spifa.md)
+for a full worked example). Inference is done via Gibbs sampling with
+adaptive Metropolis-Hastings updates for the spatial range and
+correlation parameters.
 
 ## Usage
 
@@ -218,6 +219,14 @@ separate columns, e.g.:
     items <- as.matrix(dplyr::select(data, `Item 1`:`Item 10`))
     data$items <- items
     spifa(items ~ x1, data = data, nfactors = 2)
+
+Missing values are handled differently depending on where they occur. A
+missing item response (`NA` in the response matrix) does not drop that
+respondent: it is treated as an unobserved auxiliary variable and
+sampled natively along with everything else. A missing predictor value
+(right-hand side of `formula`), by contrast, drops that respondent
+entirely, the same way [`lm`](https://rdrr.io/r/stats/lm.html) and
+friends do.
 
 **Parameter glossary.** `priors`/`constraints` use descriptive names;
 the fitted model's sampled output (as seen via

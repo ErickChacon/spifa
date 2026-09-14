@@ -4,16 +4,16 @@ models for binary responses using full Bayesian inference. The model
 represents each binary response as a thresholded continuous auxiliary
 variable explained by nfactors latent abilities, optionally
 extended with linear predictors and/or a multivariate Gaussian process to
-capture spatial dependence in the latent factors (see the "spifa-ipixuna"
-vignette for a full worked example). Inference is done via Gibbs sampling
+capture spatial dependence in the latent factors (see vignette(
+"spifa") for a full worked example). Inference is done via Gibbs sampling
 with adaptive Metropolis-Hastings updates for the spatial range and
 correlation parameters.'><meta property="og:description" content='Fits exploratory, confirmatory, and spatial item factor analysis (IFA)
 models for binary responses using full Bayesian inference. The model
 represents each binary response as a thresholded continuous auxiliary
 variable explained by nfactors latent abilities, optionally
 extended with linear predictors and/or a multivariate Gaussian process to
-capture spatial dependence in the latent factors (see the "spifa-ipixuna"
-vignette for a full worked example). Inference is done via Gibbs sampling
+capture spatial dependence in the latent factors (see vignette(
+"spifa") for a full worked example). Inference is done via Gibbs sampling
 with adaptive Metropolis-Hastings updates for the spatial range and
 correlation parameters.'></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -31,10 +31,11 @@ correlation parameters.'></head><body>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/spifa.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/spifa-ipixuna.html">Spatial Item Factor Analysis</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/vg01-prepare-data.html">Preparing Your Data</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -58,8 +59,8 @@ models for binary responses using full Bayesian inference. The model
 represents each binary response as a thresholded continuous auxiliary
 variable explained by <code>nfactors</code> latent abilities, optionally
 extended with linear predictors and/or a multivariate Gaussian process to
-capture spatial dependence in the latent factors (see the "spifa-ipixuna"
-vignette for a full worked example). Inference is done via Gibbs sampling
+capture spatial dependence in the latent factors (see <code><a href="../articles/spifa.html">vignette(
+"spifa")</a></code> for a full worked example). Inference is done via Gibbs sampling
 with adaptive Metropolis-Hastings updates for the spatial range and
 correlation parameters.</p>
     </div>
@@ -261,6 +262,12 @@ rather than being flattened into separate columns, e.g.:</p><div class="sourceCo
 <span><span class="va">data</span><span class="op">$</span><span class="va">items</span> <span class="op">&lt;-</span> <span class="va">items</span></span>
 <span><span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span><span class="va">items</span> <span class="op">~</span> <span class="va">x1</span>, data <span class="op">=</span> <span class="va">data</span>, nfactors <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 
+<p>Missing values are handled differently depending on where they occur. A
+missing item response (<code>NA</code> in the response matrix) does not drop
+that respondent: it is treated as an unobserved auxiliary variable and
+sampled natively along with everything else. A missing predictor value
+(right-hand side of <code>formula</code>), by contrast, drops that respondent
+entirely, the same way <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></code> and friends do.</p>
 <p><strong>Parameter glossary.</strong> <code>priors</code>/<code>constraints</code> use
 descriptive names; the fitted model's sampled output (as seen via
 <code><a href="summary.spifa.html">summary.spifa</a></code>, <code><a href="plot_trace.html">plot_trace</a></code>, and friends)

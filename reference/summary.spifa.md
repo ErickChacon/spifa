@@ -9,7 +9,9 @@ split-chain R-hat (Vehtari et al. 2021), which splits each chain in half
 and compares the halves – so it remains a meaningful convergence
 diagnostic even though
 [`spifa`](https://ErickChacon.github.io/spifa/reference/spifa.md) only
-ever fits a single chain.
+ever fits a single chain. Discrimination parameters (`A`) structurally
+restricted to zero (via `constraints$discrimination`) are excluded,
+since they are fixed by construction rather than estimated.
 
 ## Usage
 
