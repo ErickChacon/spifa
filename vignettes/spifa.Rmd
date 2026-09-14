@@ -1,10 +1,9 @@
 ---
-title: "Spatial Item Factor Analysis"
-author: "Erick A. Chacon-Montalvan"
-date: "`r Sys.Date()`"
+title: "Bayesian Spatial Item Factor Analysis"
 output: rmarkdown::html_vignette
+bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{Spatial Item Factor Analysis}
+  %\VignetteIndexEntry{Bayesian Spatial Item Factor Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,184 +15,332 @@ knitr::opts_chunk$set(comment = "#>")
 options(width = 100)
 ```
 
+In this vignette, we show how to use the **spifa** package to fit a spatial item
+factor model, summarise and visualize the posterior samples, and predict and map
+the latent factors at new locations.
+
 ## Introduction
 
-In this vignette, we show how to use the **spifa** package to fit a spatial
-multidimensional 2 parameter logistic model, as used in item response
-theory. Let $Y_{ij}$ be the binary response for item $j$ in individual $i$.
-The model can be defined using an auxiliary variable $Z_{ij}$ such that
-
-\begin{align}
+We will focus on the spatial item factor model proposed in @chaconmontalvan2025. Let
+$Y_{ij}$ be the binary response for item $j$ in individual $i$. The model can be defined
+using an auxiliary variable $Z_{ij}$ such that:
+$$
+\begin{aligned}
   {Y}_{ij}  & =
   \left\lbrace
   \begin{array}[2]{cc}
-    1 & \text{if} ~ {Z}_{ij} > 0\\
-    0 & \text{otherwise}
+    1, & \text{if} ~ {Z}_{ij} > 0\\
+    0, & \text{otherwise}
   \end{array}
   \right.\\
-  {Z}_{ij} & = c_j + a_j^\intercal\theta_i + \epsilon_{ij},
-  ~~ \epsilon_{ij} \sim {N}(0, 1)
-\end{align}
-
-where the vector of latent abilities $\theta_i$ is modelled, in the spatial
-case, as
-
+  {Z}_{ij} & = c_j + \boldsymbol{a}_j^\intercal\boldsymbol{\theta}_i + \epsilon_{ij},
+  ~~ \epsilon_{ij} \sim {N}(0, 1),
+\end{aligned}
 $$
-\theta_i = X_i^\intercal B + w(s_i) + v_i,
-$$
+where the easiness parameters $c_j$ define how common is to endorse the item $j$, and the
+discrimination parameters $\boldsymbol{a}_j$ define how important is item $j$ to
+discriminate the latent factors/abilities $\boldsymbol{\theta}_i$.
 
-the sum of a predictor effect ($X_i^\intercal B$, with $X_i$ the row of
-predictors for individual $i$ and $B$ the matrix of effects), a
-multivariate Gaussian process capturing spatial dependence ($w(s_i)$, at
-location $s_i$), and a multivariate non-spatial term ($v_i$), rather than
-assumed independent across individuals.
+The vector of latent abilities $\boldsymbol{\theta}_i$ is modelled in terms of
+predictors $\boldsymbol{x}_i$, a vector of Gaussian processes $\boldsymbol{w}(s_i)$, and a
+multivariate non-spatial term $\boldsymbol{v}_i$:
+$$
+\boldsymbol{\theta}_i = \boldsymbol{B} \boldsymbol{x}_i + \boldsymbol{T} \boldsymbol{w}(s_i) + \boldsymbol{v}_i,
+$$
+where $\boldsymbol{B}$ is the matrix of multivariate effects of the predictors,
+$\boldsymbol{T}$ defines the relationship between the spatial processes and the latent
+abilities, and $\boldsymbol{v}_i$ is allowed to have a correlations structure
+$\boldsymbol{R}$.
+
+This model is unidentifiable, so it is important to restrict the discrimination
+parameters $\boldsymbol{a}_j$ and set informative priors for the spatial range of the
+Gaussian processes $\boldsymbol{w}(s_i)$ before fitting it, to facilitate convergence
+of the posterior sampling algorithm -- in practice, both are best informed by
+exploratory analysis (e.g. a preliminary non-spatial item factor analysis for the
+former, an empirical variogram for the latter), though we use them directly below
+without walking through that derivation. The linear transformation $\boldsymbol{T}$,
+by contrast, is not determined from exploratory analysis -- it is a structural choice
+made by the user (usually diagonal, i.e. one independent Gaussian process per
+factor), though alternative structures can be specified and compared.
+
 
 ## Load required packages and data
 
 ```{r}
-library(dplyr)
-library(ggplot2)
 library(spifa)
-library(sf)
+```
 
+The `ipixuna` data under analysis is included in the **spifa** package: a simulated
+dataset of 10 `items` responses on 100 household locations, on the same area of study
+as in @chaconmontalvan2025. It is a `sf` object containing the `items` responses as a
+matrix, locations under the `geometry` column, and a predictor `wealth`.
+
+```{r}
 data(ipixuna)
+ipixuna
 ```
 
-`ipixuna` has one row per (simulated) household, with a ten-item binary
-`items` response matrix, a covariate `wealth`, and a spatial coordinate
-`geometry`:
+The `items` can be easily obtained as an element of the data `ipixuna`:
 
 ```{r}
-ipixuna |>
-  dplyr::select(-geometry, -items) |>
-  head(10) |>
-  knitr::kable(digits = 2)
+ipixuna$items |> head()
 ```
 
-The true generating parameters used to simulate the data (including the
-discrimination structure) are stored as an attribute, which is convenient
-both for setting sensible restrictions and for checking recovery below:
+## Sample from the posterior of a SPIFA model
 
-```{r}
-parameters <- attr(ipixuna, "parameters")
-str(parameters)
-```
+As mentioned before, an identifiable spifa model requires restricting the
+discrimination parameters, along with adequate initial values and priors for the
+spatial parameters (mainly the range). In practice, these are best obtained from a
+preliminary analysis, as shown in `vignette("vg04-mirt-variogram-workflow")`. Here, we
+instead assume the discrimination structure and some initial knowledge of the spatial
+parameters are already available, and focus on defining, fitting, and diagnosing the
+model.
 
-## Fit a SPIFA model for the Ipixuna data
-
-We restrict the discrimination matrix to the structure used to simulate the
-data, and let the three latent factors follow independent Gaussian
-processes (`W = diag(3)`) over the household coordinates. `niter` is kept
-small here so the vignette builds quickly; in practice use a few thousand
-iterations and check convergence (see `?plot_trace`).
-
-```{r}
-L_a <- (parameters$discrimination != 0) * 1
-nfactors <- ncol(parameters$discrimination)
-
-system.time(
-  samples <- spifa(
-    items ~ wealth, data = ipixuna, nfactors = nfactors,
-    niter = 1000, thin = 1, standardize = FALSE,
-    constraints = list(discrimination = L_a, loading = diag(nfactors),
-      sd = parameters$resid_params$sd),
-    priors = list(
-      loading = list(initial = 0.6, mean = 0.6, sd = 0.4),
-      range = list(initial = 200, mean = 200, sd = 0.4)))
-  )
-samples
-
-attr(samples, "fit_args")$model_type
-```
-
-## Summarise samples
-
-```{r}
-summary(samples, burnin = 100, select = "c")
-```
-
-## Visualize results
-
-Traceplots of the easiness (`c`) and discrimination (`a`) parameters:
-
-```{r, fig.height = 6}
-plot_trace(samples, select = "c")
-
-plot_trace(samples, select = "A")
-```
-
-Traceplots of the residual correlation and of the Gaussian process
-hyperparameters (loading matrix `T` and range `phi`):
-
-```{r, fig.height = 6}
-plot_trace(samples, select = "Corr")
-
-plot_trace(samples, select = "T")
-
-plot_trace(samples, select = "phi")
-```
-
-Credible intervals for the discrimination parameters, against the true
-simulated values:
-
-```{r, fig.height = 5}
-plot_interval(samples, select = "A", burnin = 100,
-              reference = parameters$discrimination)
-```
-
-## Predict and map the latent factors
-
-The reason **spifa** models the latent factors as spatial processes is to
-predict them at new, unobserved locations -- this is what makes it possible
-to map a construct like food insecurity across a whole area from survey
-data collected at a limited number of households. `predict()` takes an
-`sf`/`sfc` object of new locations (with any predictor columns the model
-needs, `wealth` here) and returns posterior predictive draws of the latent
-factors at those locations:
-
-```{r, fig.height = 5}
-newdata <- st_sf(wealth = 0, geometry = st_make_grid(ipixuna, n = c(15, 15),
-  what = "centers"))
-pred <- predict(samples, newdata = newdata, burnin = 100)
-
-newdata$theta1 <- posterior::summarise_draws(pred, mean)$mean[
-  grepl(",1\\]$", posterior::variables(pred))]
-
-ggplot(newdata) +
-  geom_sf(aes(colour = theta1)) +
-  scale_colour_viridis_c() +
-  labs(colour = "Factor 1\n(predicted mean)")
-```
-
-## Compare models with DIC
-
-`dic()` computes the Deviance Information Criterion, useful for comparing
-candidate models fitted to the same data -- e.g. to choose the number of
-factors, or to compare restriction structures. Here we compare the
-3-factor structure used above against a 2-factor alternative (both without
-the spatial/predictor structure, so the comparison is fast):
+First, we obtain the number of items (10) and define the number of factors (3) we will
+use:
 
 ```{r}
 nitems <- ncol(ipixuna$items)
-A3 <- matrix(1, nitems, 3)
-A3[c(1, 3, 5), 1] <- 0
-A3[c(2, 6, 9), 2] <- 0
-A3[c(4, 7, 10), 3] <- 0
-
-A2 <- matrix(1, nitems, 2)
-A2[c(1, 3, 5, 9), 1] <- 0
-A2[c(2, 4, 6, 7, 10), 2] <- 0
-
-fit3 <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 300,
-  constraints = list(discrimination = A3))
-fit2 <- spifa(items ~ 1, data = ipixuna, nfactors = 2, ngp = 0, niter = 300,
-  constraints = list(discrimination = A2))
-
-dplyr::bind_rows(
-  "3 factors" = dic(fit3, burnin = 100),
-  "2 factors" = dic(fit2, burnin = 100),
-  .id = "model")
+nfactors <- 3
 ```
 
-The 3-factor model has the lower DIC, correctly favouring the structure
-used to simulate the data.
+### Restrictions
+
+We define the discrimination matrix (10x3): items 4 and 8 do not inform factor 1,
+items 4, 5, 6, 7, 8, and 10 do not inform factor 2, and items 5 and 6 do not inform
+factor 3.
+
+```{r}
+A <- matrix(1, nitems, nfactors)
+A[c(4, 8), 1] <- 0
+A[c(4, 5, 6, 7, 8, 10), 2] <- 0
+A[c(5, 6), 3] <- 0
+A
+```
+
+### Priors
+
+In factor analysis, the sign of the factors is not identifiable, so we need to fix the
+direction of each factor (which determines how we interpret it). A common way to do
+this is to set a strong positive or negative prior on a few discrimination parameters.
+The discrimination parameters are assumed to have a Normal prior, so `mean`/`sd` are
+directly its mean and standard deviation. Here, we set the mean prior to 1 for items 5
+and 6 on factor 1, and to -1 for items 4 and 8 on factor 3, each with a standard
+deviation prior of 0.45:
+
+```{r}
+A_mean <- matrix(0, nitems, nfactors)
+A_mean[c(5, 6), 1] <- 1
+A_mean[c(4, 8), 3] <- -1
+A_mean
+
+A_sd <- matrix(1, nitems, nfactors)
+A_sd[A_mean != 0] <- 0.45
+A_sd
+```
+
+Similarly, we will define the prior for the range parameter of the Gaussian processes. By
+default the `spifa()` function introduces 1 GP per factor, meaning that 3 range parameters
+will be used in the model. Since the range must be positive, it is instead assumed to
+have a Log-Normal prior: `mean`/`sd` are the mean and standard deviation of its
+logarithm, not of the range itself. The range is in the same units as the coordinates
+(metres here); `150` is a plausible order of magnitude for the spacing between
+households in this study area. If we want to set the same prior for all three, we can
+define a single mean and standard deviation that will be recycled across them:
+
+```{r}
+phi_mean <- 150
+phi_sd <- 0.4
+```
+
+### Sampling
+
+The function `spifa()` is used to sample from the posterior distribution of the model.
+The main arguments are:
+
+- `formula`: expression to define the response items and predictors to include in the
+  latent abilities,
+- `data`: a `sf` object containing the terms defined in `formula`,
+- `nfactors`: the number of factors for the model,
+- `niter`, `thin`, `burnin`: usual sampling arguments,
+- `constraints`: a named list of constraints for certain parameters,
+- `priors`: a named list of prior information including initial values.
+
+In the following, we fit a spifa model with `3` latent factors, explained by `wealth`,
+constraints for the *discrimination* parameters and priors for the *discrimination* and
+*range* parameters. By default, it will introduce a GP for each latent factor.
+
+```{r, eval = FALSE}
+samples <- spifa(
+  items ~ wealth, data = ipixuna, nfactors = nfactors,
+  burnin = 1000, niter = 4000,
+  constraints = list(discrimination = A),
+  priors = list(
+    discrimination = list(initial = A_mean, mean = A_mean, sd = A_sd),
+    range = list(initial = phi_mean, mean = phi_mean, sd = phi_sd)
+  )
+)
+samples
+```
+
+```{r, echo = FALSE}
+samples <- readRDS(system.file("vigdata", "spifa.rds", package = "spifa"))
+samples
+```
+
+The `print()` method shows metadata of the model such as *model type*, *formula*,
+*dimensions*, MCMC dimensions including the number of saved *samples*. Additionally, it
+shows the summary and diagnostics of the item model parameters (easiness and
+discrimination), and the factor model parameters (effects, loading, range, and
+correlation). Among the diagnostics, `ess_bulk` is the bulk effective sample size and
+`rhat` is the potential scale reduction factor on split chains, which should be close
+to 1 at convergence.
+
+## Summarise and visualize samples
+
+### Summary
+
+While `print()` gives a quick overview, `summary()` computes the full set of posterior
+statistics (mean, median, sd, mad, quantiles, `ess_bulk`, `ess_tail`, and `rhat`) for a
+chosen parameter group, returned as a tidy tibble. Its main arguments are `select` (the
+parameter group, e.g. `"c"`, `"A"`, `"phi"`), and `burnin`/`thin`, in case we want to
+discard some initial samples or thin them further before summarising:
+
+```{r}
+summary(samples, select = "c")
+```
+
+### Plot
+
+`plot()` gives a quick overview of a fitted model: traceplots and density plots, side
+by side, for the `easiness` and `discrimination` parameters by default.
+
+```{r, fig.height = 6}
+plot(samples)
+```
+
+Use the `select` argument for a specific parameter group and `nshow` to define the
+number of random parameters to show:
+
+```{r}
+plot(samples, select = "c", nshow = 5)
+```
+
+### Plotting functions
+
+For more flexibility, **spifa** provides three individual plotting functions:
+
+- `plot_trace()`,
+- `plot_density()`,
+- `plot_interval()`
+
+They take as input the spifa `samples` with the `select` argument to define the parameter
+group.
+
+#### Trace plots
+
+`plot_trace()` draws the values against iteration per parameter. By default, it plots
+one panel per parameter (`facet = TRUE`), or all of them in a single panel when
+`facet = FALSE`.
+
+Traceplots of the residual correlation:
+
+```{r}
+plot_trace(samples, select = "Corr")
+```
+
+Traceplots of the range parameter of the GPs:
+
+```{r}
+plot_trace(samples, select = "phi", facet = FALSE)
+```
+
+#### Density plots
+
+`plot_density()` draws the posterior density of each parameter in the selected group.
+Similar to `plot_trace()`, you can control the `facet` argument.
+
+Comparing the easiness parameters:
+
+```{r, fig.height = 5}
+plot_density(samples, select = "c")
+```
+
+Comparing the predictor effects:
+
+```{r, fig.height = 5}
+plot_density(samples, select = "B", facet = TRUE, facet_scales = "free_y")
+```
+
+#### Interval plots
+
+`plot_interval()` draws the posterior mean/median and credible interval of
+each parameter in the selected group.
+
+Compare the discrimination parameters:
+
+```{r, fig.height = 5}
+plot_interval(samples, select = "A")
+```
+
+Compare the easiness parameters:
+
+```{r, fig.height = 5}
+plot_interval(samples, select = "phi", horizontal = TRUE)
+```
+
+<!-- ## Predict and map the latent factors -->
+<!---->
+<!-- The reason **spifa** models the latent factors as spatial processes is to predict -->
+<!-- them at new, unobserved locations -- this is what makes it possible to map a -->
+<!-- construct like food insecurity across a whole area from survey data collected at a -->
+<!-- limited number of households. `predict()` takes the fitted `object` and `newdata`, an -->
+<!-- `sf`/`sfc` object of new locations (with any predictor columns the model needs, -->
+<!-- `wealth` here), and returns posterior predictive draws of the latent factors at those -->
+<!-- locations -- one draw per retained MCMC iteration, so uncertainty in the fitted -->
+<!-- parameters is propagated through to the predictions: -->
+<!---->
+<!-- ```{r, fig.height = 5} -->
+<!-- newdata <- st_sf(wealth = 0, geometry = st_make_grid(ipixuna, n = c(15, 15), -->
+<!--   what = "centers")) -->
+<!-- pred <- predict(samples, newdata = newdata) -->
+<!---->
+<!-- newdata$theta1 <- posterior::summarise_draws(pred, mean)$mean[ -->
+<!--   grepl(",1\\]$", posterior::variables(pred))] -->
+<!---->
+<!-- ggplot(newdata) + -->
+<!--   geom_sf(aes(colour = theta1)) + -->
+<!--   scale_colour_viridis_c() + -->
+<!--   labs(colour = "Factor 1\n(predicted mean)") -->
+<!-- ``` -->
+<!---->
+<!-- ## Compare models with DIC -->
+<!---->
+<!-- `dic()` computes the Deviance Information Criterion for a fitted model, useful for -->
+<!-- comparing candidate models fitted to the same data -- e.g. to choose the number of -->
+<!-- factors, or to compare restriction structures; the lower the DIC, the better the -->
+<!-- trade-off between fit and complexity. Its main arguments are `x` (the fitted model) -->
+<!-- and `burnin`/`thin`, as in `summary()`. Here we compare the 3-factor structure used -->
+<!-- above against a 2-factor alternative (both without the spatial/predictor structure, -->
+<!-- so the comparison is fast): -->
+<!---->
+<!-- ```{r} -->
+<!-- A2 <- matrix(1, nitems, 2) -->
+<!-- A2[c(1, 3, 5, 9), 1] <- 0 -->
+<!-- A2[c(2, 4, 6, 7, 10), 2] <- 0 -->
+<!---->
+<!-- fit3 <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 300, -->
+<!--   constraints = list(discrimination = A)) -->
+<!-- fit2 <- spifa(items ~ 1, data = ipixuna, nfactors = 2, ngp = 0, niter = 300, -->
+<!--   constraints = list(discrimination = A2)) -->
+<!---->
+<!-- dplyr::bind_rows( -->
+<!--   "3 factors" = dic(fit3, burnin = 100), -->
+<!--   "2 factors" = dic(fit2, burnin = 100), -->
+<!--   .id = "model") -->
+<!-- ``` -->
+<!---->
+<!-- The 3-factor model has the lower DIC, favouring the discrimination structure used -->
+<!-- above over an arbitrary 2-factor alternative. -->
+
+## References

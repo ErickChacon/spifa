@@ -49,9 +49,9 @@ nitems <- ncol(ipixuna$items)
 
 # define a restriction for the discrimination
 A <- matrix(1, nitems, nfactors)
-A[c(1, 3, 5), 1] <- 0
-A[c(2, 6, 9), 2] <- 0
-A[c(4, 7, 10), 3] <- 0
+A[c(4, 8), 1] <- 0
+A[c(4, 5, 6, 7, 8, 10), 2] <- 0
+A[c(5, 6), 3] <- 0
 
 # sampling from the posterior distribution
 samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, niter = 1000,
