@@ -16,10 +16,9 @@ simply by dropping the spatial structure.
 The package implements the methodology described in “Mapping food
 insecurity in the Brazilian Amazon using a spatial item factor analysis
 model” (2025), published in *The Annals of Applied Statistics* at
-<https://doi.org/10.1214/25-AOAS2072> (see [Citation](#citation) below).
-In addition to the core spatial item factor analysis model, **spifa**
-offers tools for model diagnostics, visualization, and summarizing
-results.
+<https://doi.org/10.1214/25-AOAS2072>. In addition to the core spatial
+item factor analysis model, **spifa** offers tools for model
+diagnostics, visualization, and summarizing results.
 
 ## Installation
 
@@ -85,5 +84,4 @@ citation("spifa")
 ## See also
 
 For item factor analysis *without* spatial structure, see the
-[`mirt`](https://cran.r-project.org/package=mirt) package, which
-**spifa** complements rather than replaces.
+[`mirt`](https://cran.r-project.org/package=mirt) package.

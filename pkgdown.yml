@@ -3,7 +3,7 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   spifa-ipixuna: spifa-ipixuna.html
-last_built: 2026-09-14T08:58Z
+last_built: 2026-09-14T09:07Z
 urls:
   reference: https://ErickChacon.github.io/spifa/reference
   article: https://ErickChacon.github.io/spifa/articles
