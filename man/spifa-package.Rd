@@ -15,6 +15,7 @@ for the main model-fitting function.
 Useful links:
 \itemize{
   \item \url{https://github.com/ErickChacon/spifa}
+  \item \url{https://ErickChacon.github.io/spifa/}
   \item Report bugs at \url{https://github.com/ErickChacon/spifa/issues}
 }
 

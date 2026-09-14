@@ -11,6 +11,13 @@
 #' with adaptive Metropolis-Hastings updates for the spatial range and
 #' correlation parameters.
 #'
+#' @references
+#' Chacon-Montalvan, E. A., Parry, L., Giorgi, E., Torres, P., Orellana,
+#' J. D. Y., Moraga, P., and Taylor, B. M. (2025). Mapping food insecurity
+#' in the Brazilian Amazon using a spatial item factor analysis model. The
+#' Annals of Applied Statistics, 19(4), 3438-3463.
+#' \doi{10.1214/25-AOAS2072}
+#'
 #' @details
 #' The type of model fitted is determined automatically from \code{formula}
 #' and the class of \code{data}: a one-sided right-hand side (\code{items ~

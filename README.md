@@ -2,53 +2,86 @@
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/ErickChacon/spifa/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ErickChacon/spifa/actions/workflows/R-CMD-check.yaml)
+[![pkgdown](https://github.com/ErickChacon/spifa/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/ErickChacon/spifa/actions/workflows/pkgdown.yaml)
 <!-- badges: end -->
 
 ## Introduction
 
-**spifa** fits item factor analysis (IFA) models for binary responses using
-full Bayesian inference (Gibbs sampling with adaptive Metropolis-Hastings),
-via auxiliary variables with a probit link function. Beyond standard
-exploratory and confirmatory IFA, the latent factors can be modelled as a
-multivariate Gaussian process to capture spatial dependence, so spatially
-referenced constructs (e.g. an ideology or socio-economic index measured at
-survey locations) can be mapped and predicted at new locations.
+**spifa** fits spatial item factor analysis (IFA) models for binary
+responses using full Bayesian inference (adaptive Metropolis-Hastings
+within Gibbs sampling), via auxiliary variables with a probit link
+function. The latent factors are modelled as the sum of a predictor effect,
+a multivariate Gaussian process capturing spatial dependence, and a
+multivariate non-spatial term, so spatially referenced constructs (e.g.
+food insecurity or a socio-economic index measured at survey locations)
+can be mapped and predicted at new locations. Standard exploratory and
+confirmatory IFA are supported as particular cases, simply by dropping the
+spatial structure.
 
-For item factor analysis *without* spatial structure, see the
-[`mirt`](https://cran.r-project.org/package=mirt) package, which **spifa**
-complements rather than replaces.
+The package implements the methodology described in "Mapping food
+insecurity in the Brazilian Amazon using a spatial item factor analysis
+model" (2025), published in *The Annals of Applied Statistics* at
+<https://doi.org/10.1214/25-AOAS2072> (see [Citation](#citation) below). In
+addition to the core spatial item factor analysis model, **spifa** offers
+tools for model diagnostics, visualization, and summarizing results.
 
 ## Installation
 
+You can install the development version from GitHub:
+
 ```r
-# install.packages("remotes")
 remotes::install_github("ErickChacon/spifa")
 ```
 
 ## Basic usage
 
-A minimal *spatial* item factor analysis fit on the bundled `ipixuna`
-dataset (an `sf` object, so a spatial Gaussian process is added
-automatically -- see `?spifa`):
+A minimal *spatial* item factor analysis fit on the bundled `ipixuna` dataset (a
+simulated `sf` object with `items` responses for geo-referenced households). We
+define the factor loadings structure (discrimination) and fit the model with the
+default spatial structure for each factor:
 
 ```r
 library(spifa)
 
 data(ipixuna)
-samples <- spifa(items ~ 1, data = ipixuna, nfactors = 3, niter = 1000)
+nfactors <- 3
+nitems <- ncol(ipixuna$items)
 
-samples
-summary(samples, burnin = 500, select = "c")
+# define a restriction for the discrimination
+A <- matrix(1, nitems, nfactors)
+A[c(1, 3, 5), 1] <- 0
+A[c(2, 6, 9), 2] <- 0
+A[c(4, 7, 10), 3] <- 0
+
+# sampling from the posterior distribution
+samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, niter = 1000,
+  constraints = list(discrimination = A))
+
+# visualize the easiness parameters (c)
 plot(samples, select = "c", burnin = 500)
 ```
 
 <img src="man/figures/README-example.png" width="100%" />
 
-Printing `samples` directly (`print.spifa()`) gives model type, dimensions,
-and a grouped posterior summary table at a glance; `summary()` computes the
-full set of statistics for a specific parameter block; `plot()` gives a
-quick trace + density overview. `plot_trace()`/`plot_density()`/
-`plot_interval()` cover trace, density, and credible-interval views
-individually, for any parameter block. See `vignette("spifa-ipixuna")` for
-a full worked example with predictors and a theory-driven discrimination
-structure.
+See `vignette("spifa-ipixuna")` for a full worked example.
+
+## Citation
+
+If you use **spifa** in your work, please cite both the paper that proposes
+the underlying model and the package itself:
+
+> Chacón-Montalván, E. A., Parry, L., Giorgi, E., Torres, P., Orellana,
+> J. D. Y., Moraga, P., and Taylor, B. M. (2025). Mapping food insecurity in
+> the Brazilian Amazon using a spatial item factor analysis model. *The
+> Annals of Applied Statistics*, 19(4), 3438-3463.
+> <https://doi.org/10.1214/25-AOAS2072>
+
+```r
+citation("spifa")
+```
+
+## See also
+
+For item factor analysis *without* spatial structure, see the
+[`mirt`](https://cran.r-project.org/package=mirt) package, which **spifa**
+complements rather than replaces.

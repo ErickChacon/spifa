@@ -237,6 +237,13 @@ samples_spifa_pred <- spifa(items ~ wealth, data = ipixuna, nfactors = nfactors,
 }
 
 }
+\references{
+Chacon-Montalvan, E. A., Parry, L., Giorgi, E., Torres, P., Orellana,
+J. D. Y., Moraga, P., and Taylor, B. M. (2025). Mapping food insecurity
+in the Brazilian Amazon using a spatial item factor analysis model. The
+Annals of Applied Statistics, 19(4), 3438-3463.
+\doi{10.1214/25-AOAS2072}
+}
 \author{
 Erick A. Chacón-Montalván
 }

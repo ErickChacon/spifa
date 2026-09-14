@@ -1,0 +1,43 @@
+citHeader("To cite spifa in publications, please cite both the methodology paper and the package:")
+
+bibentry(
+  bibtype  = "Article",
+  title    = "Mapping food insecurity in the {B}razilian {A}mazon using a spatial item factor analysis model",
+  author   = c(
+    person(c("Erick", "A."), "Chacón-Montalván"),
+    person("Luke", "Parry"),
+    person("Emanuele", "Giorgi"),
+    person("Patricia", "Torres"),
+    person(c("Jesem", "Douglas", "Yamall"), "Orellana"),
+    person("Paula", "Moraga"),
+    person(c("Benjamin", "M."), "Taylor")
+  ),
+  journal  = "The Annals of Applied Statistics",
+  year     = "2025",
+  volume   = "19",
+  number   = "4",
+  pages    = "3438--3463",
+  doi      = "10.1214/25-AOAS2072",
+  textVersion = paste(
+    "Chacón-Montalván, E. A., Parry, L., Giorgi, E., Torres, P.,",
+    "Orellana, J. D. Y., Moraga, P., and Taylor, B. M. (2025).",
+    "Mapping food insecurity in the Brazilian Amazon using a spatial item",
+    "factor analysis model. The Annals of Applied Statistics, 19(4),",
+    "3438-3463. https://doi.org/10.1214/25-AOAS2072"
+  )
+)
+
+bibentry(
+  bibtype  = "Manual",
+  title    = "{spifa}: Bayesian Spatial Item Factor Analysis",
+  author   = person(c("Erick", "A."), "Chacón-Montalván"),
+  year     = format(Sys.Date(), "%Y"),
+  note     = paste("R package version", meta$Version),
+  url      = "https://github.com/ErickChacon/spifa",
+  textVersion = paste0(
+    "Chacón-Montalván, E. A. (", format(Sys.Date(), "%Y"), "). ",
+    "spifa: Bayesian Spatial Item Factor Analysis. ",
+    "R package version ", meta$Version, ". ",
+    "https://github.com/ErickChacon/spifa"
+  )
+)
