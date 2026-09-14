@@ -13,9 +13,18 @@ $`Z_{ij}`$ such that
 {Z}\_{ij} & = c_j + a_j^\intercal\theta_i + \epsilon\_{ij}, \~~
 \epsilon\_{ij} \sim {N}(0, 1) \end{align}\$\$
 
-where the latent abilities $`\theta_i`$ are, in the spatial case,
-explained by a multivariate Gaussian process rather than assumed
-independent across individuals.
+where the vector of latent abilities $`\theta_i`$ is modelled, in the
+spatial case, as
+
+``` math
+\theta_i = X_i^\intercal B + w(s_i) + v_i,
+```
+
+the sum of a predictor effect ($`X_i^\intercal B`$, with $`X_i`$ the row
+of predictors for individual $`i`$ and $`B`$ the matrix of effects), a
+multivariate Gaussian process capturing spatial dependence ($`w(s_i)`$,
+at location $`s_i`$), and a multivariate non-spatial term ($`v_i`$),
+rather than assumed independent across individuals.
 
 ## Load required packages and data
 
@@ -124,7 +133,7 @@ system.time(
 ```
 
     #>    user  system elapsed 
-    #>  57.088  20.412  19.548
+    #>  53.963  20.511  18.847
 
 ``` r
 

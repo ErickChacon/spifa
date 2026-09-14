@@ -13,6 +13,8 @@ Useful links:
 
 - <https://github.com/ErickChacon/spifa>
 
+- <https://ErickChacon.github.io/spifa/>
+
 - Report bugs at <https://github.com/ErickChacon/spifa/issues>
 
 ## Author
