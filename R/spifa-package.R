@@ -17,6 +17,7 @@
 #' @importFrom stats delete.response dist model.frame model.matrix
 #' @importFrom stats model.response quantile rnorm setNames terms update
 #' @importFrom grDevices rgb
+#' @importFrom sf st_geometry st_distance
 #' @useDynLib spifa, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @import RcppTN
