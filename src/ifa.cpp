@@ -16,21 +16,21 @@ Ifa::Ifa (Rcpp::NumericVector response, arma::mat predictors, arma::mat distance
     arma::mat B_ini, arma::vec sigmas_gp_ini, arma::vec phi_gp_ini,
     std::string mod_type):
   model_type(mod_type),
-  y(response), dist(distances), X(predictors),
   n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols),
+  y(response), dist(distances), X(predictors),
+  T(constrain_T),
+  L(constrain_L),
+  T_index(find(T != 0)),
+  V_sd(constrain_V_sd),
+  params_cov(adap_Sigma),
+  logscale(log(adap_scale)),
   ones_n(arma::ones(n)),
-  zeros_nm(arma::zeros(n*m)),
   eye_q(arma::eye(q,q)),
   eye_n(arma::eye(n,n)),
   eye_m(arma::eye(m,m)),
+  zeros_nm(arma::zeros(n*m)),
   low_thresh(Rcpp::NumericVector::create(R_NegInf, 0)),
-  high_thresh(Rcpp::NumericVector::create(0, R_PosInf)),
-  L(constrain_L),
-  T(constrain_T),
-  T_index(find(T != 0)),
-  V_sd(constrain_V_sd),
-  logscale(log(adap_scale)),
-  params_cov(adap_Sigma)
+  high_thresh(Rcpp::NumericVector::create(0, R_PosInf))
 {
 
   // Initializing c: difficulty parameters
@@ -112,19 +112,19 @@ Ifa::Ifa(Rcpp::NumericVector response, arma::mat predictors, arma::mat distances
       arma::mat constrain_L, arma::mat constrain_T, arma::mat constrain_V_sd,
       std::string mod_type):
   model_type(mod_type),
-  y(response), dist(distances), X(predictors),
   n(nobs), q(nitems), m(nfactors), ngp(ngps), p(predictors.n_cols),
+  y(response), dist(distances), X(predictors),
+  T(constrain_T),
+  L(constrain_L),
+  T_index(find(T != 0)),
+  V_sd(constrain_V_sd),
   ones_n(arma::ones(n)),
-  zeros_nm(arma::zeros(n*m)),
   eye_q(arma::eye(q,q)),
   eye_n(arma::eye(n,n)),
   eye_m(arma::eye(m,m)),
+  zeros_nm(arma::zeros(n*m)),
   low_thresh(Rcpp::NumericVector::create(R_NegInf, 0)),
-  high_thresh(Rcpp::NumericVector::create(0, R_PosInf)),
-  L(constrain_L),
-  T(constrain_T),
-  T_index(find(T != 0)),
-  V_sd(constrain_V_sd)
+  high_thresh(Rcpp::NumericVector::create(0, R_PosInf))
 {
 }
 
