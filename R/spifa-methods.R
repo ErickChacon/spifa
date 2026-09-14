@@ -73,6 +73,9 @@ print_summary <- function (x, params, label) {
 #' split-chain R-hat (Vehtari et al. 2021), which splits each chain in half
 #' and compares the halves -- so it remains a meaningful convergence
 #' diagnostic even though \code{\link{spifa}} only ever fits a single chain.
+#' Discrimination parameters (\code{A}) structurally restricted to zero
+#' (via \code{constraints$discrimination}) are excluded, since they are
+#' fixed by construction rather than estimated.
 #'
 #' @param object A fitted \code{spifa} object, as returned by
 #' \code{\link{spifa}}.
@@ -113,6 +116,7 @@ summary.spifa <- function (object, burnin = 0, thin = 1, select = NULL, ...) {
 
   niter <- posterior::niterations(object)
   object <- object |>
+    drop_restricted() |>
     posterior::subset_draws(variable = select, iteration = (burnin+1):niter) |>
     posterior::thin_draws(thin)
 

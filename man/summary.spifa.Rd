@@ -32,6 +32,9 @@ sample size (bulk and tail), and \code{rhat}. \code{rhat} is computed via
 split-chain R-hat (Vehtari et al. 2021), which splits each chain in half
 and compares the halves -- so it remains a meaningful convergence
 diagnostic even though \code{\link{spifa}} only ever fits a single chain.
+Discrimination parameters (\code{A}) structurally restricted to zero
+(via \code{constraints$discrimination}) are excluded, since they are
+fixed by construction rather than estimated.
 }
 \examples{
 \donttest{

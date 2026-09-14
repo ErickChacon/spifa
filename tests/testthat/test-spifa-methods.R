@@ -32,6 +32,36 @@ test_that("summary.spifa() returns posterior summaries with burnin/thin/select",
   expect_error(summary(samples, select = "T"), "missing")
 })
 
+test_that("summary.spifa()/print.spifa() exclude structurally restricted A parameters", {
+  data(ipixuna, package = "spifa")
+  nitems <- ncol(ipixuna$items)
+  nfactors <- 3
+  A <- matrix(1, nitems, nfactors)
+  A[c(1, 3, 5), 1] <- 0
+  A[c(2, 6, 9), 2] <- 0
+  A[c(4, 7, 10), 3] <- 0
+  ipixuna_flat <- sf::st_set_geometry(ipixuna, NULL)
+
+  samples <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
+    niter = 5, thin = 1, constraints = list(discrimination = A))
+
+  smry <- summary(samples, select = "A")
+  expect_false("A[1,1]" %in% smry$variable)
+  expect_true("A[2,1]" %in% smry$variable)
+  expect_equal(nrow(smry), sum(A == 1))
+
+  out <- paste(capture.output(print(samples)), collapse = "\n")
+  expect_no_match(out, "A\\[1,1\\]")
+  expect_match(out, "A\\[2,1\\]")
+
+  # eifa's default lower-triangular restriction is excluded the same way
+  samples_eifa <- spifa(items ~ 1, data = ipixuna_flat, nfactors = nfactors,
+    niter = 5, thin = 1)
+  smry_eifa <- summary(samples_eifa, select = "A")
+  expect_equal(nrow(smry_eifa),
+    sum(lower.tri(matrix(NA, nitems, nfactors), diag = TRUE)))
+})
+
 test_that("summary(): burnin >= niter gives a clear error, not a raw seq() crash", {
   data(ipixuna, package = "spifa")
   nitems <- ncol(ipixuna$items)

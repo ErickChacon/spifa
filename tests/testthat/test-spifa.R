@@ -255,6 +255,51 @@ test_that("spifa(): malformed constraints/priors", {
     "must be a matrix")
 })
 
+test_that("spifa(): a missing item response is kept, a missing predictor value drops the respondent", {
+  data(ipixuna, package = "spifa")
+  nitems <- ncol(ipixuna$items)
+  nfactors <- 2
+
+  # a single NA item response does not drop the respondent -- the sampler
+  # handles it natively as an unobserved auxiliary variable
+  ipixuna_item_na <- ipixuna
+  items_na <- unclass(ipixuna_item_na$items)
+  items_na[1, 1] <- NA
+  ipixuna_item_na$items <- items_na
+
+  fit_item_na <- spifa(items ~ 1, data = ipixuna_item_na, nfactors = nfactors,
+    ngp = 0, niter = 2, thin = 1)
+  expect_equal(attr(fit_item_na, "fit_args")$nobs, nrow(ipixuna))
+  expect_true(anyNA(attr(fit_item_na, "fit_args")$response))
+
+  # a single NA predictor value drops that whole respondent (no per-item
+  # handling on the predictor side), including from the item responses
+  ipixuna_pred_na <- ipixuna
+  ipixuna_pred_na$wealth[1] <- NA
+
+  fit_pred_na <- spifa(items ~ wealth, data = ipixuna_pred_na, nfactors = nfactors,
+    ngp = 0, niter = 2, thin = 1)
+  expect_equal(attr(fit_pred_na, "fit_args")$nobs, nrow(ipixuna) - 1)
+
+  # both at once, on different respondents: only the predictor-NA
+  # respondent is dropped, the item-NA respondent is kept (with its NA)
+  ipixuna_both_na <- ipixuna_pred_na
+  items_na2 <- unclass(ipixuna_both_na$items)
+  items_na2[2, 1] <- NA
+  ipixuna_both_na$items <- items_na2
+
+  fit_both_na <- spifa(items ~ wealth, data = ipixuna_both_na, nfactors = nfactors,
+    ngp = 0, niter = 2, thin = 1)
+  expect_equal(attr(fit_both_na, "fit_args")$nobs, nrow(ipixuna) - 1)
+  expect_true(anyNA(attr(fit_both_na, "fit_args")$response))
+
+  # transformed predictor terms (e.g. poly()) are still matched correctly
+  # when checking predictor completeness
+  fit_poly <- spifa(items ~ poly(wealth, 2), data = ipixuna, nfactors = nfactors,
+    ngp = 0, niter = 2, thin = 1)
+  expect_equal(attr(fit_poly, "fit_args")$nobs, nrow(ipixuna))
+})
+
 # ---------------------------------------------------------------------------
 # update.spifa()
 # ---------------------------------------------------------------------------

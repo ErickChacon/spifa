@@ -61,9 +61,9 @@ samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, niter = 1000,
 plot(samples, select = "c", burnin = 500)
 ```
 
-<img src="man/figures/README-example.png" width="100%" />
+<img src="man/figures/README-example.png" width="100%" alt="Trace and density plots of the easiness (c) posterior samples from the basic usage example" />
 
-See `vignette("spifa-ipixuna")` for a full worked example.
+See `vignette("spifa")` for a full worked example.
 
 ## Citation
 

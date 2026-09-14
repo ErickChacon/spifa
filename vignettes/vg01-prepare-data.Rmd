@@ -1,0 +1,136 @@
+---
+title: "Preparing Your Data"
+author: "Erick A. Chacon-Montalvan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Preparing Your Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+```
+
+## Introduction
+
+`spifa()` expects data in a specific shape: one row per respondent, and the
+binary item responses stored as a single *matrix-valued column* (`nobs x
+nitems`) rather than one column per item. This is the same convention base
+R uses for multivariate `lm()`. Survey data rarely arrives in that shape --
+this vignette builds a small questionnaire dataset from scratch, the way
+it typically comes out of a survey tool (one column per item, `"Yes"`/
+`"No"` responses, a household covariate, GPS coordinates), and walks
+through getting it into the shape `spifa()` needs.
+
+```{r}
+library(dplyr)
+library(sf)
+library(spifa)
+```
+
+## Simulating a raw questionnaire export
+
+Five binary items, a household `wealth` covariate, and GPS coordinates,
+for 20 households -- exactly what a survey export typically looks like:
+
+```{r}
+set.seed(1)
+nobs <- 20
+nitems <- 5
+
+raw <- data.frame(
+  id = seq_len(nobs),
+  wealth = rnorm(nobs),
+  lon = runif(nobs, -71.70, -71.68),
+  lat = runif(nobs, -7.06, -7.04))
+
+for (j in seq_len(nitems)) {
+  raw[[paste0("item", j)]] <- factor(ifelse(rbinom(nobs, 1, 0.5) == 1, "Yes", "No"))
+}
+
+head(raw, 3)
+```
+
+## From one column per item to a matrix column
+
+Recode each item to binary `0`/`1` (`spifa()` also accepts `TRUE`/`FALSE`,
+coerced the same way), then assemble the item columns into a single matrix
+column with `as.matrix()` + ordinary `$<-` assignment (or `I()`), which
+preserves it as a matrix rather than flattening it back into separate
+columns:
+
+```{r}
+data <- raw |>
+  mutate(across(starts_with("item"), ~ as.integer(.x == "Yes")))
+
+data$items <- as.matrix(select(data, starts_with("item")))
+data <- select(data, id, wealth, lon, lat, items)
+
+str(data)
+```
+
+Passing the original one-column-per-item `raw` data (before this step) to
+`spifa()` fails clearly rather than silently doing the wrong thing:
+
+```{r, error = TRUE}
+spifa(item1 ~ 1, data = raw, nfactors = 2, niter = 5)
+```
+
+## Missing item responses
+
+Individual missing item responses (`NA`) don't need to be dropped or
+imputed -- `spifa()` handles them natively, treating a missing response as
+an unobserved auxiliary variable to be sampled along with everything else,
+rather than requiring complete rows:
+
+```{r}
+data_na <- data
+data_na$items[1, 1] <- NA
+
+fit <- spifa(items ~ 1, data = data_na, nfactors = 2, ngp = 0, niter = 5)
+attr(fit, "fit_args")$nobs  # respondent with the NA item is still included
+```
+
+## Missing predictor values
+
+Missing *predictor* values behave differently, and are worth calling out:
+a `NA` in a predictor column drops that respondent from the whole fit, the
+same way `lm()` and friends do -- unlike item responses, there's no
+partial information to keep:
+
+```{r}
+data_na <- data
+data_na$wealth[1] <- NA
+
+fit <- spifa(items ~ wealth, data = data_na, nfactors = 2, ngp = 0, niter = 5)
+attr(fit, "fit_args")$nobs  # one respondent dropped
+```
+
+## Adding spatial coordinates
+
+Spatial models need `data` to be an `sf` object. If your coordinates are
+plain numeric columns (e.g. from a GPS device), as here, convert with
+`sf::st_as_sf()`:
+
+```{r}
+data_sf <- st_as_sf(data, coords = c("lon", "lat"), crs = 4326)
+```
+
+`spifa()` then adds the spatial Gaussian process automatically (see
+`vignette("spifa")`):
+
+```{r}
+attr(spifa(items ~ 1, data = data_sf, nfactors = 2, niter = 5),
+  "fit_args")$model_type
+```
+
+## Putting it together
+
+```{r}
+fit <- spifa(items ~ wealth, data = data_sf, nfactors = 2, niter = 5)
+fit
+```

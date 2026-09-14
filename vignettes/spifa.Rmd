@@ -140,3 +140,60 @@ simulated values:
 plot_interval(samples, select = "A", burnin = 100,
               reference = parameters$discrimination)
 ```
+
+## Predict and map the latent factors
+
+The reason **spifa** models the latent factors as spatial processes is to
+predict them at new, unobserved locations -- this is what makes it possible
+to map a construct like food insecurity across a whole area from survey
+data collected at a limited number of households. `predict()` takes an
+`sf`/`sfc` object of new locations (with any predictor columns the model
+needs, `wealth` here) and returns posterior predictive draws of the latent
+factors at those locations:
+
+```{r, fig.height = 5}
+newdata <- st_sf(wealth = 0, geometry = st_make_grid(ipixuna, n = c(15, 15),
+  what = "centers"))
+pred <- predict(samples, newdata = newdata, burnin = 100)
+
+newdata$theta1 <- posterior::summarise_draws(pred, mean)$mean[
+  grepl(",1\\]$", posterior::variables(pred))]
+
+ggplot(newdata) +
+  geom_sf(aes(colour = theta1)) +
+  scale_colour_viridis_c() +
+  labs(colour = "Factor 1\n(predicted mean)")
+```
+
+## Compare models with DIC
+
+`dic()` computes the Deviance Information Criterion, useful for comparing
+candidate models fitted to the same data -- e.g. to choose the number of
+factors, or to compare restriction structures. Here we compare the
+3-factor structure used above against a 2-factor alternative (both without
+the spatial/predictor structure, so the comparison is fast):
+
+```{r}
+nitems <- ncol(ipixuna$items)
+A3 <- matrix(1, nitems, 3)
+A3[c(1, 3, 5), 1] <- 0
+A3[c(2, 6, 9), 2] <- 0
+A3[c(4, 7, 10), 3] <- 0
+
+A2 <- matrix(1, nitems, 2)
+A2[c(1, 3, 5, 9), 1] <- 0
+A2[c(2, 4, 6, 7, 10), 2] <- 0
+
+fit3 <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 300,
+  constraints = list(discrimination = A3))
+fit2 <- spifa(items ~ 1, data = ipixuna, nfactors = 2, ngp = 0, niter = 300,
+  constraints = list(discrimination = A2))
+
+dplyr::bind_rows(
+  "3 factors" = dic(fit3, burnin = 100),
+  "2 factors" = dic(fit2, burnin = 100),
+  .id = "model")
+```
+
+The 3-factor model has the lower DIC, correctly favouring the structure
+used to simulate the data.
