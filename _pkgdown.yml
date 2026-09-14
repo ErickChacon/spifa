@@ -2,3 +2,7 @@ url: https://ErickChacon.github.io/spifa/
 
 template:
   bootstrap: 5
+
+authors:
+  sidebar:
+    roles: [aut, cre, ctb, fnd]
