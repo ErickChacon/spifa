@@ -97,13 +97,18 @@ tests.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">ipixuna</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">ipixuna</span>, <span class="op">-</span><span class="va">geometry</span>, <span class="op">-</span><span class="va">items</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   id      wealth</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1 -0.57212306</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2 -0.92003870</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3  1.23197630</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4  0.30801774</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5 -0.06247617</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6  2.05414943</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 6 features and 2 fields</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: POINT</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: -71.69689 ymin: -7.053396 xmax: -71.68464 ymax: -7.039144</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Geodetic CRS:  WGS 84</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   id      wealth                    geometry</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1 -0.57212306 POINT (-71.69689 -7.052244)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2 -0.92003870 POINT (-71.68695 -7.039144)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3  1.23197630 POINT (-71.68732 -7.047609)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4  0.30801774 POINT (-71.69005 -7.047915)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5 -0.06247617 POINT (-71.68464 -7.053396)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6  2.05414943 POINT (-71.69039 -7.042424)</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">ipixuna</span>, <span class="st">"parameters"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $easiness</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [1] -0.68 -0.51 -0.34 -0.17  0.00  0.17  0.34  0.51  0.68  0.85</span>

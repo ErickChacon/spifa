@@ -50,13 +50,18 @@ Simulated; see \`data-raw/ipixuna.R\` for the generating code and
 ``` r
 data(ipixuna)
 head(dplyr::select(ipixuna, -geometry, -items))
-#>   id      wealth
-#> 1  1 -0.57212306
-#> 2  2 -0.92003870
-#> 3  3  1.23197630
-#> 4  4  0.30801774
-#> 5  5 -0.06247617
-#> 6  6  2.05414943
+#> Simple feature collection with 6 features and 2 fields
+#> Geometry type: POINT
+#> Dimension:     XY
+#> Bounding box:  xmin: -71.69689 ymin: -7.053396 xmax: -71.68464 ymax: -7.039144
+#> Geodetic CRS:  WGS 84
+#>   id      wealth                    geometry
+#> 1  1 -0.57212306 POINT (-71.69689 -7.052244)
+#> 2  2 -0.92003870 POINT (-71.68695 -7.039144)
+#> 3  3  1.23197630 POINT (-71.68732 -7.047609)
+#> 4  4  0.30801774 POINT (-71.69005 -7.047915)
+#> 5  5 -0.06247617 POINT (-71.68464 -7.053396)
+#> 6  6  2.05414943 POINT (-71.69039 -7.042424)
 attr(ipixuna, "parameters")
 #> $easiness
 #>  [1] -0.68 -0.51 -0.34 -0.17  0.00  0.17  0.34  0.51  0.68  0.85
