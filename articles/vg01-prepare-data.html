@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Preparing Your Data • spifa</title>
+<title>Preparing data for spifa() • spifa</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Preparing Your Data">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Preparing data for spifa()">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -34,7 +34,7 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/vg01-prepare-data.html">Preparing Your Data</a></li>
+<li><a class="dropdown-item" href="../articles/vg01-prepare-data.html">Preparing data for spifa()</a></li>
   </ul>
 </li>
       </ul>
@@ -56,11 +56,8 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Preparing Your Data</h1>
-                        <h4 data-toc-skip class="author">Erick A.
-Chacon-Montalvan</h4>
+      <h1>Preparing data for spifa()</h1>
             
-            <h4 data-toc-skip class="date">2026-09-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ErickChacon/spifa/blob/master/vignettes/vg01-prepare-data.Rmd" class="external-link"><code>vignettes/vg01-prepare-data.Rmd</code></a></small>
       <div class="d-none name"><code>vg01-prepare-data.Rmd</code></div>
@@ -68,19 +65,12 @@ Chacon-Montalvan</h4>
 
     
     
-<div class="section level2">
-<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
-</h2>
 <p><code><a href="../reference/spifa.html">spifa()</a></code> expects data in a specific shape: one row per
 respondent, and the binary item responses stored as a single
 <em>matrix-valued column</em> (<code>nobs x nitems</code>) rather than
 one column per item. This is the same convention base R uses for
-multivariate <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>. Survey data rarely arrives in that shape
-– this vignette builds a small questionnaire dataset from scratch, the
-way it typically comes out of a survey tool (one column per item,
-<code>"Yes"</code>/ <code>"No"</code> responses, a household covariate,
-GPS coordinates), and walks through getting it into the shape
-<code><a href="../reference/spifa.html">spifa()</a></code> needs.</p>
+multivariate <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>. This vignette builds a small dataset
+acceptable by <code><a href="../reference/spifa.html">spifa()</a></code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; </span></span>
@@ -96,13 +86,11 @@ GPS coordinates), and walks through getting it into the shape
 <pre><code><span><span class="co">#&gt; Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE</span></span></code></pre>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ErickChacon/spifa" class="external-link">spifa</a></span><span class="op">)</span></span></code></pre></div>
-</div>
 <div class="section level2">
-<h2 id="simulating-a-raw-questionnaire-export">Simulating a raw questionnaire export<a class="anchor" aria-label="anchor" href="#simulating-a-raw-questionnaire-export"></a>
+<h2 id="simulating-a-raw-questionnaire">Simulating a raw questionnaire<a class="anchor" aria-label="anchor" href="#simulating-a-raw-questionnaire"></a>
 </h2>
 <p>Five binary items, a household <code>wealth</code> covariate, and GPS
-coordinates, for 20 households – exactly what a survey export typically
-looks like:</p>
+coordinates, for 20 households:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">nobs</span> <span class="op">&lt;-</span> <span class="fl">20</span></span>
@@ -112,140 +100,283 @@ looks like:</p>
 <span>  id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nobs</span><span class="op">)</span>,</span>
 <span>  wealth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">nobs</span><span class="op">)</span>,</span>
 <span>  lon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="op">-</span><span class="fl">71.70</span>, <span class="op">-</span><span class="fl">71.68</span><span class="op">)</span>,</span>
-<span>  lat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="op">-</span><span class="fl">7.06</span>, <span class="op">-</span><span class="fl">7.04</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nitems</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">raw</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"item"</span>, <span class="va">j</span><span class="op">)</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="fl">1</span>, <span class="fl">0.5</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span>, <span class="st">"Yes"</span>, <span class="st">"No"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">raw</span>, <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt;   id     wealth       lon       lat item1 item2 item3 item4 item5</span></span>
-<span><span class="co">#&gt; 1  1 -0.6264538 -71.68358 -7.041742    No   Yes   Yes   Yes    No</span></span>
-<span><span class="co">#&gt; 2  2  0.1836433 -71.68706 -7.054128   Yes    No    No   Yes   Yes</span></span>
-<span><span class="co">#&gt; 3  3 -0.8356286 -71.68434 -7.050819    No    No    No    No    No</span></span></code></pre>
+<span>  lat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="op">-</span><span class="fl">7.06</span>, <span class="op">-</span><span class="fl">7.04</span><span class="op">)</span>,</span>
+<span>  item1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="fl">1</span>, <span class="fl">0.1</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span>,</span>
+<span>  item2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="fl">1</span>, <span class="fl">0.2</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span>,</span>
+<span>  item3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="fl">1</span>, <span class="fl">0.3</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span>,</span>
+<span>  item4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="fl">1</span>, <span class="fl">0.4</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span>,</span>
+<span>  item5 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="fl">1</span>, <span class="fl">0.5</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">raw</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt;    id      wealth       lon       lat item1 item2 item3 item4 item5</span></span>
+<span><span class="co">#&gt; 1   1 -0.62645381 -71.68358 -7.041742 FALSE FALSE  TRUE  TRUE FALSE</span></span>
+<span><span class="co">#&gt; 2   2  0.18364332 -71.68706 -7.054128 FALSE FALSE FALSE  TRUE  TRUE</span></span>
+<span><span class="co">#&gt; 3   3 -0.83562861 -71.68434 -7.050819 FALSE FALSE FALSE FALSE FALSE</span></span>
+<span><span class="co">#&gt; 4   4  1.59528080 -71.68894 -7.053352 FALSE  TRUE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; 5   5  0.32950777 -71.68941 -7.046983 FALSE FALSE  TRUE  TRUE  TRUE</span></span>
+<span><span class="co">#&gt; 6   6 -0.82046838 -71.68421 -7.054840 FALSE FALSE FALSE FALSE FALSE</span></span>
+<span><span class="co">#&gt; 7   7  0.48742905 -71.69953 -7.050429 FALSE FALSE FALSE FALSE FALSE</span></span>
+<span><span class="co">#&gt; 8   8  0.73832471 -71.69046 -7.044674 FALSE FALSE FALSE  TRUE FALSE</span></span>
+<span><span class="co">#&gt; 9   9  0.57578135 -71.68535 -7.058315 FALSE  TRUE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; 10 10 -0.30538839 -71.68615 -7.042494 FALSE FALSE FALSE  TRUE FALSE</span></span>
+<span><span class="co">#&gt; 11 11  1.51178117 -71.69045 -7.053219 FALSE  TRUE FALSE  TRUE  TRUE</span></span>
+<span><span class="co">#&gt; 12 12  0.38984324 -71.68278 -7.043211 FALSE FALSE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; 13 13 -0.62124058 -71.69124 -7.053066 FALSE FALSE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; 14 14 -2.21469989 -71.69510 -7.053325 FALSE FALSE FALSE FALSE FALSE</span></span>
+<span><span class="co">#&gt; 15 15  1.12493092 -71.69859 -7.050473 FALSE FALSE  TRUE FALSE FALSE</span></span>
+<span><span class="co">#&gt; 16 16 -0.04493361 -71.69801 -7.042156 FALSE FALSE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; 17 17 -0.01619026 -71.69367 -7.042713 FALSE FALSE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; 18 18  0.94383621 -71.68963 -7.052200 FALSE FALSE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; 19 19  0.82122120 -71.68676 -7.044454 FALSE FALSE  TRUE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; 20 20  0.59390132 -71.69186 -7.040788 FALSE FALSE FALSE FALSE  TRUE</span></span></code></pre>
 </div>
 <div class="section level2">
-<h2 id="from-one-column-per-item-to-a-matrix-column">From one column per item to a matrix column<a class="anchor" aria-label="anchor" href="#from-one-column-per-item-to-a-matrix-column"></a>
+<h2 id="data-for-spifa">Data for <code>spifa()</code><a class="anchor" aria-label="anchor" href="#data-for-spifa"></a>
 </h2>
-<p>Recode each item to binary <code>0</code>/<code>1</code>
-(<code><a href="../reference/spifa.html">spifa()</a></code> also accepts <code>TRUE</code>/<code>FALSE</code>,
-coerced the same way), then assemble the item columns into a single
-matrix column with <code><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix()</a></code> + ordinary
-<code>$&lt;-</code> assignment (or <code><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I()</a></code>), which preserves it
-as a matrix rather than flattening it back into separate columns:</p>
+<p>We extract the item as a matrix, and then provide it to a new
+<code>data.frame</code> to later convert to <code>sf</code>:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="va">raw</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/across.html" class="external-link">across</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"item"</span><span class="op">)</span>, <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">.x</span> <span class="op">==</span> <span class="st">"Yes"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">data</span><span class="op">$</span><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"item"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">id</span>, <span class="va">wealth</span>, <span class="va">lon</span>, <span class="va">lat</span>, <span class="va">items</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; 'data.frame':    20 obs. of  5 variables:</span></span>
-<span><span class="co">#&gt;  $ id    : int  1 2 3 4 5 6 7 8 9 10 ...</span></span>
-<span><span class="co">#&gt;  $ wealth: num  -0.626 0.184 -0.836 1.595 0.33 ...</span></span>
-<span><span class="co">#&gt;  $ lon   : num  -71.7 -71.7 -71.7 -71.7 -71.7 ...</span></span>
-<span><span class="co">#&gt;  $ lat   : num  -7.04 -7.05 -7.05 -7.05 -7.05 ...</span></span>
-<span><span class="co">#&gt;  $ items : int [1:20, 1:5] 0 1 0 0 1 0 1 0 0 0 ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
-<span><span class="co">#&gt;   .. ..$ : NULL</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:5] "item1" "item2" "item3" "item4" ...</span></span></code></pre>
-<p>Passing the original one-column-per-item <code>raw</code> data
-(before this step) to <code><a href="../reference/spifa.html">spifa()</a></code> fails clearly rather than
-silently doing the wrong thing:</p>
+<code class="sourceCode R"><span><span class="co"># get items as a matrix</span></span>
+<span><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">raw</span>, <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"item"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co"># create data.frame and geo-reference it</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span>, wealth <span class="op">=</span> <span class="va">raw</span><span class="op">$</span><span class="va">wealth</span>, x <span class="op">=</span> <span class="va">raw</span><span class="op">$</span><span class="va">lon</span>, y <span class="op">=</span> <span class="va">raw</span><span class="op">$</span><span class="va">lat</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span>
+<span><span class="va">data</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; Simple feature collection with 20 features and 2 fields</span></span>
+<span><span class="co">#&gt; Geometry type: POINT</span></span>
+<span><span class="co">#&gt; Dimension:     XY</span></span>
+<span><span class="co">#&gt; Bounding box:  xmin: -71.69953 ymin: -7.058315 xmax: -71.68278 ymax: -7.040788</span></span>
+<span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
+<span><span class="co">#&gt; First 10 features:</span></span>
+<span><span class="co">#&gt;    items.1 items.2 items.3 items.4 items.5     wealth                    geometry</span></span>
+<span><span class="co">#&gt; 1    FALSE   FALSE    TRUE    TRUE   FALSE -0.6264538 POINT (-71.68358 -7.041742)</span></span>
+<span><span class="co">#&gt; 2    FALSE   FALSE   FALSE    TRUE    TRUE  0.1836433 POINT (-71.68706 -7.054128)</span></span>
+<span><span class="co">#&gt; 3    FALSE   FALSE   FALSE   FALSE   FALSE -0.8356286 POINT (-71.68434 -7.050819)</span></span>
+<span><span class="co">#&gt; 4    FALSE    TRUE   FALSE   FALSE    TRUE  1.5952808 POINT (-71.68894 -7.053352)</span></span>
+<span><span class="co">#&gt; 5    FALSE   FALSE    TRUE    TRUE    TRUE  0.3295078 POINT (-71.68941 -7.046983)</span></span>
+<span><span class="co">#&gt; 6    FALSE   FALSE   FALSE   FALSE   FALSE -0.8204684  POINT (-71.68421 -7.05484)</span></span>
+<span><span class="co">#&gt; 7    FALSE   FALSE   FALSE   FALSE   FALSE  0.4874291 POINT (-71.69953 -7.050429)</span></span>
+<span><span class="co">#&gt; 8    FALSE   FALSE   FALSE    TRUE   FALSE  0.7383247 POINT (-71.69046 -7.044674)</span></span>
+<span><span class="co">#&gt; 9    FALSE    TRUE   FALSE   FALSE    TRUE  0.5757814 POINT (-71.68535 -7.058315)</span></span>
+<span><span class="co">#&gt; 10   FALSE   FALSE   FALSE    TRUE   FALSE -0.3053884 POINT (-71.68615 -7.042494)</span></span></code></pre>
+<p>Notice that we can easily access the response <code>items</code>:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span><span class="va">item1</span> <span class="op">~</span> <span class="fl">1</span>, data <span class="op">=</span> <span class="va">raw</span>, nfactors <span class="op">=</span> <span class="fl">2</span>, niter <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `spifa()`:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> The left-hand side of 'formula' must be a matrix</span></span></code></pre>
-</div>
-<div class="section level2">
-<h2 id="missing-item-responses">Missing item responses<a class="anchor" aria-label="anchor" href="#missing-item-responses"></a>
-</h2>
-<p>Individual missing item responses (<code>NA</code>) don’t need to be
-dropped or imputed – <code><a href="../reference/spifa.html">spifa()</a></code> handles them natively,
-treating a missing response as an unobserved auxiliary variable to be
-sampled along with everything else, rather than requiring complete
-rows:</p>
+<code class="sourceCode R"><span><span class="va">data</span><span class="op">$</span><span class="va">items</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt;        [,1]  [,2]  [,3]  [,4]  [,5]</span></span>
+<span><span class="co">#&gt;  [1,] FALSE FALSE  TRUE  TRUE FALSE</span></span>
+<span><span class="co">#&gt;  [2,] FALSE FALSE FALSE  TRUE  TRUE</span></span>
+<span><span class="co">#&gt;  [3,] FALSE FALSE FALSE FALSE FALSE</span></span>
+<span><span class="co">#&gt;  [4,] FALSE  TRUE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt;  [5,] FALSE FALSE  TRUE  TRUE  TRUE</span></span>
+<span><span class="co">#&gt;  [6,] FALSE FALSE FALSE FALSE FALSE</span></span>
+<span><span class="co">#&gt;  [7,] FALSE FALSE FALSE FALSE FALSE</span></span>
+<span><span class="co">#&gt;  [8,] FALSE FALSE FALSE  TRUE FALSE</span></span>
+<span><span class="co">#&gt;  [9,] FALSE  TRUE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; [10,] FALSE FALSE FALSE  TRUE FALSE</span></span>
+<span><span class="co">#&gt; [11,] FALSE  TRUE FALSE  TRUE  TRUE</span></span>
+<span><span class="co">#&gt; [12,] FALSE FALSE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; [13,] FALSE FALSE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; [14,] FALSE FALSE FALSE FALSE FALSE</span></span>
+<span><span class="co">#&gt; [15,] FALSE FALSE  TRUE FALSE FALSE</span></span>
+<span><span class="co">#&gt; [16,] FALSE FALSE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; [17,] FALSE FALSE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; [18,] FALSE FALSE FALSE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; [19,] FALSE FALSE  TRUE FALSE  TRUE</span></span>
+<span><span class="co">#&gt; [20,] FALSE FALSE FALSE FALSE  TRUE</span></span></code></pre>
+<p>This dataset can directly be used to fit a model:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">data_na</span> <span class="op">&lt;-</span> <span class="va">data</span></span>
-<span><span class="va">data_na</span><span class="op">$</span><span class="va">items</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
-<span></span>
-<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span><span class="va">items</span> <span class="op">~</span> <span class="fl">1</span>, data <span class="op">=</span> <span class="va">data_na</span>, nfactors <span class="op">=</span> <span class="fl">2</span>, ngp <span class="op">=</span> <span class="fl">0</span>, niter <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"fit_args"</span><span class="op">)</span><span class="op">$</span><span class="va">nobs</span>  <span class="co"># respondent with the NA item is still included</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; [1] 20</span></span></code></pre>
-</div>
-<div class="section level2">
-<h2 id="missing-predictor-values">Missing predictor values<a class="anchor" aria-label="anchor" href="#missing-predictor-values"></a>
-</h2>
-<p>Missing <em>predictor</em> values behave differently, and are worth
-calling out: a <code>NA</code> in a predictor column drops that
-respondent from the whole fit, the same way <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> and
-friends do – unlike item responses, there’s no partial information to
-keep:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">data_na</span> <span class="op">&lt;-</span> <span class="va">data</span></span>
-<span><span class="va">data_na</span><span class="op">$</span><span class="va">wealth</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
-<span></span>
-<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span><span class="va">items</span> <span class="op">~</span> <span class="va">wealth</span>, data <span class="op">=</span> <span class="va">data_na</span>, nfactors <span class="op">=</span> <span class="fl">2</span>, ngp <span class="op">=</span> <span class="fl">0</span>, niter <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"fit_args"</span><span class="op">)</span><span class="op">$</span><span class="va">nobs</span>  <span class="co"># one respondent dropped</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; [1] 19</span></span></code></pre>
-</div>
-<div class="section level2">
-<h2 id="adding-spatial-coordinates">Adding spatial coordinates<a class="anchor" aria-label="anchor" href="#adding-spatial-coordinates"></a>
-</h2>
-<p>Spatial models need <code>data</code> to be an <code>sf</code>
-object. If your coordinates are plain numeric columns (e.g. from a GPS
-device), as here, convert with <code><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">sf::st_as_sf()</a></code>:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">data_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span><span class="va">data</span>, coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span></code></pre></div>
-<p><code><a href="../reference/spifa.html">spifa()</a></code> then adds the spatial Gaussian process
-automatically (see <code><a href="../articles/spifa.html">vignette("spifa")</a></code>):</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span><span class="va">items</span> <span class="op">~</span> <span class="fl">1</span>, data <span class="op">=</span> <span class="va">data_sf</span>, nfactors <span class="op">=</span> <span class="fl">2</span>, niter <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span>
-<span>  <span class="st">"fit_args"</span><span class="op">)</span><span class="op">$</span><span class="va">model_type</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; [1] "spifa"</span></span></code></pre>
-</div>
-<div class="section level2">
-<h2 id="putting-it-together">Putting it together<a class="anchor" aria-label="anchor" href="#putting-it-together"></a>
-</h2>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span><span class="va">items</span> <span class="op">~</span> <span class="va">wealth</span>, data <span class="op">=</span> <span class="va">data_sf</span>, nfactors <span class="op">=</span> <span class="fl">2</span>, niter <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="va">fit</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span><span class="va">items</span> <span class="op">~</span> <span class="va">wealth</span>, data <span class="op">=</span> <span class="va">data</span>, nfactors <span class="op">=</span> <span class="fl">2</span>, niter <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; Item factor analysis model: spifa_pred</span></span>
 <span><span class="co">#&gt; Formula: items ~ wealth</span></span>
 <span><span class="co">#&gt; Dimensions: 20 respondents, 5 items, 2 latent factors, 2 spatial processes</span></span>
 <span><span class="co">#&gt; MCMC: 1 chain, iter = 5, thin = 1, samples = 5</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Item model parameters:</span></span>
-<span><span class="co">#&gt;          mean median    sd     q10     q90 ess_bulk rhat</span></span>
-<span><span class="co">#&gt; c[1]   -0.175 -0.054 0.373 -0.5564  0.1199       NA  1.9</span></span>
-<span><span class="co">#&gt; c[2]   -0.085 -0.029 0.237 -0.3235  0.1017       NA  1.9</span></span>
-<span><span class="co">#&gt; c[3]    0.157  0.106 0.160  0.0093  0.3281       NA  1.9</span></span>
-<span><span class="co">#&gt; c[4]   -0.178 -0.137 0.071 -0.2560 -0.1201       NA  0.9</span></span>
-<span><span class="co">#&gt; c[5]    0.138  0.265 0.268 -0.1554  0.3583       NA  0.9</span></span>
-<span><span class="co">#&gt; A[1,1]  0.978  1.029 0.218  0.7471  1.1772       NA  0.9</span></span>
-<span><span class="co">#&gt; A[2,1]  0.361  0.149 0.441  0.0269  0.8478       NA  1.9</span></span>
-<span><span class="co">#&gt; A[3,1]  0.698  0.605 0.613  0.1768  1.2795       NA  1.9</span></span>
-<span><span class="co">#&gt; A[4,1]  0.185  0.157 0.273 -0.0901  0.4621       NA  1.9</span></span>
-<span><span class="co">#&gt; A[5,1]  0.275  0.234 0.150  0.1710  0.4234       NA  1.9</span></span>
-<span><span class="co">#&gt; A[2,2]  0.140  0.085 0.437 -0.2403  0.5987       NA  1.9</span></span>
-<span><span class="co">#&gt; A[3,2] -0.645 -0.891 0.680 -1.2609  0.0863       NA  1.9</span></span>
-<span><span class="co">#&gt; A[4,2] -0.294 -0.362 0.300 -0.5338  0.0069       NA  0.9</span></span>
-<span><span class="co">#&gt; A[5,2] -0.046 -0.019 0.094 -0.1464  0.0401       NA  1.9</span></span>
+<span><span class="co">#&gt;          mean median   sd   q10    q90 ess_bulk rhat</span></span>
+<span><span class="co">#&gt; c[1]   -1.478 -1.471 0.24 -1.71 -1.241       NA  0.9</span></span>
+<span><span class="co">#&gt; c[2]   -0.298 -0.353 0.20 -0.44 -0.091       NA  1.9</span></span>
+<span><span class="co">#&gt; c[3]   -0.651 -0.783 0.20 -0.79 -0.422       NA  0.9</span></span>
+<span><span class="co">#&gt; c[4]   -0.734 -0.705 0.30 -1.02 -0.488       NA  0.9</span></span>
+<span><span class="co">#&gt; c[5]   -0.039 -0.044 0.17 -0.19  0.111       NA  0.9</span></span>
+<span><span class="co">#&gt; A[1,1]  0.470  0.500 0.22  0.25  0.663       NA  1.9</span></span>
+<span><span class="co">#&gt; A[2,1]  0.770  0.753 0.16  0.63  0.917       NA  1.9</span></span>
+<span><span class="co">#&gt; A[3,1]  0.846  0.907 0.35  0.47  1.179       NA  0.9</span></span>
+<span><span class="co">#&gt; A[4,1] -0.031 -0.173 0.63 -0.55  0.625       NA  1.9</span></span>
+<span><span class="co">#&gt; A[5,1]  0.441  0.370 0.56 -0.11  1.010       NA  1.9</span></span>
+<span><span class="co">#&gt; A[2,2]  1.176  1.282 0.34  0.80  1.480       NA  1.9</span></span>
+<span><span class="co">#&gt; A[3,2]  0.035 -0.024 0.20 -0.15  0.252       NA  0.9</span></span>
+<span><span class="co">#&gt; A[4,2] -0.394 -0.343 0.38 -0.76 -0.070       NA  1.9</span></span>
+<span><span class="co">#&gt; A[5,2] -0.161 -0.254 0.27 -0.35  0.111       NA  1.9</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Factor model parameters:</span></span>
-<span><span class="co">#&gt;              mean  median     sd    q10   q90 ess_bulk rhat</span></span>
-<span><span class="co">#&gt; B[1,1]     0.1159  0.1732 0.2755 -0.150 0.312       NA  0.9</span></span>
-<span><span class="co">#&gt; B[1,2]    -0.2285 -0.3519 0.2725 -0.429 0.068       NA  0.9</span></span>
-<span><span class="co">#&gt; T[1,1]     0.4830  0.4819 0.0200  0.463 0.502       NA  1.9</span></span>
-<span><span class="co">#&gt; T[2,2]     0.5197  0.5220 0.0129  0.506 0.530       NA  1.9</span></span>
-<span><span class="co">#&gt; phi[1]     0.0495  0.0499 0.0024  0.047 0.052       NA  1.9</span></span>
-<span><span class="co">#&gt; phi[2]     0.0498  0.0501 0.0015  0.048 0.051       NA  0.9</span></span>
-<span><span class="co">#&gt; Corr[2,1]  0.0049 -0.0045 0.0599 -0.052 0.069       NA  1.9</span></span>
+<span><span class="co">#&gt;              mean median      sd    q10   q90 ess_bulk rhat</span></span>
+<span><span class="co">#&gt; B[1,1]     0.1078 0.1789 0.33165 -0.250 0.402       NA  1.9</span></span>
+<span><span class="co">#&gt; B[1,2]     0.0023 0.1551 0.35755 -0.384 0.321       NA  1.9</span></span>
+<span><span class="co">#&gt; T[1,1]     0.4868 0.4828 0.01278  0.477 0.500       NA  0.9</span></span>
+<span><span class="co">#&gt; T[2,2]     0.6929 0.6908 0.00903  0.684 0.702       NA  1.9</span></span>
+<span><span class="co">#&gt; phi[1]     0.0471 0.0477 0.00097  0.046 0.048       NA  1.9</span></span>
+<span><span class="co">#&gt; phi[2]     0.0536 0.0539 0.00062  0.053 0.054       NA  0.9</span></span>
+<span><span class="co">#&gt; Corr[2,1] -0.0021 0.0023 0.02035 -0.023 0.018       NA  1.9</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ess_bulk is the bulk effective sample size; rhat is the potential</span></span>
 <span><span class="co">#&gt; scale reduction factor on split chains (Rhat = 1 at convergence).</span></span>
 <span><span class="co">#&gt; Use summary() for the full set of statistics (incl. ess_tail).</span></span></code></pre>
+<p>Alternatively, you could also create the <code>sf</code> data first
+and then assign the items:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>wealth <span class="op">=</span> <span class="va">raw</span><span class="op">$</span><span class="va">wealth</span>, x <span class="op">=</span> <span class="va">raw</span><span class="op">$</span><span class="va">lon</span>, y <span class="op">=</span> <span class="va">raw</span><span class="op">$</span><span class="va">lat</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, crs <span class="op">=</span> <span class="fl">4326</span><span class="op">)</span></span>
+<span><span class="va">data</span><span class="op">$</span><span class="va">items</span> <span class="op">&lt;-</span> <span class="va">items</span></span>
+<span><span class="va">data</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; Simple feature collection with 20 features and 2 fields</span></span>
+<span><span class="co">#&gt; Geometry type: POINT</span></span>
+<span><span class="co">#&gt; Dimension:     XY</span></span>
+<span><span class="co">#&gt; Bounding box:  xmin: -71.69953 ymin: -7.058315 xmax: -71.68278 ymax: -7.040788</span></span>
+<span><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
+<span><span class="co">#&gt; First 10 features:</span></span>
+<span><span class="co">#&gt;        wealth                    geometry items.1 items.2 items.3 items.4 items.5</span></span>
+<span><span class="co">#&gt; 1  -0.6264538 POINT (-71.68358 -7.041742)   FALSE   FALSE    TRUE    TRUE   FALSE</span></span>
+<span><span class="co">#&gt; 2   0.1836433 POINT (-71.68706 -7.054128)   FALSE   FALSE   FALSE    TRUE    TRUE</span></span>
+<span><span class="co">#&gt; 3  -0.8356286 POINT (-71.68434 -7.050819)   FALSE   FALSE   FALSE   FALSE   FALSE</span></span>
+<span><span class="co">#&gt; 4   1.5952808 POINT (-71.68894 -7.053352)   FALSE    TRUE   FALSE   FALSE    TRUE</span></span>
+<span><span class="co">#&gt; 5   0.3295078 POINT (-71.68941 -7.046983)   FALSE   FALSE    TRUE    TRUE    TRUE</span></span>
+<span><span class="co">#&gt; 6  -0.8204684  POINT (-71.68421 -7.05484)   FALSE   FALSE   FALSE   FALSE   FALSE</span></span>
+<span><span class="co">#&gt; 7   0.4874291 POINT (-71.69953 -7.050429)   FALSE   FALSE   FALSE   FALSE   FALSE</span></span>
+<span><span class="co">#&gt; 8   0.7383247 POINT (-71.69046 -7.044674)   FALSE   FALSE   FALSE    TRUE   FALSE</span></span>
+<span><span class="co">#&gt; 9   0.5757814 POINT (-71.68535 -7.058315)   FALSE    TRUE   FALSE   FALSE    TRUE</span></span>
+<span><span class="co">#&gt; 10 -0.3053884 POINT (-71.68615 -7.042494)   FALSE   FALSE   FALSE    TRUE   FALSE</span></span></code></pre>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span><span class="va">items</span> <span class="op">~</span> <span class="va">wealth</span>, data <span class="op">=</span> <span class="va">data</span>, nfactors <span class="op">=</span> <span class="fl">2</span>, niter <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; Item factor analysis model: spifa_pred</span></span>
+<span><span class="co">#&gt; Formula: items ~ wealth</span></span>
+<span><span class="co">#&gt; Dimensions: 20 respondents, 5 items, 2 latent factors, 2 spatial processes</span></span>
+<span><span class="co">#&gt; MCMC: 1 chain, iter = 5, thin = 1, samples = 5</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Item model parameters:</span></span>
+<span><span class="co">#&gt;          mean median   sd    q10     q90 ess_bulk rhat</span></span>
+<span><span class="co">#&gt; c[1]   -0.521 -0.620 1.15 -1.596  0.6837       NA  1.9</span></span>
+<span><span class="co">#&gt; c[2]   -0.395 -0.422 0.22 -0.586 -0.1786       NA  1.9</span></span>
+<span><span class="co">#&gt; c[3]   -0.680 -0.644 0.64 -1.319 -0.0379       NA  1.9</span></span>
+<span><span class="co">#&gt; c[4]   -0.269 -0.381 0.26 -0.506  0.0105       NA  0.9</span></span>
+<span><span class="co">#&gt; c[5]    0.343  0.310 0.14  0.240  0.4781       NA  0.9</span></span>
+<span><span class="co">#&gt; A[1,1]  0.719  0.623 0.26  0.570  0.9666       NA  1.9</span></span>
+<span><span class="co">#&gt; A[2,1]  0.733  0.877 0.24  0.464  0.9076       NA  1.9</span></span>
+<span><span class="co">#&gt; A[3,1] -0.418 -0.393 0.43 -0.853  0.0078       NA  1.9</span></span>
+<span><span class="co">#&gt; A[4,1]  0.072  0.084 0.13 -0.060  0.2057       NA  1.9</span></span>
+<span><span class="co">#&gt; A[5,1]  0.539  0.674 0.46  0.039  0.9192       NA  1.9</span></span>
+<span><span class="co">#&gt; A[2,2]  0.513  0.558 0.14  0.365  0.6409       NA  0.9</span></span>
+<span><span class="co">#&gt; A[3,2] -0.640 -0.627 0.30 -0.939 -0.3380       NA  1.9</span></span>
+<span><span class="co">#&gt; A[4,2]  0.338  0.604 0.59 -0.306  0.8515       NA  1.9</span></span>
+<span><span class="co">#&gt; A[5,2] -0.347 -0.385 0.23 -0.562 -0.1122       NA  1.9</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Factor model parameters:</span></span>
+<span><span class="co">#&gt;             mean median      sd     q10   q90 ess_bulk rhat</span></span>
+<span><span class="co">#&gt; B[1,1]    0.0339 0.0249 0.36675 -0.3279 0.345       NA  0.9</span></span>
+<span><span class="co">#&gt; B[1,2]    0.0378 0.0188 0.19827 -0.1308 0.222       NA  1.9</span></span>
+<span><span class="co">#&gt; T[1,1]    0.5518 0.5554 0.01123  0.5399 0.560       NA  0.9</span></span>
+<span><span class="co">#&gt; T[2,2]    0.5037 0.5025 0.00435  0.5008 0.508       NA  0.9</span></span>
+<span><span class="co">#&gt; phi[1]    0.0487 0.0487 0.00079  0.0480 0.049       NA  1.9</span></span>
+<span><span class="co">#&gt; phi[2]    0.0512 0.0511 0.00082  0.0505 0.052       NA  1.9</span></span>
+<span><span class="co">#&gt; Corr[2,1] 0.0061 0.0043 0.01438 -0.0058 0.021       NA  1.9</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ess_bulk is the bulk effective sample size; rhat is the potential</span></span>
+<span><span class="co">#&gt; scale reduction factor on split chains (Rhat = 1 at convergence).</span></span>
+<span><span class="co">#&gt; Use summary() for the full set of statistics (incl. ess_tail).</span></span></code></pre>
+</div>
+<div class="section level2">
+<h2 id="missing-values">Missing values<a class="anchor" aria-label="anchor" href="#missing-values"></a>
+</h2>
+<div class="section level3">
+<h3 id="missing-item-responses">Missing item responses<a class="anchor" aria-label="anchor" href="#missing-item-responses"></a>
+</h3>
+<p>Individual missing item responses (<code>NA</code>) don’t need to be
+dropped or imputed – <code><a href="../reference/spifa.html">spifa()</a></code> handles them natively,
+treating a missing response as an unobserved auxiliary variable to be
+sampled along with everything else, rather than requiring complete
+rows:</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">data_na</span> <span class="op">&lt;-</span> <span class="va">data</span></span>
+<span><span class="va">data_na</span><span class="op">$</span><span class="va">items</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
+<span></span>
+<span><span class="va">fit_na</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span><span class="va">items</span> <span class="op">~</span> <span class="fl">1</span>, data <span class="op">=</span> <span class="va">data_na</span>, nfactors <span class="op">=</span> <span class="fl">2</span>, ngp <span class="op">=</span> <span class="fl">0</span>, niter <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="va">fit_na</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; Item factor analysis model: eifa</span></span>
+<span><span class="co">#&gt; Formula: items ~ 1</span></span>
+<span><span class="co">#&gt; Dimensions: 20 respondents, 5 items, 2 latent factors, 0 spatial processes</span></span>
+<span><span class="co">#&gt; MCMC: 1 chain, iter = 5, thin = 1, samples = 5</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Item model parameters:</span></span>
+<span><span class="co">#&gt;         mean median   sd     q10   q90 ess_bulk rhat</span></span>
+<span><span class="co">#&gt; c[1]   -0.76 -0.759 0.41 -1.1637 -0.35       NA  1.9</span></span>
+<span><span class="co">#&gt; c[2]   -1.09 -1.114 0.34 -1.4281 -0.76       NA  1.9</span></span>
+<span><span class="co">#&gt; c[3]   -0.11 -0.083 0.29 -0.3795  0.18       NA  1.9</span></span>
+<span><span class="co">#&gt; c[4]   -0.51 -0.431 0.29 -0.8142 -0.24       NA  0.9</span></span>
+<span><span class="co">#&gt; c[5]    0.35  0.348 0.10  0.2492  0.45       NA  1.9</span></span>
+<span><span class="co">#&gt; A[1,1]  0.45  0.577 0.25  0.1766  0.67       NA  0.9</span></span>
+<span><span class="co">#&gt; A[2,1] -0.37 -0.461 0.25 -0.5951 -0.11       NA  1.9</span></span>
+<span><span class="co">#&gt; A[3,1]  0.25  0.284 0.27 -0.0021  0.48       NA  1.9</span></span>
+<span><span class="co">#&gt; A[4,1]  0.59  0.670 0.24  0.3540  0.74       NA  1.9</span></span>
+<span><span class="co">#&gt; A[5,1]  0.23  0.194 0.24  0.0111  0.47       NA  1.9</span></span>
+<span><span class="co">#&gt; A[2,2]  1.49  1.534 0.30  1.2155  1.72       NA  0.9</span></span>
+<span><span class="co">#&gt; A[3,2]  0.15  0.217 0.20 -0.0657  0.34       NA  0.9</span></span>
+<span><span class="co">#&gt; A[4,2]  0.28  0.413 0.38 -0.1132  0.54       NA  0.9</span></span>
+<span><span class="co">#&gt; A[5,2]  0.30  0.239 0.16  0.1605  0.47       NA  1.9</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ess_bulk is the bulk effective sample size; rhat is the potential</span></span>
+<span><span class="co">#&gt; scale reduction factor on split chains (Rhat = 1 at convergence).</span></span>
+<span><span class="co">#&gt; Use summary() for the full set of statistics (incl. ess_tail).</span></span></code></pre>
+<p>As you can see in <code>Dimensions</code>, the missing responses are
+not removed but rather modelled.</p>
+</div>
+<div class="section level3">
+<h3 id="missing-predictor-values">Missing predictor values<a class="anchor" aria-label="anchor" href="#missing-predictor-values"></a>
+</h3>
+<p>Missing <em>predictor</em> values behave differently, and are worth
+calling out: a <code>NA</code> in a predictor column drops that
+respondent from the whole fit:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">data_na</span> <span class="op">&lt;-</span> <span class="va">data</span></span>
+<span><span class="va">data_na</span><span class="op">$</span><span class="va">wealth</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
+<span></span>
+<span><span class="va">fit_na</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span><span class="va">items</span> <span class="op">~</span> <span class="va">wealth</span>, data <span class="op">=</span> <span class="va">data_na</span>, nfactors <span class="op">=</span> <span class="fl">2</span>, ngp <span class="op">=</span> <span class="fl">0</span>, niter <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="va">fit_na</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; Item factor analysis model: cifa_pred</span></span>
+<span><span class="co">#&gt; Formula: items ~ wealth</span></span>
+<span><span class="co">#&gt; Dimensions: 15 respondents, 5 items, 2 latent factors, 0 spatial processes</span></span>
+<span><span class="co">#&gt; MCMC: 1 chain, iter = 5, thin = 1, samples = 5</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Item model parameters:</span></span>
+<span><span class="co">#&gt;          mean median   sd   q10    q90 ess_bulk rhat</span></span>
+<span><span class="co">#&gt; c[1]   -0.286 -0.472 0.48 -0.71  0.249       NA  1.9</span></span>
+<span><span class="co">#&gt; c[2]   -0.724 -0.606 0.69 -1.39 -0.081       NA  1.9</span></span>
+<span><span class="co">#&gt; c[3]   -1.120 -1.276 0.40 -1.46 -0.673       NA  1.9</span></span>
+<span><span class="co">#&gt; c[4]   -0.614 -0.572 0.22 -0.84 -0.436       NA  1.9</span></span>
+<span><span class="co">#&gt; c[5]    0.214  0.299 0.14  0.06  0.311       NA  1.9</span></span>
+<span><span class="co">#&gt; A[1,1]  0.437  0.412 0.63 -0.19  1.082       NA  1.9</span></span>
+<span><span class="co">#&gt; A[2,1] -0.266 -0.233 0.18 -0.46 -0.111       NA  1.9</span></span>
+<span><span class="co">#&gt; A[3,1]  0.148 -0.040 0.38 -0.17  0.571       NA  1.9</span></span>
+<span><span class="co">#&gt; A[4,1]  0.099  0.151 0.24 -0.13  0.276       NA  1.9</span></span>
+<span><span class="co">#&gt; A[5,1] -0.601 -0.679 0.35 -0.90 -0.242       NA  1.9</span></span>
+<span><span class="co">#&gt; A[2,2]  0.547  0.559 0.31  0.25  0.815       NA  1.9</span></span>
+<span><span class="co">#&gt; A[3,2] -0.070 -0.022 0.14 -0.22  0.048       NA  0.9</span></span>
+<span><span class="co">#&gt; A[4,2] -0.224 -0.257 0.23 -0.44  0.019       NA  0.9</span></span>
+<span><span class="co">#&gt; A[5,2]  0.046 -0.070 0.27 -0.19  0.338       NA  1.9</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Factor model parameters:</span></span>
+<span><span class="co">#&gt;             mean median    sd     q10   q90 ess_bulk rhat</span></span>
+<span><span class="co">#&gt; B[1,1]    -0.495  -0.45 0.329 -0.8420 -0.19       NA  1.9</span></span>
+<span><span class="co">#&gt; B[1,2]    -0.780  -0.91 0.247 -0.9809 -0.50       NA  0.9</span></span>
+<span><span class="co">#&gt; Corr[2,1]  0.016   0.01 0.022 -0.0031  0.04       NA  0.9</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ess_bulk is the bulk effective sample size; rhat is the potential</span></span>
+<span><span class="co">#&gt; scale reduction factor on split chains (Rhat = 1 at convergence).</span></span>
+<span><span class="co">#&gt; Use summary() for the full set of statistics (incl. ess_tail).</span></span></code></pre>
+<p>As you can see in <code>Dimensions</code>, the 5 respondents with a
+missing <code>wealth</code> value are dropped – 15 respondents remain,
+unlike the item-response case above.</p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
