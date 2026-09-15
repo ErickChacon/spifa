@@ -1,10 +1,8 @@
 ---
-title: "Preparing Your Data"
-author: "Erick A. Chacon-Montalvan"
-date: "`r Sys.Date()`"
+title: "Preparing data for spifa()"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Preparing Your Data}
+  %\VignetteIndexEntry{Preparing data for spifa()}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,16 +13,10 @@ knitr::opts_chunk$set(comment = "#>")
 options(width = 100)
 ```
 
-## Introduction
-
-`spifa()` expects data in a specific shape: one row per respondent, and the
-binary item responses stored as a single *matrix-valued column* (`nobs x
-nitems`) rather than one column per item. This is the same convention base
-R uses for multivariate `lm()`. Survey data rarely arrives in that shape --
-this vignette builds a small questionnaire dataset from scratch, the way
-it typically comes out of a survey tool (one column per item, `"Yes"`/
-`"No"` responses, a household covariate, GPS coordinates), and walks
-through getting it into the shape `spifa()` needs.
+`spifa()` expects data in a specific shape: one row per respondent, and the binary item
+responses stored as a single *matrix-valued column* (`nobs x nitems`) rather than one
+column per item. This is the same convention base R uses for multivariate `lm()`. This
+vignette builds a small dataset acceptable by `spifa()`.
 
 ```{r}
 library(dplyr)
@@ -32,10 +24,9 @@ library(sf)
 library(spifa)
 ```
 
-## Simulating a raw questionnaire export
+## Simulating a raw questionnaire
 
-Five binary items, a household `wealth` covariate, and GPS coordinates,
-for 20 households -- exactly what a survey export typically looks like:
+Five binary items, a household `wealth` covariate, and GPS coordinates, for 20 households:
 
 ```{r}
 set.seed(1)
@@ -46,41 +37,60 @@ raw <- data.frame(
   id = seq_len(nobs),
   wealth = rnorm(nobs),
   lon = runif(nobs, -71.70, -71.68),
-  lat = runif(nobs, -7.06, -7.04))
-
-for (j in seq_len(nitems)) {
-  raw[[paste0("item", j)]] <- factor(ifelse(rbinom(nobs, 1, 0.5) == 1, "Yes", "No"))
-}
-
-head(raw, 3)
+  lat = runif(nobs, -7.06, -7.04),
+  item1 = rbinom(nobs, 1, 0.1) == 1,
+  item2 = rbinom(nobs, 1, 0.2) == 1,
+  item3 = rbinom(nobs, 1, 0.3) == 1,
+  item4 = rbinom(nobs, 1, 0.4) == 1,
+  item5 = rbinom(nobs, 1, 0.5) == 1
+)
+raw
 ```
 
-## From one column per item to a matrix column
+## Data for `spifa()`
 
-Recode each item to binary `0`/`1` (`spifa()` also accepts `TRUE`/`FALSE`,
-coerced the same way), then assemble the item columns into a single matrix
-column with `as.matrix()` + ordinary `$<-` assignment (or `I()`), which
-preserves it as a matrix rather than flattening it back into separate
-columns:
+We extract the item as a matrix, and then provide it to a new `data.frame` to later
+convert to `sf`:
 
 ```{r}
-data <- raw |>
-  mutate(across(starts_with("item"), ~ as.integer(.x == "Yes")))
-
-data$items <- as.matrix(select(data, starts_with("item")))
-data <- select(data, id, wealth, lon, lat, items)
-
-str(data)
+# get items as a matrix
+items <- select(raw, starts_with("item")) |>
+  as.matrix() |>
+  unname()
+# create data.frame and geo-reference it
+data <- data.frame(items = I(items), wealth = raw$wealth, x = raw$lon, y = raw$lat) |>
+    st_as_sf(coords = c("x", "y"), crs = 4326)
+data
 ```
 
-Passing the original one-column-per-item `raw` data (before this step) to
-`spifa()` fails clearly rather than silently doing the wrong thing:
+Notice that we can easily access the response `items`:
 
-```{r, error = TRUE}
-spifa(item1 ~ 1, data = raw, nfactors = 2, niter = 5)
+```{r}
+data$items
 ```
 
-## Missing item responses
+This dataset can directly be used to fit a model:
+
+```{r}
+spifa(items ~ wealth, data = data, nfactors = 2, niter = 5)
+```
+
+Alternatively, you could also create the `sf` data first and then assign the items:
+
+```{r}
+data <- data.frame(wealth = raw$wealth, x = raw$lon, y = raw$lat) |>
+    st_as_sf(coords = c("x", "y"), crs = 4326)
+data$items <- items
+data
+```
+
+```{r}
+spifa(items ~ wealth, data = data, nfactors = 2, niter = 5)
+```
+
+## Missing values
+
+### Missing item responses
 
 Individual missing item responses (`NA`) don't need to be dropped or
 imputed -- `spifa()` handles them natively, treating a missing response as
@@ -89,48 +99,28 @@ rather than requiring complete rows:
 
 ```{r}
 data_na <- data
-data_na$items[1, 1] <- NA
+data_na$items[1:5, 1] <- NA
 
-fit <- spifa(items ~ 1, data = data_na, nfactors = 2, ngp = 0, niter = 5)
-attr(fit, "fit_args")$nobs  # respondent with the NA item is still included
+fit_na <- spifa(items ~ 1, data = data_na, nfactors = 2, ngp = 0, niter = 5)
+fit_na
 ```
 
-## Missing predictor values
+As you can see in `Dimensions`, the missing responses are not removed but rather
+modelled.
+
+### Missing predictor values
 
 Missing *predictor* values behave differently, and are worth calling out:
-a `NA` in a predictor column drops that respondent from the whole fit, the
-same way `lm()` and friends do -- unlike item responses, there's no
-partial information to keep:
+a `NA` in a predictor column drops that respondent from the whole fit:
 
 ```{r}
 data_na <- data
-data_na$wealth[1] <- NA
+data_na$wealth[1:5] <- NA
 
-fit <- spifa(items ~ wealth, data = data_na, nfactors = 2, ngp = 0, niter = 5)
-attr(fit, "fit_args")$nobs  # one respondent dropped
+fit_na <- spifa(items ~ wealth, data = data_na, nfactors = 2, ngp = 0, niter = 5)
+fit_na
 ```
 
-## Adding spatial coordinates
+As you can see in `Dimensions`, the 5 respondents with a missing `wealth` value are
+dropped -- 15 respondents remain, unlike the item-response case above.
 
-Spatial models need `data` to be an `sf` object. If your coordinates are
-plain numeric columns (e.g. from a GPS device), as here, convert with
-`sf::st_as_sf()`:
-
-```{r}
-data_sf <- st_as_sf(data, coords = c("lon", "lat"), crs = 4326)
-```
-
-`spifa()` then adds the spatial Gaussian process automatically (see
-`vignette("spifa")`):
-
-```{r}
-attr(spifa(items ~ 1, data = data_sf, nfactors = 2, niter = 5),
-  "fit_args")$model_type
-```
-
-## Putting it together
-
-```{r}
-fit <- spifa(items ~ wealth, data = data_sf, nfactors = 2, niter = 5)
-fit
-```
