@@ -7,45 +7,45 @@ samples, and predict and map the latent factors at new locations.
 ## Introduction
 
 We will focus on the spatial item factor model proposed in
-Chacón-Montalván et al. (2025). Let \\Y\_{ij}\\ be the binary response
-for item \\j\\ in individual \\i\\. The model can be defined using an
-auxiliary variable \\Z\_{ij}\\ such that:
+Chacón-Montalván et al. (2025). Let Y\_{ij} be the binary response for
+item j in individual i. The model can be defined using an auxiliary
+variable Z\_{ij} such that:
 
-\\ \begin{aligned} {Y}\_{ij} & = \begin{cases} 1, & \text{if} ~
-{Z}\_{ij} \> 0\\ 0, & \text{otherwise} \end{cases}\\ {Z}\_{ij} & = c_j +
+\begin{aligned} {Y}\_{ij} & = \begin{cases} 1, & \text{if} ~ {Z}\_{ij}
+\> 0\\ 0, & \text{otherwise} \end{cases}\\ {Z}\_{ij} & = c_j +
 \boldsymbol{a}\_j^\intercal\boldsymbol{\theta}\_i + \epsilon\_{ij}, \~~
-\epsilon\_{ij} \sim {N}(0, 1), \end{aligned} \\
+\epsilon\_{ij} \sim {N}(0, 1), \end{aligned}
 
-where the easiness parameters \\c_j\\ define how common is to endorse
-the item \\j\\, and the discrimination parameters \\\boldsymbol{a}\_j\\
-define how important is item \\j\\ to discriminate the latent
-factors/abilities \\\boldsymbol{\theta}\_i\\.
+where the easiness parameters c_j define how common is to endorse the
+item j, and the discrimination parameters \boldsymbol{a}\_j define how
+important is item j to discriminate the latent factors/abilities
+\boldsymbol{\theta}\_i.
 
-The vector of latent abilities \\\boldsymbol{\theta}\_i\\ is modelled in
-terms of predictors \\\boldsymbol{x}\_i\\, a vector of Gaussian
-processes \\\boldsymbol{w}(s_i)\\, and a multivariate non-spatial term
-\\\boldsymbol{v}\_i\\: \\ \boldsymbol{\theta}\_i = \boldsymbol{B}
+The vector of latent abilities \boldsymbol{\theta}\_i is modelled in
+terms of predictors \boldsymbol{x}\_i, a vector of Gaussian processes
+\boldsymbol{w}(s_i), and a multivariate non-spatial term
+\boldsymbol{v}\_i: \boldsymbol{\theta}\_i = \boldsymbol{B}
 \boldsymbol{x}\_i + \boldsymbol{T} \boldsymbol{w}(s_i) +
-\boldsymbol{v}\_i, \\ where \\\boldsymbol{B}\\ is the matrix of
-multivariate effects of the predictors, \\\boldsymbol{T}\\ defines the
-relationship between the spatial processes and the latent abilities, and
-\\\boldsymbol{v}\_i\\ is allowed to have a correlations structure
-\\\boldsymbol{R}\\.
+\boldsymbol{v}\_i, where \boldsymbol{B} is the matrix of multivariate
+effects of the predictors, \boldsymbol{T} defines the relationship
+between the spatial processes and the latent abilities, and
+\boldsymbol{v}\_i is allowed to have a correlations structure
+\boldsymbol{R}.
 
 This model is unidentifiable, so it is important to restrict the
-discrimination parameters \\\boldsymbol{a}\_j\\ and set informative
-priors for the spatial range of the Gaussian processes
-\\\boldsymbol{w}(s_i)\\ before fitting it, to facilitate convergence of
-the posterior sampling algorithm – in practice, both are best informed
-by exploratory analysis (e.g. a preliminary non-spatial item factor
-analysis for the former, an empirical variogram for the latter), though
-we use them directly below without walking through that derivation. The
-linear transformation \\\boldsymbol{T}\\, by contrast, is not determined
-from exploratory analysis – it is a structural choice made by the user
-(usually diagonal, i.e. one independent Gaussian process per factor),
-though alternative structures can be specified and compared.
+discrimination parameters \boldsymbol{a}\_j and set informative priors
+for the spatial range of the Gaussian processes \boldsymbol{w}(s_i)
+before fitting it, to facilitate convergence of the posterior sampling
+algorithm – in practice, both are best informed by exploratory analysis
+(e.g. a preliminary non-spatial item factor analysis for the former, an
+empirical variogram for the latter), though we use them directly below
+without walking through that derivation. The linear transformation
+\boldsymbol{T}, by contrast, is not determined from exploratory analysis
+– it is a structural choice made by the user (usually diagonal, i.e. one
+independent Gaussian process per factor), though alternative structures
+can be specified and compared.
 
-## Load required packages and data
+## Ipixuna data
 
 ``` r
 
@@ -130,7 +130,7 @@ ipixuna$items |> head()
     #> [5,]    1    0    1    0    1    1    1    1    1     1
     #> [6,]    0    0    0    0    0    0    0    0    0     0
 
-## Sample from the posterior of a SPIFA model
+## Sample from the posterior
 
 As mentioned before, an identifiable spifa model requires restricting
 the discrimination parameters, along with adequate initial values and
@@ -490,7 +490,7 @@ plot_interval(samples, select = "phi", horizontal = TRUE)
 
 ![](spifa_files/figure-html/unnamed-chunk-18-1.png)
 
-## Predict and map the latent factors
+## Predict the latent factors
 
 **spifa** provides Bayesian prediction of the latent factors at (i) the
 observed locations and (ii) new locations through the

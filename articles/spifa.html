@@ -6,13 +6,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Bayesian Spatial Item Factor Analysis • spifa</title>
-<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
-  window.MathJax = {
-    chtml: {
-      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
-    }
-  };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -78,11 +73,10 @@ locations.</p>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>We will focus on the spatial item factor model proposed in <span class="citation">Chacón-Montalván et al. (2025)</span>. Let <span class="math inline">\(Y_{ij}\)</span> be the binary response for item
-<span class="math inline">\(j\)</span> in individual <span class="math inline">\(i\)</span>. The model can be defined using an
-auxiliary variable <span class="math inline">\(Z_{ij}\)</span> such
+<p>We will focus on the spatial item factor model proposed in <span class="citation">Chacón-Montalván et al. (2025)</span>. Let <span class="math inline">Y_{ij}</span> be the binary response for item <span class="math inline">j</span> in individual <span class="math inline">i</span>. The model can be defined using an
+auxiliary variable <span class="math inline">Z_{ij}</span> such
 that:</p>
-<p><span class="math display">\[
+<p><span class="math display">
 \begin{aligned}
   {Y}_{ij}  &amp; =
   \begin{cases}
@@ -93,37 +87,37 @@ that:</p>
 + \epsilon_{ij},
   ~~ \epsilon_{ij} \sim {N}(0, 1),
 \end{aligned}
-\]</span></p>
-<p>where the easiness parameters <span class="math inline">\(c_j\)</span> define how common is to endorse the
-item <span class="math inline">\(j\)</span>, and the discrimination
-parameters <span class="math inline">\(\boldsymbol{a}_j\)</span> define
-how important is item <span class="math inline">\(j\)</span> to
-discriminate the latent factors/abilities <span class="math inline">\(\boldsymbol{\theta}_i\)</span>.</p>
-<p>The vector of latent abilities <span class="math inline">\(\boldsymbol{\theta}_i\)</span> is modelled in
-terms of predictors <span class="math inline">\(\boldsymbol{x}_i\)</span>, a vector of Gaussian
-processes <span class="math inline">\(\boldsymbol{w}(s_i)\)</span>, and
-a multivariate non-spatial term <span class="math inline">\(\boldsymbol{v}_i\)</span>: <span class="math display">\[
+</span></p>
+<p>where the easiness parameters <span class="math inline">c_j</span>
+define how common is to endorse the item <span class="math inline">j</span>, and the discrimination parameters <span class="math inline">\boldsymbol{a}_j</span> define how important is item
+<span class="math inline">j</span> to discriminate the latent
+factors/abilities <span class="math inline">\boldsymbol{\theta}_i</span>.</p>
+<p>The vector of latent abilities <span class="math inline">\boldsymbol{\theta}_i</span> is modelled in terms of
+predictors <span class="math inline">\boldsymbol{x}_i</span>, a vector
+of Gaussian processes <span class="math inline">\boldsymbol{w}(s_i)</span>, and a multivariate
+non-spatial term <span class="math inline">\boldsymbol{v}_i</span>:
+<span class="math display">
 \boldsymbol{\theta}_i = \boldsymbol{B} \boldsymbol{x}_i + \boldsymbol{T}
 \boldsymbol{w}(s_i) + \boldsymbol{v}_i,
-\]</span> where <span class="math inline">\(\boldsymbol{B}\)</span> is
-the matrix of multivariate effects of the predictors, <span class="math inline">\(\boldsymbol{T}\)</span> defines the relationship
-between the spatial processes and the latent abilities, and <span class="math inline">\(\boldsymbol{v}_i\)</span> is allowed to have a
-correlations structure <span class="math inline">\(\boldsymbol{R}\)</span>.</p>
+</span> where <span class="math inline">\boldsymbol{B}</span> is the
+matrix of multivariate effects of the predictors, <span class="math inline">\boldsymbol{T}</span> defines the relationship
+between the spatial processes and the latent abilities, and <span class="math inline">\boldsymbol{v}_i</span> is allowed to have a
+correlations structure <span class="math inline">\boldsymbol{R}</span>.</p>
 <p>This model is unidentifiable, so it is important to restrict the
-discrimination parameters <span class="math inline">\(\boldsymbol{a}_j\)</span> and set informative
-priors for the spatial range of the Gaussian processes <span class="math inline">\(\boldsymbol{w}(s_i)\)</span> before fitting it, to
+discrimination parameters <span class="math inline">\boldsymbol{a}_j</span> and set informative priors
+for the spatial range of the Gaussian processes <span class="math inline">\boldsymbol{w}(s_i)</span> before fitting it, to
 facilitate convergence of the posterior sampling algorithm – in
 practice, both are best informed by exploratory analysis (e.g. a
 preliminary non-spatial item factor analysis for the former, an
 empirical variogram for the latter), though we use them directly below
-without walking through that derivation. The linear transformation <span class="math inline">\(\boldsymbol{T}\)</span>, by contrast, is not
+without walking through that derivation. The linear transformation <span class="math inline">\boldsymbol{T}</span>, by contrast, is not
 determined from exploratory analysis – it is a structural choice made by
 the user (usually diagonal, i.e. one independent Gaussian process per
 factor), though alternative structures can be specified and
 compared.</p>
 </div>
 <div class="section level2">
-<h2 id="load-required-packages-and-data">Load required packages and data<a class="anchor" aria-label="anchor" href="#load-required-packages-and-data"></a>
+<h2 id="ipixuna-data">Ipixuna data<a class="anchor" aria-label="anchor" href="#ipixuna-data"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ErickChacon/spifa" class="external-link">spifa</a></span><span class="op">)</span></span>
@@ -192,7 +186,7 @@ data <code>ipixuna</code>:</p>
 <span><span class="co">#&gt; [6,]    0    0    0    0    0    0    0    0    0     0</span></span></code></pre>
 </div>
 <div class="section level2">
-<h2 id="sample-from-the-posterior-of-a-spifa-model">Sample from the posterior of a SPIFA model<a class="anchor" aria-label="anchor" href="#sample-from-the-posterior-of-a-spifa-model"></a>
+<h2 id="sample-from-the-posterior">Sample from the posterior<a class="anchor" aria-label="anchor" href="#sample-from-the-posterior"></a>
 </h2>
 <p>As mentioned before, an identifiable spifa model requires restricting
 the discrimination parameters, along with adequate initial values and
@@ -507,7 +501,7 @@ credible interval of each parameter in the selected group.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="predict-and-map-the-latent-factors">Predict and map the latent factors<a class="anchor" aria-label="anchor" href="#predict-and-map-the-latent-factors"></a>
+<h2 id="predict-the-latent-factors">Predict the latent factors<a class="anchor" aria-label="anchor" href="#predict-the-latent-factors"></a>
 </h2>
 <p><strong>spifa</strong> provides Bayesian prediction of the latent
 factors at (i) the observed locations and (ii) new locations through the
