@@ -50,24 +50,6 @@ can be specified and compared.
 ``` r
 
 library(spifa)
-library(posterior)
-```
-
-    #> This is posterior version 1.7.0
-
-    #> 
-    #> Attaching package: 'posterior'
-
-    #> The following objects are masked from 'package:stats':
-    #> 
-    #>     mad, sd, var
-
-    #> The following objects are masked from 'package:base':
-    #> 
-    #>     %in%, match
-
-``` r
-
 library(ggplot2)
 library(sf)
 ```
@@ -507,7 +489,7 @@ object:
 ``` r
 
 pred_samples <- predict(samples)
-as_draws_df(pred_samples)
+posterior::as_draws_df(pred_samples)
 ```
 
     #> # A draws_df: 4000 iterations, 1 chains, and 300 variables

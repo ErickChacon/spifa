@@ -36,6 +36,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/vg01-prepare-data.html">Preparing data for spifa()</a></li>
+    <li><a class="dropdown-item" href="../articles/vg02-model-types.html">Model types</a></li>
   </ul>
 </li>
       </ul>
@@ -121,18 +122,7 @@ compared.</p>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ErickChacon/spifa" class="external-link">spifa</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/posterior/" class="external-link">posterior</a></span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; This is posterior version 1.7.0</span></span></code></pre>
-<pre><code><span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'posterior'</span></span></code></pre>
-<pre><code><span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     mad, sd, var</span></span></code></pre>
-<pre><code><span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     %in%, match</span></span></code></pre>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE</span></span></code></pre>
 <p>The <code>ipixuna</code> data under analysis is included in the
@@ -142,7 +132,7 @@ area of study as in <span class="citation">Chacón-Montalván et al.
 (2025)</span>. It is a <code>sf</code> object containing the
 <code>items</code> responses as a matrix, locations under the
 <code>geometry</code> column, and a predictor <code>wealth</code>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">ipixuna</span><span class="op">)</span></span>
 <span><span class="va">ipixuna</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; Simple feature collection with 100 features and 3 fields</span></span>
@@ -175,7 +165,7 @@ area of study as in <span class="citation">Chacón-Montalván et al.
 <span><span class="co">#&gt; 10 POINT (-71.68778 -7.043805)</span></span></code></pre>
 <p>The <code>items</code> can be easily obtained as an element of the
 data <code>ipixuna</code>:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ipixuna</span><span class="op">$</span><span class="va">items</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt;      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]</span></span>
 <span><span class="co">#&gt; [1,]    0    1    1    0    1    1    1    1    1     1</span></span>
@@ -198,7 +188,7 @@ spatial parameters are already available, and focus on defining,
 fitting, and diagnosing the model.</p>
 <p>First, we obtain the number of items (10) and define the number of
 factors (3) we will use:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nitems</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">ipixuna</span><span class="op">$</span><span class="va">items</span><span class="op">)</span></span>
 <span><span class="va">nfactors</span> <span class="op">&lt;-</span> <span class="fl">3</span></span></code></pre></div>
 <div class="section level3">
@@ -207,7 +197,7 @@ factors (3) we will use:</p>
 <p>We define the discrimination matrix (10x3): items 4 and 8 do not
 inform factor 1, items 4, 5, 6, 7, 8, and 10 do not inform factor 2, and
 items 5 and 6 do not inform factor 3.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">A</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">nitems</span>, <span class="va">nfactors</span><span class="op">)</span></span>
 <span><span class="va">A</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span><span class="va">A</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">6</span>, <span class="fl">7</span>, <span class="fl">8</span>, <span class="fl">10</span><span class="op">)</span>, <span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
@@ -237,7 +227,7 @@ parameters are assumed to have a Normal prior, so
 deviation. Here, we set the mean prior to 1 for items 5 and 6 on factor
 1, and to -1 for items 4 and 8 on factor 3, each with a standard
 deviation prior of 0.45:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">A_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">nitems</span>, <span class="va">nfactors</span><span class="op">)</span></span>
 <span><span class="va">A_mean</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">6</span><span class="op">)</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
 <span><span class="va">A_mean</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span>, <span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">1</span></span>
@@ -253,7 +243,7 @@ deviation prior of 0.45:</p>
 <span><span class="co">#&gt;  [8,]    0    0   -1</span></span>
 <span><span class="co">#&gt;  [9,]    0    0    0</span></span>
 <span><span class="co">#&gt; [10,]    0    0    0</span></span></code></pre>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">A_sd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">nitems</span>, <span class="va">nfactors</span><span class="op">)</span></span>
 <span><span class="va">A_sd</span><span class="op">[</span><span class="va">A_mean</span> <span class="op">!=</span> <span class="fl">0</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0.45</span></span>
 <span><span class="va">A_sd</span></span></code></pre></div>
@@ -279,7 +269,7 @@ range is in the same units as the coordinates (metres here);
 between households in this study area. If we want to set the same prior
 for all three, we can define a single mean and standard deviation that
 will be recycled across them:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">phi_mean</span> <span class="op">&lt;-</span> <span class="fl">150</span></span>
 <span><span class="va">phi_sd</span> <span class="op">&lt;-</span> <span class="fl">0.4</span></span></code></pre></div>
 </div>
@@ -312,7 +302,7 @@ factors, explained by <code>wealth</code>, constraints for the
 <em>discrimination</em> parameters and priors for the
 <em>discrimination</em> and <em>range</em> parameters. By default, it
 will introduce a GP for each latent factor.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span></span>
 <span>  <span class="va">items</span> <span class="op">~</span> <span class="va">wealth</span>, data <span class="op">=</span> <span class="va">ipixuna</span>, nfactors <span class="op">=</span> <span class="va">nfactors</span>,</span>
 <span>  burnin <span class="op">=</span> <span class="fl">10000</span>, niter <span class="op">=</span> <span class="fl">8000</span>, thin <span class="op">=</span> <span class="fl">2</span>,</span>
@@ -405,7 +395,7 @@ group, returned as a tidy tibble. Its main arguments are
 <code>"A"</code>, <code>"phi"</code>), and
 <code>burnin</code>/<code>thin</code>, in case we want to discard some
 initial samples or thin them further before summarising:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"c"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 12</span></span></span>
 <span><span class="co">#&gt;    variable    mean  median    sd   mad    q2.5     q10     q90    q97.5 ess_bulk ess_tail  rhat</span></span>
@@ -428,13 +418,13 @@ initial samples or thin them further before summarising:</p>
 traceplots and density plots, side by side, for the
 <code>easiness</code> and <code>discrimination</code> parameters by
 default.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span></code></pre></div>
 <p><img src="spifa_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>Use the <code>select</code> argument for a specific parameter group
 and <code>nshow</code> to define the number of random parameters to
 show:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"c"</span>, nshow <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <p><img src="spifa_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 </div>
@@ -460,11 +450,11 @@ parameter. By default, it plots one panel per parameter
 (<code>facet = TRUE</code>), or all of them in a single panel when
 <code>facet = FALSE</code>.</p>
 <p>Traceplots of the residual correlation:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_trace.html">plot_trace</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"Corr"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="spifa_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>Traceplots of the range parameter of the GPs:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_trace.html">plot_trace</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"phi"</span>, facet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="spifa_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 </div>
@@ -475,12 +465,12 @@ parameter. By default, it plots one panel per parameter
 parameter in the selected group. Similar to <code><a href="../reference/plot_trace.html">plot_trace()</a></code>,
 you can control the <code>facet</code> argument.</p>
 <p>Comparing the easiness parameters:</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_density.html">plot_density</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"c"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; Picking joint bandwidth of 0.0451</span></span></code></pre>
 <p><img src="spifa_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>Comparing the predictor effects:</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_density.html">plot_density</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"B"</span>, facet <span class="op">=</span> <span class="cn">TRUE</span>, facet_scales <span class="op">=</span> <span class="st">"free_y"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="spifa_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 </div>
@@ -490,11 +480,11 @@ you can control the <code>facet</code> argument.</p>
 <p><code><a href="../reference/plot_interval.html">plot_interval()</a></code> draws the posterior mean/median and
 credible interval of each parameter in the selected group.</p>
 <p>Compare the discrimination parameters:</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_interval.html">plot_interval</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"A"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="spifa_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>Compare the range parameters:</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_interval.html">plot_interval</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"phi"</span>, horizontal <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="spifa_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 </div>
@@ -512,9 +502,9 @@ factors at (i) the observed locations and (ii) new locations through the
 <p>By default <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> will simply return the samples of
 the latent factors at observed locations as a
 <code><a href="https://mc-stan.org/posterior/reference/draws_array.html" class="external-link">posterior::draws_array()</a></code> object:</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pred_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">as_draws_df</a></span><span class="op">(</span><span class="va">pred_samples</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">as_draws_df</a></span><span class="op">(</span><span class="va">pred_samples</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; # A draws_df: 4000 iterations, 1 chains, and 300 variables</span></span>
 <span><span class="co">#&gt;    Theta[1,1] Theta[2,1] Theta[3,1] Theta[4,1] Theta[5,1] Theta[6,1] Theta[7,1] Theta[8,1]</span></span>
 <span><span class="co">#&gt; 1       0.377     -0.270      -0.88      -0.71       0.93      -1.05      -0.60      0.708</span></span>
@@ -532,7 +522,7 @@ the latent factors at observed locations as a
 <p>We can visualize a summary (<code>mean</code> by default) of these
 predictive samples using <code><a href="../reference/plot_predict.html">plot_predict()</a></code> and integrate it
 with <code>ggplot2</code> functionality:</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_colour_distiller</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"RdBu"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="spifa_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
@@ -548,7 +538,7 @@ location/profiles.</p>
 create a <code>newdata</code> <code>sf</code> object using a predictor
 profile representing an individual with average (standardized)
 wealth:</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bnd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="va">ipixuna</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_combine.html" class="external-link">st_union</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_unary.html" class="external-link">st_convex_hull</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -576,25 +566,25 @@ wealth:</p>
 <span><span class="co">#&gt; 10      0 POLYGON ((-71.69177 -7.0582...</span></span></code></pre>
 <p>We perform prediction for this <code>newdata</code> and thin the
 posterior samples to reduce computational cost:</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pred_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">samples</span>, newdata <span class="op">=</span> <span class="va">newdata</span>, thin <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
 <p>Now, we use the <code><a href="../reference/plot_predict.html">plot_predict()</a></code> function to visualize the
 predictive <code>mean</code> by default.</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span>, boundary <span class="op">=</span> <span class="va">bnd</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_fill_distiller</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"RdBu"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Predictive mean"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="spifa_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>Other summaries can be mapped by simply providing a function in the
 <code>stat</code> argument:</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span>, boundary <span class="op">=</span> <span class="va">bnd</span>, stat <span class="op">=</span> <span class="va">sd</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"magma"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Predictive standard deviation"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="spifa_files/figure-html/unnamed-chunk-27-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>Custom functions can easily be provided, for example, we can plot the
 probability of exceeding the value of 1 to identify hotspots:</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span>, boundary <span class="op">=</span> <span class="va">bnd</span>, stat <span class="op">=</span> <span class="kw">function</span> <span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">v</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Exceedance probability: "</span>, <span class="fu">P</span><span class="op">(</span><span class="va">theta</span><span class="op">[</span><span class="va">j</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
