@@ -18,7 +18,11 @@ it need not match the training data's CRS) or a plain data frame (for
 \code{cifa_pred}), with columns matching the predictors used on the
 right-hand side of \code{formula} when the model was fitted. Its design
 matrix is built the same way \code{\link{spifa}} built the training one,
-using the same terms and factor levels.}
+using the same terms and factor levels. For a spatial model, its geometry
+may also be \code{POLYGON}/\code{MULTIPOLYGON} (e.g. a prediction grid): the
+centroid of each cell is used for the spatial kernel, but the original
+polygons are kept (see \code{Value}) so \code{\link{plot_predict}} can draw
+them as a filled map instead of points.}
 
 \item{burnin}{Number of initial (post-fitting) iterations to discard
 before using the posterior samples for prediction.}
@@ -47,7 +51,11 @@ draws are already jointly correct across factors.}
 A \code{\link[posterior]{draws_array}} of posterior predictive
 samples of the latent abilities (\code{theta}) for the requested new
 locations and/or predictor values (or, if no prediction was requested,
-for the originally observed subjects).
+for the originally observed subjects). For a spatial model, the locations
+used (\code{newdata}, or the training locations if \code{newdata} was
+omitted) are attached as the \code{"newdata"} attribute, so
+\code{\link{plot_predict}} can map the result without needing it supplied
+again.
 }
 \description{
 Predicts the latent factors of (spatial) item factor analysis

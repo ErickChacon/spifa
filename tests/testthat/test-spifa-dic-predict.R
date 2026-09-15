@@ -62,7 +62,8 @@ test_that("predict/dic: spifa", {
 
   # no newdata: latent abilities at observed locations
   pr <- predict(samples)
-  expect_equal(pr, as_draws_array(subset_draws(samples, variable = "Theta")), ignore_attr = "class")
+  expect_equal(pr, as_draws_array(subset_draws(samples, variable = "Theta")),
+    ignore_attr = c("class", "newdata"))
 
   # newdata (sfc): latent abilities at new locations
   newcoords <- sf::st_make_grid(ipixuna, n = c(5, 1), what = "centers")
@@ -128,7 +129,8 @@ test_that("predict/dic: spifa_pred", {
 
   # no newdata: latent abilities at observed locations
   pr_none <- predict(samples)
-  expect_equal(pr_none, as_draws_array(subset_draws(samples, variable = "Theta")), ignore_attr = "class")
+  expect_equal(pr_none, as_draws_array(subset_draws(samples, variable = "Theta")),
+    ignore_attr = c("class", "newdata"))
 
   # incorrect newdata: missing predictors
   newcoords <- sf::st_make_grid(ipixuna, n = c(5, 1), what = "centers")
@@ -170,4 +172,61 @@ test_that("predict()/dic(): burnin/thin", {
   # expected errors: burnin >= niter
   expect_error(predict(samples, burnin = 10), "iterations")
   expect_error(dic(samples, burnin = 15), "iterations")
+})
+
+test_that("predict(): attaches newdata as an attribute for spatial models", {
+  data(ipixuna, package = "spifa")
+  nitems <- ncol(ipixuna$items)
+  nfactors <- 3
+  A <- matrix(1, nitems, nfactors)
+  A[c(4, 8), 1] <- 0
+  A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+  A[c(5, 6), 3] <- 0
+
+  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, niter = 5,
+    constraints = list(discrimination = A))
+
+  # no newdata: the training locations are attached
+  pr <- predict(samples)
+  nd <- attr(pr, "newdata")
+  expect_s3_class(nd, "sf")
+  expect_equal(sf::st_geometry(nd), sf::st_geometry(ipixuna), ignore_attr = TRUE)
+
+  # point newdata: attached as-is
+  newcoords <- sf::st_make_grid(ipixuna, n = c(5, 1), what = "centers")
+  pr_new <- predict(samples, newdata = newcoords)
+  expect_equal(attr(pr_new, "newdata"), newcoords)
+
+  # non-spatial (eifa/cifa): no coordinates to attach
+  samples_flat <- spifa(items ~ 1, data = sf::st_set_geometry(ipixuna, NULL),
+    nfactors = nfactors, ngp = 0, niter = 5,
+    constraints = list(discrimination = A))
+  expect_null(attr(predict(samples_flat), "newdata"))
+})
+
+test_that("predict(): polygon newdata is centroided for the spatial kernel, kept as-is in the attribute", {
+  data(ipixuna, package = "spifa")
+  nitems <- ncol(ipixuna$items)
+  nfactors <- 3
+  A <- matrix(1, nitems, nfactors)
+  A[c(4, 8), 1] <- 0
+  A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+  A[c(5, 6), 3] <- 0
+
+  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, niter = 5,
+    constraints = list(discrimination = A))
+
+  grid <- sf::st_sf(geometry = sf::st_make_grid(ipixuna, n = c(3, 2)))
+  centroids <- sf::st_centroid(sf::st_geometry(grid))
+
+  set.seed(1)
+  pr_grid <- predict(samples, newdata = grid)
+  set.seed(1)
+  pr_points <- predict(samples, newdata = sf::st_sf(geometry = centroids))
+
+  # same prediction whether the caller centroids first or passes polygons
+  expect_equal(pr_grid, pr_points, ignore_attr = "newdata")
+  # but the original polygons -- not the centroids -- are what's attached
+  expect_equal(attr(pr_grid, "newdata"), grid)
+  expect_true(all(sf::st_geometry_type(attr(pr_grid, "newdata")) == "POLYGON"))
 })

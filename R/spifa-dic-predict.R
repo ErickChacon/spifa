@@ -127,7 +127,11 @@ as_matrix_opt <- function (x, param) {
 #' \code{cifa_pred}), with columns matching the predictors used on the
 #' right-hand side of \code{formula} when the model was fitted. Its design
 #' matrix is built the same way \code{\link{spifa}} built the training one,
-#' using the same terms and factor levels.
+#' using the same terms and factor levels. For a spatial model, its geometry
+#' may also be \code{POLYGON}/\code{MULTIPOLYGON} (e.g. a prediction grid): the
+#' centroid of each cell is used for the spatial kernel, but the original
+#' polygons are kept (see \code{Value}) so \code{\link{plot_predict}} can draw
+#' them as a filled map instead of points.
 #' @param burnin Number of initial (post-fitting) iterations to discard
 #' before using the posterior samples for prediction.
 #' @param thin Thinning interval applied to the posterior samples used for
@@ -151,7 +155,11 @@ as_matrix_opt <- function (x, param) {
 #' @return A \code{\link[posterior]{draws_array}} of posterior predictive
 #' samples of the latent abilities (\code{theta}) for the requested new
 #' locations and/or predictor values (or, if no prediction was requested,
-#' for the originally observed subjects).
+#' for the originally observed subjects). For a spatial model, the locations
+#' used (\code{newdata}, or the training locations if \code{newdata} was
+#' omitted) are attached as the \code{"newdata"} attribute, so
+#' \code{\link{plot_predict}} can map the result without needing it supplied
+#' again.
 #'
 #' @author Erick A. Chacón-Montalván
 #'
@@ -201,7 +209,11 @@ predict.spifa <- function (object, newdata = NULL, burnin = 0, thin = 1,
       (fit_args$model_type == "cifa_pred" & is.null(newdata)) |
       (fit_args$model_type == "spifa" & !has_newcoords) |
       (fit_args$model_type == "spifa_pred" & is.null(newdata))) {
-    return(posterior::as_draws_array(as_matrix(object, "Theta")))
+    result <- posterior::as_draws_array(as_matrix(object, "Theta"))
+    if (!is.null(predict_setup$coordinates)) {
+      attr(result, "newdata") <- sf::st_sf(geometry = predict_setup$coordinates)
+    }
+    return(result)
   }
 
   # Prediction II: for the new subjects/locations
@@ -218,6 +230,9 @@ predict.spifa <- function (object, newdata = NULL, burnin = 0, thin = 1,
       stop("newdata must be an sf/sfc object for a spatial model.", call. = FALSE)
     }
     newcoords <- sf::st_geometry(newdata)
+    if (any(sf::st_is(newcoords, c("POLYGON", "MULTIPOLYGON")))) {
+      newcoords <- sf::st_centroid(newcoords)
+    }
     npred <- length(newcoords)
     newdist <- matrix(as.numeric(sf::st_distance(newcoords)), npred, npred)
     cross_distances <- matrix(as.numeric(sf::st_distance(newcoords, coordinates)),
@@ -269,5 +284,9 @@ predict.spifa <- function (object, newdata = NULL, burnin = 0, thin = 1,
   # Predict calling c++ predict_cpp
   samples <- do.call(predict_cpp, predict_args)
 
-  return(posterior::as_draws_array(samples$theta))
+  result <- posterior::as_draws_array(samples$theta)
+  if (inherits(newdata, "sf") || inherits(newdata, "sfc")) {
+    attr(result, "newdata") <- newdata
+  }
+  return(result)
 }
