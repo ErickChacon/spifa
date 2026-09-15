@@ -11,11 +11,17 @@ Chacón-Montalván et al. (2025). Let $`Y_{ij}`$ be the binary response
 for item $`j`$ in individual $`i`$. The model can be defined using an
 auxiliary variable $`Z_{ij}`$ such that:
 
-\$\$ \begin{aligned} {Y}\_{ij} & = \left\lbrace \begin{array}\[2\]{cc}
-1, & \text{if} ~ {Z}\_{ij} \> 0\\ 0, & \text{otherwise} \end{array}
-\right.\\ {Z}\_{ij} & = c_j +
-\boldsymbol{a}\_j^\intercal\boldsymbol{\theta}\_i + \epsilon\_{ij}, \~~
-\epsilon\_{ij} \sim {N}(0, 1), \end{aligned} \$\$
+``` math
+\begin{aligned}
+  {Y}_{ij}  & =
+  \begin{cases}
+    1, & \text{if} ~ {Z}_{ij} > 0\\
+    0, & \text{otherwise}
+  \end{cases}\\
+  {Z}_{ij} & = c_j + \boldsymbol{a}_j^\intercal\boldsymbol{\theta}_i + \epsilon_{ij},
+  ~~ \epsilon_{ij} \sim {N}(0, 1),
+\end{aligned}
+```
 
 where the easiness parameters $`c_j`$ define how common is to endorse
 the item $`j`$, and the discrimination parameters $`\boldsymbol{a}_j`$
@@ -52,8 +58,29 @@ though alternative structures can be specified and compared.
 ``` r
 
 library(spifa)
-library(ggplot2)
+library(posterior)
 ```
+
+    #> This is posterior version 1.7.0
+
+    #> 
+    #> Attaching package: 'posterior'
+
+    #> The following objects are masked from 'package:stats':
+    #> 
+    #>     mad, sd, var
+
+    #> The following objects are masked from 'package:base':
+    #> 
+    #>     %in%, match
+
+``` r
+
+library(ggplot2)
+library(sf)
+```
+
+    #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 
 The `ipixuna` data under analysis is included in the **spifa** package:
 a simulated dataset of 10 `items` responses on 100 household locations,
@@ -251,7 +278,7 @@ it will introduce a GP for each latent factor.
 
 samples <- spifa(
   items ~ wealth, data = ipixuna, nfactors = nfactors,
-  burnin = 1000, niter = 4000,
+  burnin = 10000, niter = 8000, thin = 2,
   constraints = list(discrimination = A),
   priors = list(
     discrimination = list(initial = A_mean, mean = A_mean, sd = A_sd),
@@ -462,7 +489,7 @@ plot_interval(samples, select = "A")
 
 ![](spifa_files/figure-html/unnamed-chunk-17-1.png)
 
-Compare the easiness parameters:
+Compare the range parameters:
 
 ``` r
 
@@ -473,24 +500,22 @@ plot_interval(samples, select = "phi", horizontal = TRUE)
 
 ## Predict and map the latent factors
 
-The reason **spifa** models the latent factors as spatial processes is
-to predict them at new, unobserved locations – this is what makes it
-possible to map a construct like food insecurity across a whole area
-from survey data collected at a limited number of households.
-[`predict()`](https://rdrr.io/r/stats/predict.html) takes the fitted
-`object` and `newdata`, an `sf`/`sfc` object of new locations (with any
-predictor columns the model needs, `wealth` here), and returns posterior
-predictive draws of the latent factors at those locations – one draw per
-retained MCMC iteration, so uncertainty in the fitted parameters is
-propagated through to the predictions. `newdata` can be omitted to get
-the latent factors back at the original, observed households instead –
-since those were already sampled as part of the model fit, this is
-essentially free (no new locations to predict at):
+**spifa** provides Bayesian prediction of the latent factors at (i) the
+observed locations and (ii) new locations through the
+[`predict()`](https://rdrr.io/r/stats/predict.html) function.
+
+### Observed locations
+
+By default [`predict()`](https://rdrr.io/r/stats/predict.html) will
+simply return the samples of the latent factors at observed locations as
+a
+[`posterior::draws_array()`](https://mc-stan.org/posterior/reference/draws_array.html)
+object:
 
 ``` r
 
-pred <- predict(samples)
-posterior::as_draws_df(pred)
+pred_samples <- predict(samples)
+as_draws_df(pred_samples)
 ```
 
     #> # A draws_df: 4000 iterations, 1 chains, and 300 variables
@@ -508,114 +533,103 @@ posterior::as_draws_df(pred)
     #> # ... with 3990 more draws, and 292 more variables
     #> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
 
+We can visualize a summary (`mean` by default) of these predictive
+samples using
+[`plot_predict()`](https://ErickChacon.github.io/spifa/reference/plot_predict.md)
+and integrate it with `ggplot2` functionality:
+
 ``` r
 
-plot_predict(pred) +
-  scale_fill_distiller(palette = "RdBu")
+plot_predict(pred_samples) +
+  scale_colour_distiller(palette = "RdBu")
 ```
 
-![](spifa_files/figure-html/unnamed-chunk-19-1.png)
+![](spifa_files/figure-html/unnamed-chunk-20-1.png)
 
-To map all three factors we predict on a regular grid rather than at
-arbitrary points. We restrict the grid to the convex hull of the
-observed households (slightly buffered), since predicting far outside
-the surveyed area extrapolates the spatial process with no supporting
-data, and represent each grid cell as a polygon so the result plots as a
-continuous surface. `newdata` can be these polygons directly –
-[`predict()`](https://rdrr.io/r/stats/predict.html) uses each cell’s
-centroid for the spatial kernel, but keeps the polygons themselves
-attached to the result (as its `"newdata"` attribute) so
-[`plot_predict()`](https://ErickChacon.github.io/spifa/reference/plot_predict.md)
-can draw them as a map. Predicting at every grid cell for every retained
-MCMC iteration is far more work than predicting at the household
-locations, since there are many more cells than households – thinning
-further at prediction time (here `thin = 10`) keeps it more manageable,
-and, as with sampling above, we load a precomputed result rather than
-predicting during the build of this vignette:
+### New locations
 
-`pred` holds the full posterior predictive draws, so it can be reused
-for as many summaries/plots as needed without predicting again –
-[`plot_predict()`](https://ErickChacon.github.io/spifa/reference/plot_predict.md)
-maps one such summary at a time (`stat`, any function of the draws at
-one location/factor): the posterior mean per cell/factor by default, its
-standard deviation (`stat = sd`), a measure of how uncertain each
-prediction is, or the exceedance probability $`P(\theta_j > 1)`$
-(`stat = function(v) mean(v > 1)`), i.e. how often each factor is
-predicted to be more than one standard deviation above its (zero)
-reference level at each location. All three reuse the same `pred`, with
-the prediction area’s border overlaid via `hull`:
+If prediction is desired for new location/profiles, then the argument
+`newdata` can be provided, which is expected to be a `sf`/`sfc` object
+containing the new location/profiles.
+
+First, we create a grid where prediction will be performed. Then, we
+create a `newdata` `sf` object using a predictor profile representing an
+individual with average (standardized) wealth:
 
 ``` r
 
-hull <- ipixuna |>
-  st_geometry() |>
+bnd <- st_geometry(ipixuna) |>
   st_union() |>
   st_convex_hull() |>
-  st_buffer(50) |> # metres
-  st_convex_hull() # buffering on a geographic CRS can add tiny facets; re-hull to keep it clean
+  st_buffer(50)
 
-grid <- st_sf(wealth = 0, geometry = st_make_grid(hull, n = c(40, 40))) |>
-  st_filter(hull)
-
-pred <- predict(samples, newdata = grid, thin = 10)
-
-plot_predict(pred, boundary = hull) +
-  scale_fill_distiller(palette = "RdBu")
-plot_predict(pred, boundary = hull, stat = sd) +
-  scale_fill_viridis_c(option = "magma")
-plot_predict(pred, boundary = hull, stat = function (v) mean(v > 1)) +
-  scale_fill_viridis_c(limits = c(0, 1), direction = -1)
+newdata <- st_sf(wealth = 0, geometry = st_make_grid(bnd, n = c(40, 40))) |>
+  st_filter(bnd)
+newdata
 ```
 
-The three maps below are built from a small precomputed summary
-(posterior mean, sd, and exceedance probability per cell) shipped with
-the package, rather than the full draws
-[`predict()`](https://rdrr.io/r/stats/predict.html) itself returns – but
-they show exactly what the code above produces:
+    #> Simple feature collection with 1314 features and 1 field
+    #> Geometry type: POLYGON
+    #> Dimension:     XY
+    #> Bounding box:  xmin: -71.69895 ymin: -7.058242 xmax: -71.683 ymax: -7.038643
+    #> Geodetic CRS:  WGS 84
+    #> First 10 features:
+    #>    wealth                       geometry
+    #> 1       0 POLYGON ((-71.69536 -7.0582...
+    #> 2       0 POLYGON ((-71.69496 -7.0582...
+    #> 3       0 POLYGON ((-71.69456 -7.0582...
+    #> 4       0 POLYGON ((-71.69416 -7.0582...
+    #> 5       0 POLYGON ((-71.69376 -7.0582...
+    #> 6       0 POLYGON ((-71.69336 -7.0582...
+    #> 7       0 POLYGON ((-71.69297 -7.0582...
+    #> 8       0 POLYGON ((-71.69257 -7.0582...
+    #> 9       0 POLYGON ((-71.69217 -7.0582...
+    #> 10      0 POLYGON ((-71.69177 -7.0582...
 
-![](spifa_files/figure-html/unnamed-chunk-22-1.png)
-
-![](spifa_files/figure-html/unnamed-chunk-23-1.png)
-
-![](spifa_files/figure-html/unnamed-chunk-24-1.png)
-
-## Compare models with DIC
-
-[`dic()`](https://ErickChacon.github.io/spifa/reference/dic.md) computes
-the Deviance Information Criterion for a fitted model, useful for
-comparing candidate models fitted to the same data – e.g. to choose the
-number of factors, or to compare restriction structures; the lower the
-DIC, the better the trade-off between fit and complexity. Its main
-arguments are `x` (the fitted model) and `burnin`/`thin`, as in
-[`summary()`](https://rdrr.io/r/base/summary.html). Here we compare the
-3-factor structure used above against a 2-factor alternative (both
-without the spatial/predictor structure, so the comparison is fast):
+We perform prediction for this `newdata` and thin the posterior samples
+to reduce computational cost:
 
 ``` r
 
-A2 <- matrix(1, nitems, 2)
-A2[c(1, 3, 5, 9), 1] <- 0
-A2[c(2, 4, 6, 7, 10), 2] <- 0
-
-fit3 <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 300,
-  constraints = list(discrimination = A))
-fit2 <- spifa(items ~ 1, data = ipixuna, nfactors = 2, ngp = 0, niter = 300,
-  constraints = list(discrimination = A2))
-
-dplyr::bind_rows(
-  "3 factors" = dic(fit3, burnin = 100),
-  "2 factors" = dic(fit2, burnin = 100),
-  .id = "model")
+pred_samples <- predict(samples, newdata = newdata, thin = 10)
 ```
 
-    #> # A tibble: 2 × 4
-    #>   model     mean_deviance p_eff   dic
-    #>   <chr>             <dbl> <dbl> <dbl>
-    #> 1 3 factors          775.  198.  974.
-    #> 2 2 factors         1008.  107. 1115.
+Now, we use the
+[`plot_predict()`](https://ErickChacon.github.io/spifa/reference/plot_predict.md)
+function to visualize the predictive `mean` by default.
 
-The 3-factor model has the lower DIC, favouring the discrimination
-structure used above over an arbitrary 2-factor alternative.
+``` r
+
+plot_predict(pred_samples, boundary = bnd) +
+  scale_fill_distiller(palette = "RdBu") +
+  labs(title = "Predictive mean")
+```
+
+![](spifa_files/figure-html/unnamed-chunk-25-1.png)
+
+Other summaries can be mapped by simply providing a function in the
+`stat` argument:
+
+``` r
+
+plot_predict(pred_samples, boundary = bnd, stat = sd) +
+  scale_fill_viridis_c(option = "magma") +
+  labs(title = "Predictive standard deviation")
+```
+
+![](spifa_files/figure-html/unnamed-chunk-27-1.png)
+
+Custom functions can easily be provided, for example, we can plot the
+probability of exceeding the value of 1 to identify hotspots:
+
+``` r
+
+plot_predict(pred_samples, boundary = bnd, stat = function (v) mean(v > 1)) +
+  scale_fill_viridis_c(limits = c(0, 1), direction = -1) +
+  labs(title = expression(paste("Exceedance probability: ", P(theta[j] > 1))))
+```
+
+![](spifa_files/figure-html/unnamed-chunk-29-1.png)
 
 ## References
 
