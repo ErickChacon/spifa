@@ -1,0 +1,139 @@
+---
+title: "Model types"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Model types}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+```
+
+`spifa()` can fit five model types that are determined automatically from `formula` and
+the class of `data` (see `?spifa`):
+
+- Non-spatial:
+  - `eifa`: Exploratory IFA
+  - `cifa`: Confirmatory IFA
+  - `cifa_pred`: CIFA with predictors
+- Spatial:
+  - `spifa`: Spatial IFA
+  - `spifa_pred`: SPIFA with predictors
+
+## Introduction
+
+The model type is determined based on the following:
+
+1) Exploratory structure (`eifa`) is used when no `constraints` are provided.
+2) Models with predictors (`cifa_pred`/`spifa_pred`) are activated if terms are included
+on the right-hand side of `formula`.
+3) Spatial models (`spifa`/`spifa_pred`) are only activated when the `data` is
+geo-referenced as an `sf` object, otherwise the non-spatial models are activated.
+4) Setting `ngp = 0` forces the model to be non-spatial (`eifa`/`cifa`/`cifa_pred`).
+
+We will showcase the five model types using the `ipixuna` data.
+
+```{r}
+library(dplyr)
+library(sf)
+library(spifa)
+
+data(ipixuna)
+nitems <- ncol(ipixuna$items)
+```
+
+## Exploratory item factor analysis (EIFA)
+
+The simplest case is the `eifa` model, the user does not need to provide `constraints`
+neither a spatial `data`. The constraints will be internally defined as a lower-triangular matrix; and in case `data` is an `sf` object, the spatial functionality can
+be dropped using `ngp = 0`:
+
+```{r}
+set.seed(123)
+samples <- spifa(items ~ 1, data = ipixuna, nfactors = 2, ngp = 0, niter = 500)
+samples
+```
+
+Notice how the constraints have been defined internally:
+
+```{r}
+attr(samples, "fit_args")$constrain_L
+```
+
+EIFA also never estimates the correlation between the latent factors, so only the
+easiness (c) and discrimination (A) parameters are estimated.
+
+## Confirmatory item factor analysis (CIFA)
+
+Supplying your own discrimination `constraints` leads to a `cifa` model:
+
+```{r}
+nfactors <- 3
+A <- matrix(1, nitems, nfactors)
+A[c(4, 8), 1] <- 0
+A[c(4, 5, 6, 7, 8, 10), 2] <- 0
+A[c(5, 6), 3] <- 0
+
+samples <- spifa(
+  items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0, niter = 500,
+  constraints = list(discrimination = A)
+)
+samples
+```
+
+Unlike `eifa`, the `cifa` model estimates the correlation (Corr) between the latent factors.
+
+## CIFA model with predictors
+
+Adding predictor terms to the right-hand side of `formula` generates a `cifa_pred`, which models the latent factors in terms of the predictor terms:
+
+```{r}
+samples <- spifa(
+  items ~ poly(wealth, 2), data = ipixuna, nfactors = nfactors, ngp = 0, niter = 500,
+  constraints = list(discrimination = A)
+)
+samples
+```
+
+## Spatial item factor analysis (SPIFA)
+
+If the `data` is an `sf` object and no predictor terms are included in `formula`, the
+model type is `spifa` automatically. By default, it includes a spatial term for each
+factor `ngp = nfactors`; but custom number of `ngp` can be provided with a constraints
+`loading` matrix (T) of size `nfactors` x `ngp`.
+
+```{r}
+T_loading <- matrix(c(1, 1, 0, 0, 0, 1), nfactors, 2)
+T_loading
+```
+
+This structure means that 1 GP is shared between factor 1 and 2, and another
+GP is introduced for factor 3:
+
+```{r}
+samples <- spifa(
+  items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 2, niter = 500,
+  constraints = list(discrimination = A, loading = T_loading)
+)
+samples
+```
+
+Notice that the `loading` parameter is also available in the samples.
+
+## SPIFA model with predictors
+
+A `spifa_pred` model is simply defined by adding predictor terms to `formula`.
+
+```{r}
+samples <- spifa(
+  items ~ wealth, data = ipixuna, nfactors = nfactors, niter = 500,
+  constraints = list(discrimination = A)
+)
+samples
+```
+
+Notice that the predictor effects `B` is now included in the samples.

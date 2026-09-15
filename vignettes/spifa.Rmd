@@ -68,7 +68,6 @@ factor), though alternative structures can be specified and compared.
 
 ```{r}
 library(spifa)
-library(posterior)
 library(ggplot2)
 library(sf)
 ```
@@ -304,7 +303,7 @@ locations as a `posterior::draws_array()` object:
 
 ```{r}
 pred_samples <- predict(samples)
-as_draws_df(pred_samples)
+posterior::as_draws_df(pred_samples)
 ```
 
 We can visualize a summary (`mean` by default) of these predictive samples using
