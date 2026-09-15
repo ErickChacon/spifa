@@ -6,7 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Bayesian Spatial Item Factor Analysis • spifa</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -72,73 +78,49 @@ locations.</p>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>We will focus on the spatial item factor model proposed in <span class="citation">Chacón-Montalván et al. (2025)</span>. Let
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Y</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">Y_{ij}</annotation></semantics></math>
-be the binary response for item
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
-in individual
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>.
-The model can be defined using an auxiliary variable
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">Z_{ij}</annotation></semantics></math>
-such that:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mi>Y</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mo stretchy="true" form="prefix">{</mo><mtable><mtr><mtd columnalign="left" style="text-align: left"><mn>1</mn><mo>,</mo></mtd><mtd columnalign="left" style="text-align: left"><mtext mathvariant="normal">if</mtext><mspace width="0.222em"></mspace><msub><mi>Z</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>&gt;</mo><mn>0</mn></mtd></mtr><mtr><mtd columnalign="left" style="text-align: left"><mn>0</mn><mo>,</mo></mtd><mtd columnalign="left" style="text-align: left"><mtext mathvariant="normal">otherwise</mtext></mtd></mtr></mtable></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mi>Z</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><msub><mi>c</mi><mi>j</mi></msub><mo>+</mo><msubsup><mi>𝐚</mi><mi>j</mi><mo>⊺</mo></msubsup><msub><mi>𝛉</mi><mi>i</mi></msub><mo>+</mo><msub><mi>ϵ</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>,</mo><mspace width="0.222em"></mspace><mspace width="0.222em"></mspace><msub><mi>ϵ</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>∼</mo><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
+<p>We will focus on the spatial item factor model proposed in <span class="citation">Chacón-Montalván et al. (2025)</span>. Let <span class="math inline">\(Y_{ij}\)</span> be the binary response for item
+<span class="math inline">\(j\)</span> in individual <span class="math inline">\(i\)</span>. The model can be defined using an
+auxiliary variable <span class="math inline">\(Z_{ij}\)</span> such
+that:</p>
+<p><span class="math display">\[
 \begin{aligned}
   {Y}_{ij}  &amp; =
-  \left\{
-  \begin{array}{ll}
+  \begin{cases}
     1, &amp; \text{if} ~ {Z}_{ij} &gt; 0\\
     0, &amp; \text{otherwise}
-  \end{array}
-  \right.\\
-  {Z}_{ij} &amp; = c_j + \boldsymbol{a}_j^\intercal\boldsymbol{\theta}_i + \epsilon_{ij},
+  \end{cases}\\
+  {Z}_{ij} &amp; = c_j + \boldsymbol{a}_j^\intercal\boldsymbol{\theta}_i
++ \epsilon_{ij},
   ~~ \epsilon_{ij} \sim {N}(0, 1),
 \end{aligned}
-</annotation></semantics></math></p>
-<p>where the easiness parameters
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>c</mi><mi>j</mi></msub><annotation encoding="application/x-tex">c_j</annotation></semantics></math>
-define how common is to endorse the item
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>,
-and the discrimination parameters
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐚</mi><mi>j</mi></msub><annotation encoding="application/x-tex">\boldsymbol{a}_j</annotation></semantics></math>
-define how important is item
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
-to discriminate the latent factors/abilities
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛉</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\boldsymbol{\theta}_i</annotation></semantics></math>.</p>
-<p>The vector of latent abilities
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛉</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\boldsymbol{\theta}_i</annotation></semantics></math>
-is modelled in terms of predictors
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐱</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\boldsymbol{x}_i</annotation></semantics></math>,
-a vector of Gaussian processes
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐰</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>s</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\boldsymbol{w}(s_i)</annotation></semantics></math>,
-and a multivariate non-spatial term
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐯</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\boldsymbol{v}_i</annotation></semantics></math>:
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>𝛉</mi><mi>i</mi></msub><mo>=</mo><mi>𝐁</mi><msub><mi>𝐱</mi><mi>i</mi></msub><mo>+</mo><mi>𝐓</mi><mi>𝐰</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>s</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>+</mo><msub><mi>𝐯</mi><mi>i</mi></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
-\boldsymbol{\theta}_i = \boldsymbol{B} \boldsymbol{x}_i + \boldsymbol{T} \boldsymbol{w}(s_i) + \boldsymbol{v}_i,
-</annotation></semantics></math> where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐁</mi><annotation encoding="application/x-tex">\boldsymbol{B}</annotation></semantics></math>
-is the matrix of multivariate effects of the predictors,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐓</mi><annotation encoding="application/x-tex">\boldsymbol{T}</annotation></semantics></math>
-defines the relationship between the spatial processes and the latent
-abilities, and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐯</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\boldsymbol{v}_i</annotation></semantics></math>
-is allowed to have a correlations structure
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐑</mi><annotation encoding="application/x-tex">\boldsymbol{R}</annotation></semantics></math>.</p>
+\]</span></p>
+<p>where the easiness parameters <span class="math inline">\(c_j\)</span> define how common is to endorse the
+item <span class="math inline">\(j\)</span>, and the discrimination
+parameters <span class="math inline">\(\boldsymbol{a}_j\)</span> define
+how important is item <span class="math inline">\(j\)</span> to
+discriminate the latent factors/abilities <span class="math inline">\(\boldsymbol{\theta}_i\)</span>.</p>
+<p>The vector of latent abilities <span class="math inline">\(\boldsymbol{\theta}_i\)</span> is modelled in
+terms of predictors <span class="math inline">\(\boldsymbol{x}_i\)</span>, a vector of Gaussian
+processes <span class="math inline">\(\boldsymbol{w}(s_i)\)</span>, and
+a multivariate non-spatial term <span class="math inline">\(\boldsymbol{v}_i\)</span>: <span class="math display">\[
+\boldsymbol{\theta}_i = \boldsymbol{B} \boldsymbol{x}_i + \boldsymbol{T}
+\boldsymbol{w}(s_i) + \boldsymbol{v}_i,
+\]</span> where <span class="math inline">\(\boldsymbol{B}\)</span> is
+the matrix of multivariate effects of the predictors, <span class="math inline">\(\boldsymbol{T}\)</span> defines the relationship
+between the spatial processes and the latent abilities, and <span class="math inline">\(\boldsymbol{v}_i\)</span> is allowed to have a
+correlations structure <span class="math inline">\(\boldsymbol{R}\)</span>.</p>
 <p>This model is unidentifiable, so it is important to restrict the
-discrimination parameters
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐚</mi><mi>j</mi></msub><annotation encoding="application/x-tex">\boldsymbol{a}_j</annotation></semantics></math>
-and set informative priors for the spatial range of the Gaussian
-processes
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐰</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>s</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\boldsymbol{w}(s_i)</annotation></semantics></math>
-before fitting it, to facilitate convergence of the posterior sampling
-algorithm – in practice, both are best informed by exploratory analysis
-(e.g. a preliminary non-spatial item factor analysis for the former, an
+discrimination parameters <span class="math inline">\(\boldsymbol{a}_j\)</span> and set informative
+priors for the spatial range of the Gaussian processes <span class="math inline">\(\boldsymbol{w}(s_i)\)</span> before fitting it, to
+facilitate convergence of the posterior sampling algorithm – in
+practice, both are best informed by exploratory analysis (e.g. a
+preliminary non-spatial item factor analysis for the former, an
 empirical variogram for the latter), though we use them directly below
-without walking through that derivation. The linear transformation
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐓</mi><annotation encoding="application/x-tex">\boldsymbol{T}</annotation></semantics></math>,
-by contrast, is not determined from exploratory analysis – it is a
-structural choice made by the user (usually diagonal, i.e. one
-independent Gaussian process per factor), though alternative structures
-can be specified and compared.</p>
+without walking through that derivation. The linear transformation <span class="math inline">\(\boldsymbol{T}\)</span>, by contrast, is not
+determined from exploratory analysis – it is a structural choice made by
+the user (usually diagonal, i.e. one independent Gaussian process per
+factor), though alternative structures can be specified and
+compared.</p>
 </div>
 <div class="section level2">
 <h2 id="load-required-packages-and-data">Load required packages and data<a class="anchor" aria-label="anchor" href="#load-required-packages-and-data"></a>

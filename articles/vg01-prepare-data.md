@@ -11,31 +11,11 @@ dataset acceptable by
 
 ``` r
 
-library(dplyr)
-```
-
-    #> 
-    #> Attaching package: 'dplyr'
-
-    #> The following objects are masked from 'package:stats':
-    #> 
-    #>     filter, lag
-
-    #> The following objects are masked from 'package:base':
-    #> 
-    #>     intersect, setdiff, setequal, union
-
-``` r
-
+library(spifa)
 library(sf)
 ```
 
     #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
-
-``` r
-
-library(spifa)
-```
 
 ## Simulating a raw questionnaire
 
@@ -92,7 +72,7 @@ We extract the item as a matrix, and then provide it to a new
 ``` r
 
 # get items as a matrix
-items <- select(raw, starts_with("item")) |>
+items <- subset(raw, select = grep("^item", names(raw))) |>
   as.matrix() |>
   unname()
 # create data.frame and geo-reference it
