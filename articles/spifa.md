@@ -14,10 +14,12 @@ auxiliary variable $`Z_{ij}`$ such that:
 ``` math
 \begin{aligned}
   {Y}_{ij}  & =
-  \begin{cases}
+  \left\{
+  \begin{array}{ll}
     1, & \text{if} ~ {Z}_{ij} > 0\\
     0, & \text{otherwise}
-  \end{cases}\\
+  \end{array}
+  \right.\\
   {Z}_{ij} & = c_j + \boldsymbol{a}_j^\intercal\boldsymbol{\theta}_i + \epsilon_{ij},
   ~~ \epsilon_{ij} \sim {N}(0, 1),
 \end{aligned}

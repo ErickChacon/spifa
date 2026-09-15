@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   spifa: spifa.html
   vg01-prepare-data: vg01-prepare-data.html
-last_built: 2026-09-15T14:26Z
+last_built: 2026-09-15T14:37Z
 urls:
   reference: https://ErickChacon.github.io/spifa/reference
   article: https://ErickChacon.github.io/spifa/articles
