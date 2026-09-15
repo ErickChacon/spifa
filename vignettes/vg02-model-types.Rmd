@@ -38,8 +38,6 @@ geo-referenced as an `sf` object, otherwise the non-spatial models are activated
 We will showcase the five model types using the `ipixuna` data.
 
 ```{r}
-library(dplyr)
-library(sf)
 library(spifa)
 
 data(ipixuna)
