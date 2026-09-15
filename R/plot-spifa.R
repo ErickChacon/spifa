@@ -292,9 +292,10 @@ plot_density <- function (x, select, facet = FALSE,
 #' plot_interval(samples, select = "c", sort = TRUE)
 #' plot_interval(samples, select = "A", horizontal = TRUE)
 #'
-#' # overlay the true simulated discrimination values
-#' parameters <- attr(ipixuna, "parameters")
-#' plot_interval(samples, select = "A", reference = parameters$discrimination)
+#' # overlay a reference set of discrimination values (e.g. from theory)
+#' nitems <- ncol(ipixuna$items)
+#' reference_A <- matrix(1, nitems, 3)
+#' plot_interval(samples, select = "A", reference = reference_A)
 #' }
 #'
 #' @export

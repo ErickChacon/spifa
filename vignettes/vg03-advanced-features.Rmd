@@ -1,0 +1,180 @@
+---
+title: "Advanced features"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Advanced features}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+```
+
+## Introduction
+
+This vignette goes deeper into two things `vignette("spifa")` and
+`vignette("vg02-model-types")` only touch briefly:
+
+- how to control `constraints`/`priors` for every parameter group,
+- how to continue sampling with `update()` when a fit hasn't converged yet, and
+- how to compare models using `dic()`.
+
+```{r}
+library(spifa)
+
+data(ipixuna)
+nfactors <- 3
+nitems <- ncol(ipixuna$items)
+```
+
+## Restrictions and priors
+
+`spifa()`'s parameter glossary (see `?spifa`) maps six configurable parameter names --
+`easiness` (c), `discrimination` (A), `effect` (B), `corr` (Corr), `loading` (T), `range`
+(phi). Two `spifa()` arguments use these names:
+
+- `constraints`: fixes cells of a parameter to a value instead of estimating them. Only
+  `discrimination`, `loading`, and `sd` support this (the model needs some fixed structure
+  for identifiability).
+- `priors`: sets the `initial` value and prior hyperparameters (`mean`/`sd`,
+  or `eta` for `corr`) for a parameter that is estimated. Every one of the six names
+  accepts this.
+
+### `constraints`
+
+- `discrimination` (nitems x nfactors matrix): which items inform which
+  factors,
+- `loading` (nfactors x ngp matrix): which Gaussian processes feed into
+  which factors, and
+- `sd`: fixed values for the latent factors' residual standard deviation (length
+  `nfactors`). Unlike `discrimination`/`loading`, this is not estimated, it is always
+  fixed.
+
+Define `discrimination` structure:
+
+```{r}
+A <- matrix(1, nitems, nfactors)
+A[c(4, 8), 1] <- 0
+A[c(4, 5, 6, 7, 8, 10), 2] <- 0
+A[c(5, 6), 3] <- 0
+A
+```
+
+Define `loading` structure, factors 1 and 2 share one Gaussian process, factor 3 gets its
+own:
+
+```{r}
+ngp <- 2
+T_loading <- matrix(c(1, 1, 0, 0, 0, 1), nfactors, ngp)
+T_loading
+```
+
+Fix the residual standard deviation of each factor to 0.2:
+
+```{r}
+sd_fixed <- rep(0.2, nfactors)
+sd_fixed
+```
+
+### `priors`
+
+Every element accepts `initial` (starting value for the sampler) and the prior
+hyperparameters `mean`/`sd`. The parameter `corr` is the exception: it takes `initial` and
+`eta` (the LKJ shape parameter) instead.
+
+By default, `spifa()` starts every parameter at a generic default and lets the data speak.
+If you have domain knowledge, setting `priors` closer to a plausible value can speed up
+convergence substantially. Here we set a plausible prior for every parameter group:
+
+- item easiness roughly increasing across items,
+- a couple of items with a strong sign-fixing discrimination prior (as in `vignette("spifa")`),
+- a wealth effect that differs in sign across factors,
+- moderate loadings,
+- factor correlations nudged away from independence, and
+- a range parameter around `150` as in `vignette("spifa")`:
+
+```{r}
+# easiness hyperparameters
+c_mean <- seq(-0.7, 0.9, length.out = nitems)
+c_sd <- rep(0.3, nitems)
+
+# discrimination hyperparameters
+A_mean <- matrix(0, nitems, nfactors)
+A_mean[c(5, 6), 1] <- 1
+A_mean[c(4, 8), 3] <- -1
+A_sd <- matrix(1, nitems, nfactors)
+A_sd[A_mean != 0] <- 0.45
+
+# predictor effects hyperparameters
+B_mean <- matrix(c(-0.5, 0.5, 0.2), nrow = 1)
+B_sd <- matrix(0.5, nrow = 1, ncol = nfactors)
+
+# correlation initial value
+corr_initial <- diag(nfactors)
+
+# range parameter hyperparameters
+phi_mean <- 150
+phi_sd <- 0.4
+```
+
+### Fit with constraints and priors
+
+In the following code, we explicitely defined the `constraints`, and `priors` for all
+possible parameters:
+
+```{r}
+set.seed(1)
+fit_informed <- spifa(
+  items ~ wealth, data = ipixuna, nfactors = nfactors, ngp = 3,
+  burnin = 200, niter = 200, thin = 2,
+  constraints = list(discrimination = A, loading = diag(nfactors), sd = sd_fixed),
+  priors = list(
+    easiness = list(initial = c_mean, mean = c_mean, sd = c_sd),
+    discrimination = list(initial = A_mean, mean = A_mean, sd = A_sd),
+    effect = list(initial = B_mean, mean = B_mean, sd = B_sd),
+    corr = list(initial = corr_initial, eta = 2),
+    loading = list(initial = 0.6, mean = 0.6, sd = 0.3),
+    range = list(initial = phi_mean, mean = phi_mean, sd = phi_sd)))
+fit_informed
+```
+
+## Continue sampling
+
+Fits don't always converge on the first try. If you take a look at `rhat` in the previous
+section, you will notice that some values are much higher that `1.05` for example. To
+continue sampling from the current state you can use `update()`:
+
+```{r, warning = FALSE}
+fit1 <- update(fit_informed, niter = 1000)
+fit1
+```
+
+`rhat` has moved closer to 1 with the extra iterations. In practice, you have to run many
+more iterations.
+
+## Compare models with DIC
+
+`dic()` computes the Deviance Information Criterion for a fitted model, useful for
+comparing candidate models fitted to the same data. You should compare them once
+convergence is ensured. For example, let's compare with a `spifa` with 2 latent factors
+and default `constraints` and `priors`:
+
+```{r, warning = FALSE}
+fit2 <- spifa(items ~ wealth, data = ipixuna, nfactors = 2, niter = 1000, burnin = 1000)
+fit2
+```
+
+Use `dic()` and create a data.frame:
+
+```{r}
+dplyr::bind_rows(
+  "M1: 3 factors" = dic(fit1, burnin = 100, thin = 2),
+  "M2: 2 factors" = dic(fit2, burnin = 100, thin = 2),
+  .id = "model")
+```
+
+Assuming both models have converged, the 3-factor model has the lower DIC, favouring the
+discrimination structure used above over an arbitrary 2-factor alternative.
