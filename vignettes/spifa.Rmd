@@ -28,12 +28,10 @@ using an auxiliary variable $Z_{ij}$ such that:
 $$
 \begin{aligned}
   {Y}_{ij}  & =
-  \left\lbrace
-  \begin{array}[2]{cc}
+  \begin{cases}
     1, & \text{if} ~ {Z}_{ij} > 0\\
     0, & \text{otherwise}
-  \end{array}
-  \right.\\
+  \end{cases}\\
   {Z}_{ij} & = c_j + \boldsymbol{a}_j^\intercal\boldsymbol{\theta}_i + \epsilon_{ij},
   ~~ \epsilon_{ij} \sim {N}(0, 1),
 \end{aligned}
@@ -70,7 +68,9 @@ factor), though alternative structures can be specified and compared.
 
 ```{r}
 library(spifa)
+library(posterior)
 library(ggplot2)
+library(sf)
 ```
 
 The `ipixuna` data under analysis is included in the **spifa** package: a simulated
@@ -176,7 +176,7 @@ constraints for the *discrimination* parameters and priors for the *discriminati
 ```{r, eval = FALSE}
 samples <- spifa(
   items ~ wealth, data = ipixuna, nfactors = nfactors,
-  burnin = 1000, niter = 4000,
+  burnin = 10000, niter = 8000, thin = 2,
   constraints = list(discrimination = A),
   priors = list(
     discrimination = list(initial = A_mean, mean = A_mean, sd = A_sd),
@@ -286,7 +286,7 @@ Compare the discrimination parameters:
 plot_interval(samples, select = "A")
 ```
 
-Compare the easiness parameters:
+Compare the range parameters:
 
 ```{r, fig.height = 5}
 plot_interval(samples, select = "phi", horizontal = TRUE)
@@ -294,155 +294,124 @@ plot_interval(samples, select = "phi", horizontal = TRUE)
 
 ## Predict and map the latent factors
 
-The reason **spifa** models the latent factors as spatial processes is to predict
-them at new, unobserved locations -- this is what makes it possible to map a
-construct like food insecurity across a whole area from survey data collected at a
-limited number of households. `predict()` takes the fitted `object` and `newdata`, an
-`sf`/`sfc` object of new locations (with any predictor columns the model needs,
-`wealth` here), and returns posterior predictive draws of the latent factors at those
-locations -- one draw per retained MCMC iteration, so uncertainty in the fitted
-parameters is propagated through to the predictions. `newdata` can be omitted to get
-the latent factors back at the original, observed households instead -- since those
-were already sampled as part of the model fit, this is essentially free (no new
-locations to predict at):
+**spifa** provides Bayesian prediction of the latent factors at (i) the observed locations
+and (ii) new locations through the `predict()` function.
+
+### Observed locations
+
+By default `predict()` will simply return the samples of the latent factors at observed
+locations as a `posterior::draws_array()` object:
 
 ```{r}
-pred <- predict(samples)
-posterior::as_draws_df(pred)
-plot_predict(pred) +
-  scale_fill_distiller(palette = "RdBu")
+pred_samples <- predict(samples)
+as_draws_df(pred_samples)
 ```
 
-To map all three factors we predict on a regular grid rather than at arbitrary points. We
-restrict the grid to the convex hull of the observed households (slightly buffered),
-since predicting far outside the surveyed area extrapolates the spatial process with
-no supporting data, and represent each grid cell as a polygon so the result plots as
-a continuous surface. `newdata` can be these polygons directly -- `predict()` uses each
-cell's centroid for the spatial kernel, but keeps the polygons themselves attached to
-the result (as its `"newdata"` attribute) so `plot_predict()` can draw them as a map.
-Predicting at every grid cell for every retained MCMC iteration is far more work than
-predicting at the household locations, since there are many more cells than households
--- thinning further at prediction time (here `thin = 10`) keeps it more manageable, and,
-as with sampling above, we load a precomputed result rather than predicting during the
-build of this vignette:
+We can visualize a summary (`mean` by default) of these predictive samples using
+`plot_predict()` and integrate it with `ggplot2` functionality:
 
-`pred` holds the full posterior predictive draws, so it can be reused for as many
-summaries/plots as needed without predicting again -- `plot_predict()` maps one such
-summary at a time (`stat`, any function of the draws at one location/factor): the
-posterior mean per cell/factor by default, its standard deviation (`stat = sd`), a
-measure of how uncertain each prediction is, or the exceedance probability
-$P(\theta_j > 1)$ (`stat = function(v) mean(v > 1)`), i.e. how often each factor is
-predicted to be more than one standard deviation above its (zero) reference level at
-each location. All three reuse the same `pred`, with the prediction area's border
-overlaid via `hull`:
+```{r}
+plot_predict(pred_samples) +
+  scale_colour_distiller(palette = "RdBu")
+```
 
-```{r, eval = FALSE}
-hull <- ipixuna |>
-  st_geometry() |>
+### New locations
+
+If prediction is desired for new location/profiles, then the argument `newdata` can be
+provided, which is expected to be a `sf`/`sfc` object containing the new
+location/profiles.
+
+First, we create a grid where prediction will be performed. Then, we create a `newdata`
+`sf` object using a predictor profile representing an individual with average
+(standardized) wealth:
+
+```{r}
+bnd <- st_geometry(ipixuna) |>
   st_union() |>
   st_convex_hull() |>
-  st_buffer(50) |> # metres
-  st_convex_hull() # buffering on a geographic CRS can add tiny facets; re-hull to keep it clean
+  st_buffer(50)
 
-grid <- st_sf(wealth = 0, geometry = st_make_grid(hull, n = c(40, 40))) |>
-  st_filter(hull)
+newdata <- st_sf(wealth = 0, geometry = st_make_grid(bnd, n = c(40, 40))) |>
+  st_filter(bnd)
+newdata
+```
 
-pred <- predict(samples, newdata = grid, thin = 10)
+We perform prediction for this `newdata` and thin the posterior samples to reduce
+computational cost:
 
-plot_predict(pred, boundary = hull) +
-  scale_fill_distiller(palette = "RdBu")
-plot_predict(pred, boundary = hull, stat = sd) +
-  scale_fill_viridis_c(option = "magma")
-plot_predict(pred, boundary = hull, stat = function (v) mean(v > 1)) +
-  scale_fill_viridis_c(limits = c(0, 1), direction = -1)
+```{r, eval = FALSE}
+pred_samples <- predict(samples, newdata = newdata, thin = 10)
 ```
 
 ```{r, echo = FALSE}
 pred_grid <- readRDS(system.file("vigdata", "spifa-prediction.rds", package = "spifa"))
-grid <- pred_grid$grid
-hull <- pred_grid$hull
+newdata <- pred_grid$grid
+bnd <- pred_grid$bnd
 
-# same look plot_predict() applies by default (its internal theme_map())
-theme_map <- theme_bw(base_size = 9) +
-  theme(
-    axis.title = element_blank(),
-    panel.grid = element_line(linetype = 2, colour = "grey80", linewidth = 0.25),
-    panel.background = element_blank(),
-    panel.ontop = TRUE,
-    legend.position = "bottom",
-    legend.title = element_blank(),
-    legend.key.height = unit(0.4, "cm"),
-    strip.background = element_blank()
-  )
+plot_predict_vig <- function (grid, prefix, boundary = NULL) {
+  grid |>
+    tidyr::pivot_longer(starts_with(prefix), names_to = "factor", values_to = "value") |>
+    dplyr::mutate(factor = sub(paste0(prefix, "(\\d)"), "theta[\\1]", factor)) |>
+    ggplot() +
+    geom_sf(aes(fill = value), colour = NA) +
+    geom_sf(data = boundary, fill = NA, linewidth = 0.6, color = "gray50") +
+    facet_wrap(~ factor, labeller = label_parsed) +
+    theme_bw(base_size = 9) +
+    theme(
+      axis.title = element_blank(),
+      panel.grid = element_line(linetype = 2, colour = "grey80", linewidth = 0.25),
+      panel.background = element_blank(),
+      panel.ontop = TRUE,
+      legend.position = "bottom",
+      legend.title = element_blank(),
+      legend.key.height = unit(0.4, "cm"),
+      strip.background = element_blank(),
+      strip.text = element_text(size = rel(1))
+    )
+}
 ```
 
-The three maps below are built from a small precomputed summary (posterior mean, sd,
-and exceedance probability per cell) shipped with the package, rather than the full
-draws `predict()` itself returns -- but they show exactly what the code above produces:
+Now, we use the `plot_predict()` function to visualize the predictive `mean` by default.
 
-```{r, echo = FALSE, fig.height = 4}
-grid |>
-  tidyr::pivot_longer(starts_with("theta"), names_to = "factor", values_to = "value") |>
-  dplyr::mutate(factor = sub("theta(\\d)", "theta[\\1]", factor)) |>
-  ggplot() +
-  geom_sf(aes(fill = value), colour = NA) +
-  geom_sf(data = hull, fill = NA, linewidth = 0.6, color = "gray50") +
-  facet_wrap(~ factor, labeller = label_parsed) +
+```{r, eval = FALSE}
+plot_predict(pred_samples, boundary = bnd) +
   scale_fill_distiller(palette = "RdBu") +
-  theme_map
+  labs(title = "Predictive mean")
 ```
 
 ```{r, echo = FALSE, fig.height = 4}
-grid |>
-  tidyr::pivot_longer(starts_with("sd"), names_to = "factor", values_to = "value") |>
-  dplyr::mutate(factor = sub("sd(\\d)", "theta[\\1]", factor)) |>
-  ggplot() +
-  geom_sf(aes(fill = value), colour = NA) +
-  geom_sf(data = hull, fill = NA, linewidth = 0.6, color = "gray50") +
-  facet_wrap(~ factor, labeller = label_parsed) +
+plot_predict_vig(newdata, "theta", bnd) +
+  scale_fill_distiller(palette = "RdBu") +
+  labs(title = "Predictive mean")
+```
+
+Other summaries can be mapped by simply providing a function in the `stat` argument:
+
+```{r, eval = FALSE}
+plot_predict(pred_samples, boundary = bnd, stat = sd) +
   scale_fill_viridis_c(option = "magma") +
-  theme_map
+  labs(title = "Predictive standard deviation")
 ```
 
 ```{r, echo = FALSE, fig.height = 4}
-grid |>
-  tidyr::pivot_longer(starts_with("exceedance"), names_to = "factor", values_to = "value") |>
-  dplyr::mutate(factor = sub("exceedance(\\d)", "theta[\\1]", factor)) |>
-  ggplot() +
-  geom_sf(aes(fill = value), colour = NA) +
-  geom_sf(data = hull, fill = NA, linewidth = 0.6, color = "gray50") +
-  facet_wrap(~ factor, labeller = label_parsed) +
+plot_predict_vig(newdata, "sd", bnd) +
+  scale_fill_viridis_c(option = "magma") +
+  labs(title = "Predictive standard deviation")
+```
+
+Custom functions can easily be provided, for example, we can plot the probability of
+exceeding the value of 1 to identify hotspots:
+
+```{r, eval = FALSE}
+plot_predict(pred_samples, boundary = bnd, stat = function (v) mean(v > 1)) +
   scale_fill_viridis_c(limits = c(0, 1), direction = -1) +
-  theme_map
+  labs(title = expression(paste("Exceedance probability: ", P(theta[j] > 1))))
 ```
 
-## Compare models with DIC
-
-`dic()` computes the Deviance Information Criterion for a fitted model, useful for
-comparing candidate models fitted to the same data -- e.g. to choose the number of
-factors, or to compare restriction structures; the lower the DIC, the better the
-trade-off between fit and complexity. Its main arguments are `x` (the fitted model)
-and `burnin`/`thin`, as in `summary()`. Here we compare the 3-factor structure used
-above against a 2-factor alternative (both without the spatial/predictor structure,
-so the comparison is fast):
-
-```{r}
-A2 <- matrix(1, nitems, 2)
-A2[c(1, 3, 5, 9), 1] <- 0
-A2[c(2, 4, 6, 7, 10), 2] <- 0
-
-fit3 <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 300,
-  constraints = list(discrimination = A))
-fit2 <- spifa(items ~ 1, data = ipixuna, nfactors = 2, ngp = 0, niter = 300,
-  constraints = list(discrimination = A2))
-
-dplyr::bind_rows(
-  "3 factors" = dic(fit3, burnin = 100),
-  "2 factors" = dic(fit2, burnin = 100),
-  .id = "model")
+```{r, echo = FALSE, fig.height = 4}
+plot_predict_vig(newdata, "exceedance", bnd) +
+  scale_fill_viridis_c(limits = c(0, 1), direction = -1) +
+  labs(title = expression(paste("Exceedance probability: ", P(theta[j] > 1))))
 ```
-
-The 3-factor model has the lower DIC, favouring the discrimination structure used
-above over an arbitrary 2-factor alternative.
 
 ## References

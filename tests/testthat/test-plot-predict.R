@@ -38,9 +38,7 @@ test_that("plot_predict() draws points for point newdata, polygons for polygon n
   pred_points <- predict(samples, newdata = newcoords)
   gg_points <- plot_predict(pred_points)
   expect_true(inherits(gg_points$layers[[1]]$geom, "GeomSf"))
-  expect_true("fill" %in% names(gg_points$layers[[1]]$mapping))
-  expect_equal(gg_points$layers[[1]]$aes_params$shape, 21)
-  expect_equal(gg_points$layers[[1]]$aes_params$colour, "grey40")
+  expect_true("colour" %in% names(gg_points$layers[[1]]$mapping))
 
   grid <- sf::st_sf(geometry = sf::st_make_grid(ipixuna, n = c(3, 2)))
   pred_grid <- predict(samples, newdata = grid)

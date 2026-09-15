@@ -9,7 +9,8 @@ theme_map <- function (base_size = 9, legend = "bottom") {
           legend.position = legend,
           legend.title = element_blank(),
           legend.key.height = unit(0.4, "cm"),
-          strip.background = element_blank())
+          strip.background = element_blank(),
+          strip.text = element_text(size = rel(1)))
 }
 
 #' @title Map Posterior Predictions from a Fitted spifa Model
@@ -124,7 +125,7 @@ plot_predict <- function (pred, grid = NULL, select = NULL, stat = mean,
 
   gg <- ggplot(df)
   if (is_point) {
-    gg <- gg + geom_sf(aes(fill = value), shape = 21, colour = "grey40", stroke = 0.3)
+    gg <- gg + geom_sf(aes(colour = value))
   } else {
     gg <- gg + geom_sf(aes(fill = value), colour = NA)
   }
