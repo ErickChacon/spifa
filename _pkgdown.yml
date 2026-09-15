@@ -2,7 +2,7 @@ url: https://ErickChacon.github.io/spifa/
 
 template:
   bootstrap: 5
-  math-rendering: mathjax
+  math-rendering: katex
 
 authors:
   sidebar:

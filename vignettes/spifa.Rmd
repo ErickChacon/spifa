@@ -64,7 +64,7 @@ made by the user (usually diagonal, i.e. one independent Gaussian process per
 factor), though alternative structures can be specified and compared.
 
 
-## Load required packages and data
+## Ipixuna data
 
 ```{r}
 library(spifa)
@@ -89,7 +89,7 @@ The `items` can be easily obtained as an element of the data `ipixuna`:
 ipixuna$items |> head()
 ```
 
-## Sample from the posterior of a SPIFA model
+## Sample from the posterior
 
 As mentioned before, an identifiable spifa model requires restricting the
 discrimination parameters, along with adequate initial values and priors for the
@@ -292,7 +292,7 @@ Compare the range parameters:
 plot_interval(samples, select = "phi", horizontal = TRUE)
 ```
 
-## Predict and map the latent factors
+## Predict the latent factors
 
 **spifa** provides Bayesian prediction of the latent factors at (i) the observed locations
 and (ii) new locations through the `predict()` function.
