@@ -9,15 +9,18 @@ samples, and predict and map the latent factors at new locations.
 We will focus on the spatial item factor model proposed in
 Chacón-Montalván et al. (2025). Let $`Y_{ij}`$ be the binary response
 for item $`j`$ in individual $`i`$. The model can be defined using an
-auxiliary variable $`Z_{ij}`$ such that: \$\$ \begin{aligned} {Y}\_{ij}
-& = \left\lbrace \begin{array}\[2\]{cc} 1, & \text{if} ~ {Z}\_{ij} \>
-0\\ 0, & \text{otherwise} \end{array} \right.\\ {Z}\_{ij} & = c_j +
+auxiliary variable $`Z_{ij}`$ such that:
+
+\$\$ \begin{aligned} {Y}\_{ij} & = \left\lbrace \begin{array}\[2\]{cc}
+1, & \text{if} ~ {Z}\_{ij} \> 0\\ 0, & \text{otherwise} \end{array}
+\right.\\ {Z}\_{ij} & = c_j +
 \boldsymbol{a}\_j^\intercal\boldsymbol{\theta}\_i + \epsilon\_{ij}, \~~
-\epsilon\_{ij} \sim {N}(0, 1), \end{aligned} \$\$ where the easiness
-parameters $`c_j`$ define how common is to endorse the item $`j`$, and
-the discrimination parameters $`\boldsymbol{a}_j`$ define how important
-is item $`j`$ to discriminate the latent factors/abilities
-$`\boldsymbol{\theta}_i`$.
+\epsilon\_{ij} \sim {N}(0, 1), \end{aligned} \$\$
+
+where the easiness parameters $`c_j`$ define how common is to endorse
+the item $`j`$, and the discrimination parameters $`\boldsymbol{a}_j`$
+define how important is item $`j`$ to discriminate the latent
+factors/abilities $`\boldsymbol{\theta}_i`$.
 
 The vector of latent abilities $`\boldsymbol{\theta}_i`$ is modelled in
 terms of predictors $`\boldsymbol{x}_i`$, a vector of Gaussian processes
@@ -49,6 +52,7 @@ though alternative structures can be specified and compared.
 ``` r
 
 library(spifa)
+library(ggplot2)
 ```
 
 The `ipixuna` data under analysis is included in the **spifa** package:
@@ -466,6 +470,152 @@ plot_interval(samples, select = "phi", horizontal = TRUE)
 ```
 
 ![](spifa_files/figure-html/unnamed-chunk-18-1.png)
+
+## Predict and map the latent factors
+
+The reason **spifa** models the latent factors as spatial processes is
+to predict them at new, unobserved locations – this is what makes it
+possible to map a construct like food insecurity across a whole area
+from survey data collected at a limited number of households.
+[`predict()`](https://rdrr.io/r/stats/predict.html) takes the fitted
+`object` and `newdata`, an `sf`/`sfc` object of new locations (with any
+predictor columns the model needs, `wealth` here), and returns posterior
+predictive draws of the latent factors at those locations – one draw per
+retained MCMC iteration, so uncertainty in the fitted parameters is
+propagated through to the predictions. `newdata` can be omitted to get
+the latent factors back at the original, observed households instead –
+since those were already sampled as part of the model fit, this is
+essentially free (no new locations to predict at):
+
+``` r
+
+pred <- predict(samples)
+posterior::as_draws_df(pred)
+```
+
+    #> # A draws_df: 4000 iterations, 1 chains, and 300 variables
+    #>    Theta[1,1] Theta[2,1] Theta[3,1] Theta[4,1] Theta[5,1] Theta[6,1] Theta[7,1] Theta[8,1]
+    #> 1       0.377     -0.270      -0.88      -0.71       0.93      -1.05      -0.60      0.708
+    #> 2       1.383     -0.855      -0.28      -1.28       1.17      -0.66      -1.05     -0.101
+    #> 3       0.657     -0.046      -0.83      -1.19       0.95      -0.98      -1.43     -0.662
+    #> 4       0.680     -0.132      -1.03      -1.06       0.18      -1.20      -0.25      0.075
+    #> 5       0.235     -0.536      -1.24      -1.30      -0.08      -0.77      -0.69     -0.274
+    #> 6       0.871     -0.050      -0.86      -1.39       0.43      -0.80      -0.56     -0.388
+    #> 7       0.344     -0.058      -0.63      -1.38      -0.22      -1.18      -0.49     -0.725
+    #> 8       0.561     -0.574      -0.47      -0.50       1.14      -1.54      -0.16     -0.593
+    #> 9      -0.065     -0.339      -0.48      -0.57       0.54      -1.27      -0.59     -0.704
+    #> 10      0.918      0.066      -0.43      -0.82       0.25      -0.57      -0.16      0.252
+    #> # ... with 3990 more draws, and 292 more variables
+    #> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
+
+``` r
+
+plot_predict(pred) +
+  scale_fill_distiller(palette = "RdBu")
+```
+
+![](spifa_files/figure-html/unnamed-chunk-19-1.png)
+
+To map all three factors we predict on a regular grid rather than at
+arbitrary points. We restrict the grid to the convex hull of the
+observed households (slightly buffered), since predicting far outside
+the surveyed area extrapolates the spatial process with no supporting
+data, and represent each grid cell as a polygon so the result plots as a
+continuous surface. `newdata` can be these polygons directly –
+[`predict()`](https://rdrr.io/r/stats/predict.html) uses each cell’s
+centroid for the spatial kernel, but keeps the polygons themselves
+attached to the result (as its `"newdata"` attribute) so
+[`plot_predict()`](https://ErickChacon.github.io/spifa/reference/plot_predict.md)
+can draw them as a map. Predicting at every grid cell for every retained
+MCMC iteration is far more work than predicting at the household
+locations, since there are many more cells than households – thinning
+further at prediction time (here `thin = 10`) keeps it more manageable,
+and, as with sampling above, we load a precomputed result rather than
+predicting during the build of this vignette:
+
+`pred` holds the full posterior predictive draws, so it can be reused
+for as many summaries/plots as needed without predicting again –
+[`plot_predict()`](https://ErickChacon.github.io/spifa/reference/plot_predict.md)
+maps one such summary at a time (`stat`, any function of the draws at
+one location/factor): the posterior mean per cell/factor by default, its
+standard deviation (`stat = sd`), a measure of how uncertain each
+prediction is, or the exceedance probability $`P(\theta_j > 1)`$
+(`stat = function(v) mean(v > 1)`), i.e. how often each factor is
+predicted to be more than one standard deviation above its (zero)
+reference level at each location. All three reuse the same `pred`, with
+the prediction area’s border overlaid via `hull`:
+
+``` r
+
+hull <- ipixuna |>
+  st_geometry() |>
+  st_union() |>
+  st_convex_hull() |>
+  st_buffer(50) |> # metres
+  st_convex_hull() # buffering on a geographic CRS can add tiny facets; re-hull to keep it clean
+
+grid <- st_sf(wealth = 0, geometry = st_make_grid(hull, n = c(40, 40))) |>
+  st_filter(hull)
+
+pred <- predict(samples, newdata = grid, thin = 10)
+
+plot_predict(pred, boundary = hull) +
+  scale_fill_distiller(palette = "RdBu")
+plot_predict(pred, boundary = hull, stat = sd) +
+  scale_fill_viridis_c(option = "magma")
+plot_predict(pred, boundary = hull, stat = function (v) mean(v > 1)) +
+  scale_fill_viridis_c(limits = c(0, 1), direction = -1)
+```
+
+The three maps below are built from a small precomputed summary
+(posterior mean, sd, and exceedance probability per cell) shipped with
+the package, rather than the full draws
+[`predict()`](https://rdrr.io/r/stats/predict.html) itself returns – but
+they show exactly what the code above produces:
+
+![](spifa_files/figure-html/unnamed-chunk-22-1.png)
+
+![](spifa_files/figure-html/unnamed-chunk-23-1.png)
+
+![](spifa_files/figure-html/unnamed-chunk-24-1.png)
+
+## Compare models with DIC
+
+[`dic()`](https://ErickChacon.github.io/spifa/reference/dic.md) computes
+the Deviance Information Criterion for a fitted model, useful for
+comparing candidate models fitted to the same data – e.g. to choose the
+number of factors, or to compare restriction structures; the lower the
+DIC, the better the trade-off between fit and complexity. Its main
+arguments are `x` (the fitted model) and `burnin`/`thin`, as in
+[`summary()`](https://rdrr.io/r/base/summary.html). Here we compare the
+3-factor structure used above against a 2-factor alternative (both
+without the spatial/predictor structure, so the comparison is fast):
+
+``` r
+
+A2 <- matrix(1, nitems, 2)
+A2[c(1, 3, 5, 9), 1] <- 0
+A2[c(2, 4, 6, 7, 10), 2] <- 0
+
+fit3 <- spifa(items ~ 1, data = ipixuna, nfactors = 3, ngp = 0, niter = 300,
+  constraints = list(discrimination = A))
+fit2 <- spifa(items ~ 1, data = ipixuna, nfactors = 2, ngp = 0, niter = 300,
+  constraints = list(discrimination = A2))
+
+dplyr::bind_rows(
+  "3 factors" = dic(fit3, burnin = 100),
+  "2 factors" = dic(fit2, burnin = 100),
+  .id = "model")
+```
+
+    #> # A tibble: 2 × 4
+    #>   model     mean_deviance p_eff   dic
+    #>   <chr>             <dbl> <dbl> <dbl>
+    #> 1 3 factors          775.  198.  974.
+    #> 2 2 factors         1008.  107. 1115.
+
+The 3-factor model has the lower DIC, favouring the discrimination
+structure used above over an arbitrary 2-factor alternative.
 
 ## References
 

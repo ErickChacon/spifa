@@ -14,6 +14,8 @@
   : Density Plot of spifa Posterior Samples
 - [`plot_interval()`](https://ErickChacon.github.io/spifa/reference/plot_interval.md)
   : Interval Plot of spifa Posterior Samples
+- [`plot_predict()`](https://ErickChacon.github.io/spifa/reference/plot_predict.md)
+  : Map Posterior Predictions from a Fitted spifa Model
 - [`plot_trace()`](https://ErickChacon.github.io/spifa/reference/plot_trace.md)
   : Trace Plot of spifa Posterior Samples
 - [`predict(`*`<spifa>`*`)`](https://ErickChacon.github.io/spifa/reference/predict.spifa.md)

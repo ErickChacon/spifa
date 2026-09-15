@@ -71,7 +71,11 @@ it need not match the training data's CRS) or a plain data frame (for
 <code>cifa_pred</code>), with columns matching the predictors used on the
 right-hand side of <code>formula</code> when the model was fitted. Its design
 matrix is built the same way <code><a href="spifa.html">spifa</a></code> built the training one,
-using the same terms and factor levels.</p></dd>
+using the same terms and factor levels. For a spatial model, its geometry
+may also be <code>POLYGON</code>/<code>MULTIPOLYGON</code> (e.g. a prediction grid): the
+centroid of each cell is used for the spatial kernel, but the original
+polygons are kept (see <code>Value</code>) so <code><a href="plot_predict.html">plot_predict</a></code> can draw
+them as a filled map instead of points.</p></dd>
 
 
 <dt id="arg-burnin">burnin<a class="anchor" aria-label="anchor" href="#arg-burnin"></a></dt>
@@ -110,7 +114,11 @@ draws are already jointly correct across factors.</p></dd>
     <p>A <code><a href="https://mc-stan.org/posterior/reference/draws_array.html" class="external-link">draws_array</a></code> of posterior predictive
 samples of the latent abilities (<code>theta</code>) for the requested new
 locations and/or predictor values (or, if no prediction was requested,
-for the originally observed subjects).</p>
+for the originally observed subjects). For a spatial model, the locations
+used (<code>newdata</code>, or the training locations if <code>newdata</code> was
+omitted) are attached as the <code>"newdata"</code> attribute, so
+<code><a href="plot_predict.html">plot_predict</a></code> can map the result without needing it supplied
+again.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -142,7 +150,6 @@ the original data's format.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">ipixuna</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">nitems</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">ipixuna</span><span class="op">$</span><span class="va">items</span><span class="op">)</span></span></span>
@@ -161,42 +168,42 @@ the original data's format.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[1,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1  0.897</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.543</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3  1.024</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.046</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.216</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -2.39</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -1.72</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.63</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.40</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.93</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[2,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 0.369</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 0.056</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 0.379</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 0.895</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 0.497</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -1.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.72</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4  0.55</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  0.59</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[3,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 1.02</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 1.50</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 0.74</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 0.91</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1  0.15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.92</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.17</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4  1.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  0.54</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[4,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.89</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -1.74</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.31</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.58</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.94</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -1.28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.16</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -1.73</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  0.43</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 296 more variables</span>
 <span class="r-in"><span><span class="co"># latent abilities for new locations</span></span></span>
@@ -207,41 +214,41 @@ the original data's format.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.42</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2  1.55</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.91</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.68</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -1.23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.69</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.48</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -1.10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4  0.41</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  0.93</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[2,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -1.146</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.280</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.734</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4  0.049</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -1.655</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1  0.48</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.14</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3  0.42</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4  0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  0.13</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[3,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.429</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2  1.390</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.069</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4  0.370</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5  0.128</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.92</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.53</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4  1.37</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  1.29</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[4,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -1.36</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.17</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.49</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4  1.16</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.39</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.332</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.629</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.002</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4  0.764</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  1.349</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 14 more variables</span>
 <span class="r-in"><span></span></span>
@@ -254,42 +261,42 @@ the original data's format.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[1,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -1.39</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.16</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -1.38</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4  0.42</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5  0.78</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1  0.098</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.670</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3  1.648</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4  0.162</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.798</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[2,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -2.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -1.76</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3  0.56</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.65</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.57</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.018</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.381</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.809</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.613</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  0.233</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[3,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.34</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -1.05</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3  1.85</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4  0.30</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -1.19</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.66</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.42</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.77</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Theta[4,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.596</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.650</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3  0.021</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4  2.080</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5  1.105</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -2.09</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.46</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.31</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -1.75</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  1.79</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 14 more variables</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

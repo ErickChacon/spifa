@@ -32,7 +32,12 @@ predict(object, newdata = NULL, burnin = 0, thin = 1, joint = FALSE, ...)
   right-hand side of `formula` when the model was fitted. Its design
   matrix is built the same way
   [`spifa`](https://ErickChacon.github.io/spifa/reference/spifa.md)
-  built the training one, using the same terms and factor levels.
+  built the training one, using the same terms and factor levels. For a
+  spatial model, its geometry may also be `POLYGON`/`MULTIPOLYGON` (e.g.
+  a prediction grid): the centroid of each cell is used for the spatial
+  kernel, but the original polygons are kept (see `Value`) so
+  [`plot_predict`](https://ErickChacon.github.io/spifa/reference/plot_predict.md)
+  can draw them as a filled map instead of points.
 
 - burnin:
 
@@ -71,7 +76,11 @@ A
 [`draws_array`](https://mc-stan.org/posterior/reference/draws_array.html)
 of posterior predictive samples of the latent abilities (`theta`) for
 the requested new locations and/or predictor values (or, if no
-prediction was requested, for the originally observed subjects).
+prediction was requested, for the originally observed subjects). For a
+spatial model, the locations used (`newdata`, or the training locations
+if `newdata` was omitted) are attached as the `"newdata"` attribute, so
+[`plot_predict`](https://ErickChacon.github.io/spifa/reference/plot_predict.md)
+can map the result without needing it supplied again.
 
 ## Details
 
@@ -105,7 +114,6 @@ Erick A. Chacón-Montalván
 ``` r
 # \donttest{
 library(sf)
-#> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 data(ipixuna)
 
 nitems <- ncol(ipixuna$items)
@@ -124,42 +132,42 @@ predict(samples)
 #> , , variable = Theta[1,1]
 #> 
 #>          chain
-#> iteration      1
-#>         1  0.897
-#>         2 -0.543
-#>         3  1.024
-#>         4 -0.046
-#>         5 -0.216
+#> iteration     1
+#>         1 -2.39
+#>         2 -1.72
+#>         3 -0.63
+#>         4 -0.40
+#>         5 -0.93
 #> 
 #> , , variable = Theta[2,1]
 #> 
 #>          chain
 #> iteration     1
-#>         1 0.369
-#>         2 0.056
-#>         3 0.379
-#>         4 0.895
-#>         5 0.497
+#>         1 -1.02
+#>         2  0.36
+#>         3 -0.72
+#>         4  0.55
+#>         5  0.59
 #> 
 #> , , variable = Theta[3,1]
 #> 
 #>          chain
-#> iteration    1
-#>         1 1.02
-#>         2 1.00
-#>         3 1.50
-#>         4 0.74
-#>         5 0.91
+#> iteration     1
+#>         1  0.15
+#>         2  0.92
+#>         3 -0.17
+#>         4  1.02
+#>         5  0.54
 #> 
 #> , , variable = Theta[4,1]
 #> 
 #>          chain
 #> iteration     1
-#>         1 -0.89
-#>         2 -1.74
-#>         3 -0.31
-#>         4 -0.58
-#>         5 -0.94
+#>         1 -1.28
+#>         2 -0.90
+#>         3 -0.16
+#>         4 -1.73
+#>         5  0.43
 #> 
 #> # ... with 296 more variables
 # latent abilities for new locations
@@ -170,41 +178,41 @@ predict(samples, newdata = newdata)
 #> 
 #>          chain
 #> iteration     1
-#>         1 -0.42
-#>         2  1.55
-#>         3 -0.91
-#>         4 -0.68
-#>         5 -1.23
+#>         1 -0.69
+#>         2  0.48
+#>         3 -1.10
+#>         4  0.41
+#>         5  0.93
 #> 
 #> , , variable = Theta[2,1]
 #> 
 #>          chain
-#> iteration      1
-#>         1 -1.146
-#>         2  0.280
-#>         3 -0.734
-#>         4  0.049
-#>         5 -1.655
+#> iteration     1
+#>         1  0.48
+#>         2 -0.14
+#>         3  0.42
+#>         4  0.90
+#>         5  0.13
 #> 
 #> , , variable = Theta[3,1]
 #> 
 #>          chain
-#> iteration      1
-#>         1 -0.429
-#>         2  1.390
-#>         3 -0.069
-#>         4  0.370
-#>         5  0.128
+#> iteration     1
+#>         1 -0.92
+#>         2 -0.53
+#>         3 -0.90
+#>         4  1.37
+#>         5  1.29
 #> 
 #> , , variable = Theta[4,1]
 #> 
 #>          chain
-#> iteration     1
-#>         1 -1.36
-#>         2 -0.17
-#>         3 -0.49
-#>         4  1.16
-#>         5 -0.39
+#> iteration      1
+#>         1 -0.332
+#>         2  0.629
+#>         3 -0.002
+#>         4  0.764
+#>         5  1.349
 #> 
 #> # ... with 14 more variables
 
@@ -217,42 +225,42 @@ predict(samples_pred, newdata = newdata_pred)
 #> , , variable = Theta[1,1]
 #> 
 #>          chain
-#> iteration     1
-#>         1 -1.39
-#>         2  0.16
-#>         3 -1.38
-#>         4  0.42
-#>         5  0.78
+#> iteration      1
+#>         1  0.098
+#>         2  0.670
+#>         3  1.648
+#>         4  0.162
+#>         5 -0.798
 #> 
 #> , , variable = Theta[2,1]
 #> 
 #>          chain
-#> iteration     1
-#>         1 -2.00
-#>         2 -1.76
-#>         3  0.56
-#>         4 -0.65
-#>         5 -0.57
+#> iteration      1
+#>         1 -0.018
+#>         2  0.381
+#>         3 -0.809
+#>         4 -0.613
+#>         5  0.233
 #> 
 #> , , variable = Theta[3,1]
 #> 
 #>          chain
 #> iteration     1
-#>         1 -0.34
-#>         2 -1.05
-#>         3  1.85
-#>         4  0.30
-#>         5 -1.19
+#>         1 -0.66
+#>         2 -0.20
+#>         3 -0.90
+#>         4 -0.42
+#>         5 -0.77
 #> 
 #> , , variable = Theta[4,1]
 #> 
 #>          chain
-#> iteration      1
-#>         1 -0.596
-#>         2 -0.650
-#>         3  0.021
-#>         4  2.080
-#>         5  1.105
+#> iteration     1
+#>         1 -2.09
+#>         2  0.46
+#>         3 -0.31
+#>         4 -1.75
+#>         5  1.79
 #> 
 #> # ... with 14 more variables
 # }
