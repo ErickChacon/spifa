@@ -19,9 +19,8 @@ column per item. This is the same convention base R uses for multivariate `lm()`
 vignette builds a small dataset acceptable by `spifa()`.
 
 ```{r}
-library(dplyr)
-library(sf)
 library(spifa)
+library(sf)
 ```
 
 ## Simulating a raw questionnaire
@@ -54,7 +53,7 @@ convert to `sf`:
 
 ```{r}
 # get items as a matrix
-items <- select(raw, starts_with("item")) |>
+items <- subset(raw, select = grep("^item", names(raw))) |>
   as.matrix() |>
   unname()
 # create data.frame and geo-reference it

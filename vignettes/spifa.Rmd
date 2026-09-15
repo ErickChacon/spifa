@@ -28,12 +28,10 @@ using an auxiliary variable $Z_{ij}$ such that:
 $$
 \begin{aligned}
   {Y}_{ij}  & =
-  \left\{
-  \begin{array}{ll}
+  \begin{cases}
     1, & \text{if} ~ {Z}_{ij} > 0\\
     0, & \text{otherwise}
-  \end{array}
-  \right.\\
+  \end{cases}\\
   {Z}_{ij} & = c_j + \boldsymbol{a}_j^\intercal\boldsymbol{\theta}_i + \epsilon_{ij},
   ~~ \epsilon_{ij} \sim {N}(0, 1),
 \end{aligned}
