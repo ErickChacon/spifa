@@ -8,7 +8,7 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center", out.width = "100%")
 knitr::opts_chunk$set(fig.width = 7, fig.height = 4)
 knitr::opts_chunk$set(comment = "#>")
 options(width = 100)
@@ -111,13 +111,14 @@ fscore_sf
 
 We can evaluate the effect of wealth on this estimated latent factors:
 
-```{r}
+```{r, fig.height = 3}
 fscore_sf |>
   tidyr::pivot_longer(F1:F3) |>
   ggplot(aes(wealth, value)) +
     geom_point() +
     geom_smooth(method = 'lm', formula = y ~ x) +
-    facet_wrap(~ name)
+    facet_wrap(~ name) +
+    theme_bw()
 ```
 
 There seems to be an effect in F1 and F3, so we will analyse the residual spatial
@@ -129,7 +130,7 @@ From `gstat`, we can use `variogram()` to obtain the empirical variogram, `vgm()
 a theoretical variogram and  `fit.variogram()` to fit the theoretical model to the
 empirical variogram.
 
-```{r}
+```{r, fig.height = 5}
 vg1 <- variogram(F1 ~ wealth, fscore_sf, width = 20, cutoff = 1000)
 vg1_fit <- fit.variogram(vg1, model = vgm(psill = 0.6, "Exp", range = 100, nugget = 0.1))
 vg1_fit
@@ -138,7 +139,7 @@ plot(vg1, vg1_fit, pch = 19, main = "F1")
 
 For F1, we can see that there is some evidence of spatial correlation at small scale.
 
-```{r}
+```{r, fig.height = 5}
 vg2 <- variogram(F2 ~ wealth, fscore_sf, width = 50, cutoff = 1000)
 vg2_fit <- fit.variogram(vg2, model = vgm(psill = 0.6, "Exp", range = 100, nugget = 0.1))
 vg2_fit
@@ -147,7 +148,7 @@ plot(vg2, vg2_fit, pch = 19, main = "F2")
 
 For F2, there is a much clearer spatial structure with a range parameter around `170`.
 
-```{r}
+```{r, fig.height = 5}
 vg3 <- variogram(F3 ~ wealth, fscore_sf, width = 50, cutoff = 800)
 vg3_fit <- fit.variogram(vg3, model = vgm(psill = 0.6, "Exp", range = 100, nugget = 0.1))
 vg3_fit
