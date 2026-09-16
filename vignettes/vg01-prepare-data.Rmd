@@ -1,8 +1,8 @@
 ---
-title: "Preparing data for spifa()"
+title: "Data preparation"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Preparing data for spifa()}
+  %\VignetteIndexEntry{Data preparation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

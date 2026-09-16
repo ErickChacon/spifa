@@ -24,8 +24,6 @@ the class of `data` (see `?spifa`):
   - `spifa`: Spatial IFA
   - `spifa_pred`: SPIFA with predictors
 
-## Introduction
-
 The model type is determined based on the following:
 
 1) Exploratory structure (`eifa`) is used when no `constraints` are provided.
