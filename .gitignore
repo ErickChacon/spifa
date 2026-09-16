@@ -23,7 +23,8 @@ docs
 # RStudio files
 .Rproj.user/
 
-# produced vignettes
+# produced README and vignettes
+/README.html
 vignettes/*.html
 vignettes/*.pdf
 vignettes/figure

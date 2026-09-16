@@ -5,6 +5,8 @@
 [![pkgdown](https://github.com/ErickChacon/spifa/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/ErickChacon/spifa/actions/workflows/pkgdown.yaml)
 <!-- badges: end -->
 
+<img src="man/figures/readme-map.png" width="100%" alt="Predictive mean maps of three latent factors over the Ipixuna study area, produced with predict() and plot_predict()" />
+
 ## Introduction
 
 **spifa** fits spatial item factor analysis (IFA) models for binary
@@ -37,8 +39,8 @@ remotes::install_github("ErickChacon/spifa")
 
 A minimal *spatial* item factor analysis fit on the bundled `ipixuna` dataset (a
 simulated `sf` object with `items` responses for geo-referenced households). We
-define the factor loadings structure (discrimination) and fit the model with the
-default spatial structure for each factor:
+define the discrimination structure and fit the model with the default spatial
+structure for each factor:
 
 ```r
 library(spifa)
@@ -61,7 +63,7 @@ samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, niter = 1000,
 plot(samples, select = "c", burnin = 500)
 ```
 
-<img src="man/figures/README-example.png" width="100%" alt="Trace and density plots of the easiness (c) posterior samples from the basic usage example" />
+<img src="man/figures/readme-example.png" width="100%" alt="Trace and density plots of the easiness (c) posterior samples from the basic usage example" />
 
 See `vignette("spifa")` for a full worked example.
 
