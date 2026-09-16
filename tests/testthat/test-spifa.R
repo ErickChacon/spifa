@@ -7,8 +7,9 @@ test_that("eifa", {
   nfactors <- 3
   nitems <- ncol(ipixuna$items)
 
-  samples <- spifa(items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0,
-    niter = 5)
+  samples <- spifa(
+    items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0, niter = 5
+  )
 
   expect_equal(attr(samples, "fit_args")$model_type, "eifa")
   expect_equal(attr(samples, "fit_args")$constrain_L,
