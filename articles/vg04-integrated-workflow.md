@@ -195,7 +195,8 @@ fscore_sf |>
   ggplot(aes(wealth, value)) +
     geom_point() +
     geom_smooth(method = 'lm', formula = y ~ x) +
-    facet_wrap(~ name)
+    facet_wrap(~ name) +
+    theme_bw()
 ```
 
 ![](vg04-integrated-workflow_files/figure-html/unnamed-chunk-8-1.png)

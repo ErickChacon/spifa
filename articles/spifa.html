@@ -422,13 +422,13 @@ traceplots and density plots, side by side, for the
 default.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 <p>Use the <code>select</code> argument for a specific parameter group
 and <code>nshow</code> to define the number of random parameters to
 show:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"c"</span>, nshow <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
 <h3 id="plotting-functions">Plotting functions<a class="anchor" aria-label="anchor" href="#plotting-functions"></a>
@@ -454,11 +454,11 @@ parameter. By default, it plots one panel per parameter
 <p>Traceplots of the residual correlation:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_trace.html">plot_trace</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"Corr"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 <p>Traceplots of the range parameter of the GPs:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_trace.html">plot_trace</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"phi"</span>, facet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level4">
 <h4 id="density-plots">Density plots<a class="anchor" aria-label="anchor" href="#density-plots"></a>
@@ -470,11 +470,11 @@ you can control the <code>facet</code> argument.</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_density.html">plot_density</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"c"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; Picking joint bandwidth of 0.0451</span></span></code></pre>
-<p><img src="spifa_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 <p>Comparing the predictor effects:</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_density.html">plot_density</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"B"</span>, facet <span class="op">=</span> <span class="cn">TRUE</span>, facet_scales <span class="op">=</span> <span class="st">"free_y"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level4">
 <h4 id="interval-plots">Interval plots<a class="anchor" aria-label="anchor" href="#interval-plots"></a>
@@ -484,11 +484,11 @@ credible interval of each parameter in the selected group.</p>
 <p>Compare the discrimination parameters:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_interval.html">plot_interval</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"A"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 <p>Compare the range parameters:</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_interval.html">plot_interval</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="st">"phi"</span>, horizontal <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 </div>
 </div>
 </div>
@@ -527,7 +527,7 @@ with <code>ggplot2</code> functionality:</p>
 <div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_colour_distiller</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"RdBu"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
 <h3 id="new-locations">New locations<a class="anchor" aria-label="anchor" href="#new-locations"></a>
@@ -576,21 +576,21 @@ predictive <code>mean</code> by default.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span>, boundary <span class="op">=</span> <span class="va">bnd</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_fill_distiller</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"RdBu"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Predictive mean"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 <p>Other summaries can be mapped by simply providing a function in the
 <code>stat</code> argument:</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span>, boundary <span class="op">=</span> <span class="va">bnd</span>, stat <span class="op">=</span> <span class="va">sd</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"magma"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Predictive standard deviation"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-27-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-27-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 <p>Custom functions can easily be provided, for example, we can plot the
 probability of exceeding the value of 1 to identify hotspots:</p>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span>, boundary <span class="op">=</span> <span class="va">bnd</span>, stat <span class="op">=</span> <span class="kw">function</span> <span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">v</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Exceedance probability: "</span>, <span class="fu">P</span><span class="op">(</span><span class="va">theta</span><span class="op">[</span><span class="va">j</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-29-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-29-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 </div>
 </div>
 <div class="section level2 unnumbered">
