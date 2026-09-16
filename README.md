@@ -81,8 +81,3 @@ the underlying model and the package itself:
 ```r
 citation("spifa")
 ```
-
-## See also
-
-For item factor analysis *without* spatial structure, see the
-[`mirt`](https://cran.r-project.org/package=mirt) package.
