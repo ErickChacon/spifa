@@ -12,13 +12,13 @@ test_that("summary.spifa(): returns posterior summaries with burnin/thin/select"
   A[c(4, 7, 10), 3] <- 0
 
   samples <- spifa(
-    items ~ 1, data = ipixun, nfactors = nfactors, ngp = 0, niter = 10,
+    items ~ 1, data = ipixuna, nfactors = nfactors, ngp = 0, niter = 10,
     constraints = list(discrimination = A)
   )
 
   smry <- summary(samples, select = "c")
   expect_true(all(c("variable", "q2.5", "median", "q97.5") %in% names(smry)))
-  expect_equal(nrow(smry), ncol(ipixun$items))
+  expect_equal(nrow(smry), ncol(ipixuna$items))
 
   smry_burnin <- summary(samples, burnin = 5, select = "c")
   c_block <- as_draws_matrix(subset_draws(samples, variable = "c"))
@@ -121,4 +121,50 @@ test_that("print.spifa(): shows formula, dimensions, and summary table", {
     items ~ 1, data = ipixuna, nfactors = 3, niter = 5, execute = FALSE
   )
   expect_output(print(samples_unexecuted), "not executed")
+})
+
+test_that("print.spifa(): shows the right factor blocks for cifa_pred/spifa/spifa_pred", {
+  data(ipixuna, package = "spifa")
+  nitems <- ncol(ipixuna$items)
+  nfactors <- 3
+  A <- matrix(1, nitems, nfactors)
+  A[c(4, 8), 1] <- 0
+  A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
+  A[c(5, 6), 3] <- 0
+
+  # cifa_pred: B present, no T/phi (non-spatial)
+  cifa_pred <- spifa(
+    items ~ wealth, data = ipixuna, nfactors = nfactors, ngp = 0,
+    niter = 5, constraints = list(discrimination = A)
+  )
+  out_cifa_pred <- paste(capture.output(print(cifa_pred)), collapse = "\n")
+  expect_match(out_cifa_pred, "Formula: items ~ wealth", fixed = TRUE)
+  expect_match(out_cifa_pred, "B\\[1,1\\]")
+  expect_match(out_cifa_pred, "Corr\\[2,1\\]")
+  expect_no_match(out_cifa_pred, "T\\[")
+  expect_no_match(out_cifa_pred, "phi\\[")
+
+  # spifa: T/phi present, no B (no predictor)
+  spifa_fit <- spifa(
+    items ~ 1, data = ipixuna, nfactors = nfactors, niter = 5,
+    constraints = list(discrimination = A, loading = diag(nfactors))
+  )
+  out_spifa <- paste(capture.output(print(spifa_fit)), collapse = "\n")
+  expect_match(out_spifa, "Formula: items ~ 1", fixed = TRUE)
+  expect_match(out_spifa, "T\\[1,1\\]")
+  expect_match(out_spifa, "phi\\[1\\]")
+  expect_match(out_spifa, "Corr\\[2,1\\]")
+  expect_no_match(out_spifa, "B\\[")
+
+  # spifa_pred: B, T, phi, and Corr all present
+  spifa_pred <- spifa(
+    items ~ wealth, data = ipixuna, nfactors = nfactors, niter = 5,
+    constraints = list(discrimination = A, loading = diag(nfactors))
+  )
+  out_spifa_pred <- paste(capture.output(print(spifa_pred)), collapse = "\n")
+  expect_match(out_spifa_pred, "Formula: items ~ wealth", fixed = TRUE)
+  expect_match(out_spifa_pred, "B\\[1,1\\]")
+  expect_match(out_spifa_pred, "T\\[1,1\\]")
+  expect_match(out_spifa_pred, "phi\\[1\\]")
+  expect_match(out_spifa_pred, "Corr\\[2,1\\]")
 })
