@@ -204,7 +204,7 @@ test_that("predict(): attaches newdata as an attribute for spatial models", {
   expect_null(attr(predict(samples_flat), "newdata"))
 })
 
-test_that("predict(): polygon newdata is centroided for the spatial kernel, kept as-is in the attribute", {
+test_that("predict(): polygon newdata is centroided, kept as-is in the attribute", {
   data(ipixuna, package = "spifa")
   nitems <- ncol(ipixuna$items)
   nfactors <- 3
