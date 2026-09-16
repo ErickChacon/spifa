@@ -52,7 +52,7 @@ nfactors <- 3
 them here:
 
 ```{r}
-items <- ipixuna$items
+items <- unclass(ipixuna$items)
 colnames(items) <- paste0("item", seq_len(nitems))
 head(items)
 ```
