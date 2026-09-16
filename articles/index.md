@@ -4,8 +4,8 @@
 
 - [Bayesian Spatial Item Factor
   Analysis](https://ErickChacon.github.io/spifa/articles/spifa.md):
-- [Preparing data for
-  spifa()](https://ErickChacon.github.io/spifa/articles/vg01-prepare-data.md):
+- [Data
+  preparation](https://ErickChacon.github.io/spifa/articles/vg01-prepare-data.md):
 - [Model
   types](https://ErickChacon.github.io/spifa/articles/vg02-model-types.md):
 - [Advanced

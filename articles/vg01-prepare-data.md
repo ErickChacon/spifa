@@ -1,4 +1,4 @@
-# Preparing data for spifa()
+# Data preparation
 
 [`spifa()`](https://ErickChacon.github.io/spifa/reference/spifa.md)
 expects data in a specific shape: one row per respondent, and the binary
