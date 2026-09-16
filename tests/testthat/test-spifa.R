@@ -341,6 +341,12 @@ test_that("update.spifa(): warm-starts from the last draw", {
         attr(samples2, "fit_args")$c_initial
       } else if (block == "A") {
         as.numeric(attr(samples2, "fit_args")$A_initial)
+      } else if (block == "B") {
+        as.numeric(attr(samples2, "fit_args")$B_initial)
+      } else if (block == "T") {
+        attr(samples2, "fit_args")$sigmas_gp_initial
+      } else if (block == "phi") {
+        attr(samples2, "fit_args")$phi_gp_initial
       }
       expect_equal(unname(used), last)
     }
@@ -371,7 +377,7 @@ test_that("update.spifa(): warm-starts from the last draw", {
     items ~ wealth, data = ipixuna, nfactors = nfactors, ngp = 0, niter = 10,
     constraints = list(discrimination = A)
   )
-  cifa_pred2 <- expect_warm_started(cifa_pred)
+  cifa_pred2 <- expect_warm_started(cifa_pred, blocks = c("c", "A", "B"))
   expect_equal(dim(attr(cifa_pred2, "fit_args")$B_initial), c(1, nfactors))
 
   # spifa: T/phi present
@@ -383,7 +389,7 @@ test_that("update.spifa(): warm-starts from the last draw", {
       range = list(initial = 200, mean = 200, sd = 0.4)
     )
   )
-  spifa2 <- expect_warm_started(spifa_fit)
+  spifa2 <- expect_warm_started(spifa_fit, blocks = c("c", "A", "T", "phi"))
   expect_length(attr(spifa2, "fit_args")$sigmas_gp_initial, nfactors)
   expect_length(attr(spifa2, "fit_args")$phi_gp_initial, nfactors)
 })
