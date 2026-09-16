@@ -103,7 +103,7 @@ restriction and range prior from the previous two steps.</li>
 <p><code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt()</a></code> requires named item columns;
 <code>ipixuna$items</code> doesn’t have any, so we name them here:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">items</span> <span class="op">&lt;-</span> <span class="va">ipixuna</span><span class="op">$</span><span class="va">items</span></span>
+<code class="sourceCode R"><span><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">unclass</a></span><span class="op">(</span><span class="va">ipixuna</span><span class="op">$</span><span class="va">items</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"item"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nitems</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt;      item1 item2 item3 item4 item5 item6 item7 item8 item9 item10</span></span>
@@ -117,28 +117,30 @@ restriction and range prior from the previous two steps.</li>
 it (varimax) towards a simple structure:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">11</span><span class="op">)</span></span>
-<span><span class="va">efa</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt</a></span><span class="op">(</span><span class="va">items</span>, model <span class="op">=</span> <span class="va">nfactors</span>, itemtype <span class="op">=</span> <span class="st">"2PL"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">loadings</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">efa</span>, rotate <span class="op">=</span> <span class="st">"varimax"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">rotF</span></span>
+<span><span class="va">efa</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt</a></span><span class="op">(</span><span class="va">items</span>, model <span class="op">=</span> <span class="va">nfactors</span>, itemtype <span class="op">=</span> <span class="st">"2PL"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; Warning: EM cycles terminated after 500 iterations.</span></span></code></pre>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">loadings</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">efa</span>, rotate <span class="op">=</span> <span class="st">"varimax"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">rotF</span></span>
 <span><span class="va">loadings</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Loadings:</span></span>
 <span><span class="co">#&gt;        F1     F2     F3    </span></span>
 <span><span class="co">#&gt; item1          0.993       </span></span>
 <span><span class="co">#&gt; item2   0.351  0.438  0.373</span></span>
-<span><span class="co">#&gt; item3   0.248  0.409  0.654</span></span>
+<span><span class="co">#&gt; item3   0.249  0.409  0.654</span></span>
 <span><span class="co">#&gt; item4                 0.741</span></span>
-<span><span class="co">#&gt; item5   0.967 -0.251       </span></span>
-<span><span class="co">#&gt; item6   0.808  0.150 -0.164</span></span>
-<span><span class="co">#&gt; item7   0.740  0.115  0.323</span></span>
-<span><span class="co">#&gt; item8   0.181  0.145  0.749</span></span>
-<span><span class="co">#&gt; item9   0.589  0.505  0.497</span></span>
-<span><span class="co">#&gt; item10  0.876  0.240  0.405</span></span>
+<span><span class="co">#&gt; item5   0.967 -0.250       </span></span>
+<span><span class="co">#&gt; item6   0.807  0.150 -0.164</span></span>
+<span><span class="co">#&gt; item7   0.741  0.115  0.323</span></span>
+<span><span class="co">#&gt; item8   0.181  0.145  0.750</span></span>
+<span><span class="co">#&gt; item9   0.589  0.506  0.496</span></span>
+<span><span class="co">#&gt; item10  0.875  0.241  0.404</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;               F1    F2    F3</span></span>
-<span><span class="co">#&gt; SS loadings 3.47 1.779 2.228</span></span></code></pre>
+<span><span class="co">#&gt;                F1   F2    F3</span></span>
+<span><span class="co">#&gt; SS loadings 3.471 1.78 2.225</span></span></code></pre>
 <p>Thresholding small loadings to zero turns this into a
 <code>0</code>/<code>1</code> restriction:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">A</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">loadings</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0.24</span><span class="op">)</span> <span class="op">*</span> <span class="fl">1</span></span>
 <span><span class="va">A</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt;        F1 F2 F3</span></span>
@@ -170,23 +172,23 @@ empirical variogram.</p>
 </h3>
 <p>First, we obtain the estimated latent factors using
 <code>fscores</code> from <strong>mirt</strong>:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fscore</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://philchalmers.github.io/mirt/reference/fscores.html" class="external-link">fscores</a></span><span class="op">(</span><span class="va">efa</span>, rotate <span class="op">=</span> <span class="st">"varimax"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">fscore</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"F"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nfactors</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fscore</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt;              F1          F2          F3</span></span>
-<span><span class="co">#&gt; [1,]  1.3209072 -0.08659718  0.40473236</span></span>
-<span><span class="co">#&gt; [2,] -0.5338734  0.81141612  0.08410447</span></span>
-<span><span class="co">#&gt; [3,] -0.5491064  1.13344286  1.26656931</span></span>
-<span><span class="co">#&gt; [4,] -1.1081944 -0.63596499 -0.86982681</span></span>
-<span><span class="co">#&gt; [5,]  0.9608746  1.01811627  0.05732729</span></span>
-<span><span class="co">#&gt; [6,] -1.1081944 -0.63596499 -0.86982681</span></span></code></pre>
+<span><span class="co">#&gt; [1,]  1.3211407 -0.08912794  0.40562255</span></span>
+<span><span class="co">#&gt; [2,] -0.5322310  0.80842440  0.08238761</span></span>
+<span><span class="co">#&gt; [3,] -0.5511549  1.13429362  1.26588181</span></span>
+<span><span class="co">#&gt; [4,] -1.1083551 -0.63914342 -0.86797847</span></span>
+<span><span class="co">#&gt; [5,]  0.9604463  1.01333822  0.05713584</span></span>
+<span><span class="co">#&gt; [6,] -1.1083551 -0.63914342 -0.86797847</span></span></code></pre>
 <p>Then, we need to geo-reference these factor scores in order to
 perform spatial analysis. <code>gstat</code> uses the default
 coordinates units to compute distances between locations, so we will
 also transform the coordinates system to a planar one where distances
 can be computed in meters:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fscore_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/sf.html" class="external-link">st_sf</a></span><span class="op">(</span></span>
 <span>  id <span class="op">=</span> <span class="va">ipixuna</span><span class="op">$</span><span class="va">id</span>, wealth <span class="op">=</span> <span class="va">ipixuna</span><span class="op">$</span><span class="va">wealth</span>, <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fscore</span><span class="op">)</span>,</span>
 <span>  geometry <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="va">ipixuna</span><span class="op">)</span>, <span class="fl">32719</span><span class="op">)</span></span>
@@ -199,23 +201,23 @@ can be computed in meters:</p>
 <span><span class="co">#&gt; Projected CRS: WGS 84 / UTM zone 19S</span></span>
 <span><span class="co">#&gt; First 10 features:</span></span>
 <span><span class="co">#&gt;    id      wealth          F1          F2          F3                 geometry</span></span>
-<span><span class="co">#&gt; 1   1 -0.57212306  1.32090723 -0.08659718  0.40473236 POINT (202051.7 9219614)</span></span>
-<span><span class="co">#&gt; 2   2 -0.92003870 -0.53387343  0.81141612  0.08410447 POINT (203142.2 9221070)</span></span>
-<span><span class="co">#&gt; 3   3  1.23197630 -0.54910639  1.13344286  1.26656931 POINT (203106.4 9220133)</span></span>
-<span><span class="co">#&gt; 4   4  0.30801774 -1.10819444 -0.63596499 -0.86982681 POINT (202804.6 9220098)</span></span>
-<span><span class="co">#&gt; 5   5 -0.06247617  0.96087465  1.01811627  0.05732729 POINT (203407.1 9219495)</span></span>
-<span><span class="co">#&gt; 6   6  2.05414943 -1.10819444 -0.63596499 -0.86982681 POINT (202764.3 9220705)</span></span>
-<span><span class="co">#&gt; 7   7  2.30552728 -1.42405321  0.88850676 -0.97949497 POINT (202274.5 9219862)</span></span>
-<span><span class="co">#&gt; 8   8  0.16913811 -0.70618866  0.88880362 -0.01218983   POINT (203219 9220140)</span></span>
-<span><span class="co">#&gt; 9   9 -0.21989753  0.03224795 -1.44583313 -0.92989481 POINT (202584.1 9219519)</span></span>
-<span><span class="co">#&gt; 10 10 -0.91744763  0.08558966  1.65688463  0.33149164 POINT (203053.4 9220554)</span></span></code></pre>
+<span><span class="co">#&gt; 1   1 -0.57212306  1.32114072 -0.08912794  0.40562255 POINT (202051.7 9219614)</span></span>
+<span><span class="co">#&gt; 2   2 -0.92003870 -0.53223099  0.80842440  0.08238761 POINT (203142.2 9221070)</span></span>
+<span><span class="co">#&gt; 3   3  1.23197630 -0.55115490  1.13429362  1.26588181 POINT (203106.4 9220133)</span></span>
+<span><span class="co">#&gt; 4   4  0.30801774 -1.10835509 -0.63914342 -0.86797847 POINT (202804.6 9220098)</span></span>
+<span><span class="co">#&gt; 5   5 -0.06247617  0.96044628  1.01333822  0.05713584 POINT (203407.1 9219495)</span></span>
+<span><span class="co">#&gt; 6   6  2.05414943 -1.10835509 -0.63914342 -0.86797847 POINT (202764.3 9220705)</span></span>
+<span><span class="co">#&gt; 7   7  2.30552728 -1.42214199  0.88292663 -0.98076254 POINT (202274.5 9219862)</span></span>
+<span><span class="co">#&gt; 8   8  0.16913811 -0.70539249  0.88627583 -0.01411773   POINT (203219 9220140)</span></span>
+<span><span class="co">#&gt; 9   9 -0.21989753  0.03337854 -1.44721269 -0.92935929 POINT (202584.1 9219519)</span></span>
+<span><span class="co">#&gt; 10 10 -0.91744763  0.08478991  1.65515016  0.33080265 POINT (203053.4 9220554)</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="evaluate-predictors-effects">Evaluate predictors effects<a class="anchor" aria-label="anchor" href="#evaluate-predictors-effects"></a>
 </h3>
 <p>We can evaluate the effect of wealth on this estimated latent
 factors:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fscore_sf</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">pivot_longer</a></span><span class="op">(</span><span class="va">F1</span><span class="op">:</span><span class="va">F3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">wealth</span>, <span class="va">value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -234,41 +236,41 @@ effect:</p>
 obtain the empirical variogram, <code><a href="https://r-spatial.github.io/gstat/reference/vgm.html" class="external-link">vgm()</a></code> to define a
 theoretical variogram and <code><a href="https://r-spatial.github.io/gstat/reference/fit.variogram.html" class="external-link">fit.variogram()</a></code> to fit the
 theoretical model to the empirical variogram.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vg1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/gstat/reference/variogram.html" class="external-link">variogram</a></span><span class="op">(</span><span class="va">F1</span> <span class="op">~</span> <span class="va">wealth</span>, <span class="va">fscore_sf</span>, width <span class="op">=</span> <span class="fl">20</span>, cutoff <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
 <span><span class="va">vg1_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/gstat/reference/fit.variogram.html" class="external-link">fit.variogram</a></span><span class="op">(</span><span class="va">vg1</span>, model <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/gstat/reference/vgm.html" class="external-link">vgm</a></span><span class="op">(</span>psill <span class="op">=</span> <span class="fl">0.6</span>, <span class="st">"Exp"</span>, range <span class="op">=</span> <span class="fl">100</span>, nugget <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">vg1_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt;   model     psill    range</span></span>
-<span><span class="co">#&gt; 1   Nug 0.1898512  0.00000</span></span>
-<span><span class="co">#&gt; 2   Exp 0.3404936 28.01651</span></span></code></pre>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; 1   Nug 0.1864819  0.00000</span></span>
+<span><span class="co">#&gt; 2   Exp 0.3435766 27.67716</span></span></code></pre>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">vg1</span>, <span class="va">vg1_fit</span>, pch <span class="op">=</span> <span class="fl">19</span>, main <span class="op">=</span> <span class="st">"F1"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="vg04-integrated-workflow_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>For F1, we can see that there is some evidence of spatial correlation
 at small scale.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vg2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/gstat/reference/variogram.html" class="external-link">variogram</a></span><span class="op">(</span><span class="va">F2</span> <span class="op">~</span> <span class="va">wealth</span>, <span class="va">fscore_sf</span>, width <span class="op">=</span> <span class="fl">50</span>, cutoff <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
 <span><span class="va">vg2_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/gstat/reference/fit.variogram.html" class="external-link">fit.variogram</a></span><span class="op">(</span><span class="va">vg2</span>, model <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/gstat/reference/vgm.html" class="external-link">vgm</a></span><span class="op">(</span>psill <span class="op">=</span> <span class="fl">0.6</span>, <span class="st">"Exp"</span>, range <span class="op">=</span> <span class="fl">100</span>, nugget <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">vg2_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt;   model     psill    range</span></span>
-<span><span class="co">#&gt; 1   Nug 0.2078264   0.0000</span></span>
-<span><span class="co">#&gt; 2   Exp 0.4378773 170.9282</span></span></code></pre>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; 1   Nug 0.2075966   0.0000</span></span>
+<span><span class="co">#&gt; 2   Exp 0.4376844 170.9042</span></span></code></pre>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">vg2</span>, <span class="va">vg2_fit</span>, pch <span class="op">=</span> <span class="fl">19</span>, main <span class="op">=</span> <span class="st">"F2"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="vg04-integrated-workflow_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>For F2, there is a much clearer spatial structure with a range
 parameter around <code>170</code>.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vg3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/gstat/reference/variogram.html" class="external-link">variogram</a></span><span class="op">(</span><span class="va">F3</span> <span class="op">~</span> <span class="va">wealth</span>, <span class="va">fscore_sf</span>, width <span class="op">=</span> <span class="fl">50</span>, cutoff <span class="op">=</span> <span class="fl">800</span><span class="op">)</span></span>
 <span><span class="va">vg3_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/gstat/reference/fit.variogram.html" class="external-link">fit.variogram</a></span><span class="op">(</span><span class="va">vg3</span>, model <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/gstat/reference/vgm.html" class="external-link">vgm</a></span><span class="op">(</span>psill <span class="op">=</span> <span class="fl">0.6</span>, <span class="st">"Exp"</span>, range <span class="op">=</span> <span class="fl">100</span>, nugget <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; Warning in fit.variogram(vg3, model = vgm(psill = 0.6, "Exp", range = 100, : No convergence after</span></span>
 <span><span class="co">#&gt; 200 iterations: try different initial values?</span></span></code></pre>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">vg3_fit</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt;   model     psill    range</span></span>
-<span><span class="co">#&gt; 1   Nug 0.0000000  0.00000</span></span>
-<span><span class="co">#&gt; 2   Exp 0.6257179 16.92687</span></span></code></pre>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">vg3_fit</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt;   model     psill   range</span></span>
+<span><span class="co">#&gt; 1   Nug 0.0000000  0.0000</span></span>
+<span><span class="co">#&gt; 2   Exp 0.6250431 16.9448</span></span></code></pre>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">vg3</span>, <span class="va">vg3_fit</span>, pch <span class="op">=</span> <span class="fl">19</span>, main <span class="op">=</span> <span class="st">"F3"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="vg04-integrated-workflow_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>For F3 also the range parameter seems to be small.</p>
@@ -292,7 +294,7 @@ F2’s estimate is the one clear signal – with only 100 households, F1 and
 F3’s much smaller ranges are more likely noise than genuine short-range
 structure – so we use a common reference value of 150 (close to F2’s
 ~170) for all three factors:</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/spifa.html">spifa</a></span><span class="op">(</span></span>
 <span>  <span class="va">items</span> <span class="op">~</span> <span class="va">wealth</span>, data <span class="op">=</span> <span class="va">ipixuna</span>, nfactors <span class="op">=</span> <span class="va">nfactors</span>,</span>
@@ -306,52 +308,52 @@ structure – so we use a common reference value of 150 (close to F2’s
 <span><span class="co">#&gt; MCMC: 1 chain, iter = 4000, thin = 1, samples = 4000</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Item model parameters:</span></span>
-<span><span class="co">#&gt;           mean median   sd    q10     q90 ess_bulk rhat</span></span>
-<span><span class="co">#&gt; c[1]    -0.528 -0.522 0.29 -0.902 -0.1629      118    1</span></span>
-<span><span class="co">#&gt; c[2]    -0.566 -0.558 0.24 -0.875 -0.2665      104    1</span></span>
-<span><span class="co">#&gt; c[3]    -0.629 -0.612 0.29 -1.023 -0.2687       91    1</span></span>
-<span><span class="co">#&gt; c[4]    -0.380 -0.376 0.21 -0.653 -0.1126      223    1</span></span>
-<span><span class="co">#&gt; c[5]    -0.359 -0.347 0.31 -0.750  0.0168      147    1</span></span>
-<span><span class="co">#&gt; c[6]     0.035  0.028 0.23 -0.247  0.3336      162    1</span></span>
-<span><span class="co">#&gt; c[7]     0.193  0.185 0.24 -0.107  0.4975      123    1</span></span>
-<span><span class="co">#&gt; c[8]     0.141  0.144 0.21 -0.130  0.4145      205    1</span></span>
-<span><span class="co">#&gt; c[9]     0.632  0.636 0.33  0.203  1.0421       78    1</span></span>
-<span><span class="co">#&gt; c[10]    0.371  0.361 0.34 -0.044  0.8075       65    1</span></span>
-<span><span class="co">#&gt; A[2,1]  -0.293 -0.288 0.23 -0.595  0.0069      244    1</span></span>
-<span><span class="co">#&gt; A[3,1]  -0.125 -0.119 0.24 -0.425  0.1764      342    1</span></span>
-<span><span class="co">#&gt; A[5,1]  -1.693 -1.660 0.43 -2.261 -1.1667      100    1</span></span>
-<span><span class="co">#&gt; A[6,1]  -1.246 -1.216 0.33 -1.714 -0.8453      215    1</span></span>
-<span><span class="co">#&gt; A[7,1]  -1.155 -1.117 0.32 -1.592 -0.7836      169    1</span></span>
-<span><span class="co">#&gt; A[9,1]  -1.031 -1.004 0.33 -1.462 -0.6357      141    1</span></span>
-<span><span class="co">#&gt; A[10,1] -1.446 -1.410 0.39 -1.975 -0.9729      109    1</span></span>
-<span><span class="co">#&gt; A[1,2]   1.157  1.148 0.35  0.703  1.6158      110    1</span></span>
-<span><span class="co">#&gt; A[2,2]   0.677  0.673 0.21  0.408  0.9559      309    1</span></span>
-<span><span class="co">#&gt; A[3,2]   0.668  0.635 0.32  0.302  1.0823      143    1</span></span>
-<span><span class="co">#&gt; A[5,2]  -0.076 -0.082 0.27 -0.404  0.2636      212    1</span></span>
-<span><span class="co">#&gt; A[9,2]   0.870  0.840 0.31  0.504  1.2846      210    1</span></span>
-<span><span class="co">#&gt; A[10,2]  0.222  0.230 0.30 -0.156  0.5987      206    1</span></span>
-<span><span class="co">#&gt; A[2,3]   0.531  0.515 0.26  0.224  0.8630      128    1</span></span>
-<span><span class="co">#&gt; A[3,3]   0.972  0.961 0.24  0.671  1.2852      177    1</span></span>
-<span><span class="co">#&gt; A[4,3]   0.935  0.906 0.29  0.590  1.3242      227    1</span></span>
-<span><span class="co">#&gt; A[7,3]   0.703  0.670 0.28  0.380  1.0459      214    1</span></span>
-<span><span class="co">#&gt; A[8,3]   1.019  0.971 0.33  0.632  1.4709      172    1</span></span>
-<span><span class="co">#&gt; A[9,3]   0.815  0.811 0.30  0.441  1.1894      219    1</span></span>
-<span><span class="co">#&gt; A[10,3]  1.096  1.071 0.36  0.663  1.5752      126    1</span></span>
+<span><span class="co">#&gt;           mean median   sd    q10    q90 ess_bulk rhat</span></span>
+<span><span class="co">#&gt; c[1]    -0.498 -0.497 0.33 -0.893 -0.090       76    1</span></span>
+<span><span class="co">#&gt; c[2]    -0.549 -0.551 0.25 -0.850 -0.237       92    1</span></span>
+<span><span class="co">#&gt; c[3]    -0.574 -0.574 0.28 -0.938 -0.219      104    1</span></span>
+<span><span class="co">#&gt; c[4]    -0.352 -0.349 0.21 -0.612 -0.098      198    1</span></span>
+<span><span class="co">#&gt; c[5]    -0.370 -0.350 0.29 -0.747 -0.016      129    1</span></span>
+<span><span class="co">#&gt; c[6]     0.015  0.019 0.22 -0.263  0.285      236    1</span></span>
+<span><span class="co">#&gt; c[7]     0.215  0.203 0.23 -0.070  0.516      185    1</span></span>
+<span><span class="co">#&gt; c[8]     0.159  0.147 0.22 -0.108  0.451      272    1</span></span>
+<span><span class="co">#&gt; c[9]     0.704  0.661 0.38  0.271  1.193       66    1</span></span>
+<span><span class="co">#&gt; c[10]    0.391  0.379 0.31  0.011  0.789      158    1</span></span>
+<span><span class="co">#&gt; A[2,1]  -0.313 -0.306 0.22 -0.593 -0.039      238    1</span></span>
+<span><span class="co">#&gt; A[3,1]  -0.106 -0.103 0.23 -0.401  0.180      310    1</span></span>
+<span><span class="co">#&gt; A[5,1]  -1.698 -1.667 0.45 -2.300 -1.135      100    1</span></span>
+<span><span class="co">#&gt; A[6,1]  -1.241 -1.214 0.31 -1.651 -0.859      151    1</span></span>
+<span><span class="co">#&gt; A[7,1]  -1.122 -1.095 0.33 -1.544 -0.723       85    1</span></span>
+<span><span class="co">#&gt; A[9,1]  -1.041 -1.007 0.34 -1.503 -0.628      137    1</span></span>
+<span><span class="co">#&gt; A[10,1] -1.414 -1.397 0.34 -1.875 -0.989      168    1</span></span>
+<span><span class="co">#&gt; A[1,2]   1.189  1.153 0.38  0.722  1.715       89    1</span></span>
+<span><span class="co">#&gt; A[2,2]   0.715  0.705 0.22  0.440  1.008      426    1</span></span>
+<span><span class="co">#&gt; A[3,2]   0.688  0.680 0.29  0.314  1.074      195    1</span></span>
+<span><span class="co">#&gt; A[5,2]  -0.111 -0.099 0.31 -0.523  0.279      141    1</span></span>
+<span><span class="co">#&gt; A[9,2]   0.948  0.927 0.38  0.475  1.430      115    1</span></span>
+<span><span class="co">#&gt; A[10,2]  0.193  0.192 0.31 -0.190  0.577      155    1</span></span>
+<span><span class="co">#&gt; A[2,3]   0.494  0.484 0.25  0.180  0.816      266    1</span></span>
+<span><span class="co">#&gt; A[3,3]   0.924  0.920 0.23  0.637  1.217      324    1</span></span>
+<span><span class="co">#&gt; A[4,3]   0.863  0.833 0.27  0.544  1.238      137    1</span></span>
+<span><span class="co">#&gt; A[7,3]   0.652  0.630 0.25  0.351  0.984      177    1</span></span>
+<span><span class="co">#&gt; A[8,3]   1.009  0.986 0.29  0.656  1.401      214    1</span></span>
+<span><span class="co">#&gt; A[9,3]   0.833  0.819 0.30  0.456  1.229      181    1</span></span>
+<span><span class="co">#&gt; A[10,3]  1.068  1.042 0.33  0.679  1.503      162    1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Factor model parameters:</span></span>
-<span><span class="co">#&gt;               mean   median     sd    q10     q90 ess_bulk rhat</span></span>
-<span><span class="co">#&gt; B[1,1]     3.5e-01  3.4e-01  0.104   0.22   0.478     98.6  1.0</span></span>
-<span><span class="co">#&gt; B[1,2]    -5.6e-04  1.7e-04  0.106  -0.14   0.135     83.3  1.0</span></span>
-<span><span class="co">#&gt; B[1,3]    -1.8e-01 -1.8e-01  0.099  -0.31  -0.058    807.7  1.0</span></span>
-<span><span class="co">#&gt; T[1,1]     9.4e-01  9.3e-01  0.121   0.79   1.104     19.3  1.1</span></span>
-<span><span class="co">#&gt; T[2,2]     9.9e-01  9.6e-01  0.161   0.79   1.219     39.7  1.0</span></span>
-<span><span class="co">#&gt; T[3,3]     9.5e-01  9.5e-01  0.133   0.79   1.119     25.9  1.1</span></span>
-<span><span class="co">#&gt; phi[1]     8.7e+01  8.4e+01 26.337  52.85 122.385      7.1  1.1</span></span>
-<span><span class="co">#&gt; phi[2]     1.8e+02  1.7e+02 47.019 120.91 233.438     54.9  1.0</span></span>
-<span><span class="co">#&gt; phi[3]     1.2e+02  1.2e+02 33.999  77.07 160.776     44.8  1.0</span></span>
-<span><span class="co">#&gt; Corr[2,1] -1.5e-01 -1.7e-01  0.445  -0.68   0.519      4.9  1.2</span></span>
-<span><span class="co">#&gt; Corr[3,1] -3.3e-02 -5.8e-02  0.214  -0.28   0.229      7.2  1.1</span></span>
-<span><span class="co">#&gt; Corr[3,2] -5.2e-02 -1.0e-01  0.417  -0.54   0.534      9.6  1.1</span></span>
+<span><span class="co">#&gt;               mean  median    sd    q10     q90 ess_bulk rhat</span></span>
+<span><span class="co">#&gt; B[1,1]      0.3593   0.352  0.11   0.22   0.503      186  1.0</span></span>
+<span><span class="co">#&gt; B[1,2]      0.0098   0.013  0.10  -0.13   0.142      292  1.0</span></span>
+<span><span class="co">#&gt; B[1,3]     -0.2136  -0.209  0.10  -0.35  -0.084      529  1.0</span></span>
+<span><span class="co">#&gt; T[1,1]      0.9689   0.962  0.11   0.83   1.134       35  1.0</span></span>
+<span><span class="co">#&gt; T[2,2]      0.9867   0.970  0.19   0.75   1.256       32  1.0</span></span>
+<span><span class="co">#&gt; T[3,3]      0.9811   0.965  0.14   0.83   1.155       40  1.0</span></span>
+<span><span class="co">#&gt; phi[1]     82.1705  80.151 19.87  57.43 106.581       33  1.0</span></span>
+<span><span class="co">#&gt; phi[2]    172.9428 165.389 55.89 108.35 243.588       45  1.0</span></span>
+<span><span class="co">#&gt; phi[3]    115.9469 114.255 29.58  82.03 155.454       55  1.0</span></span>
+<span><span class="co">#&gt; Corr[2,1]  -0.1652  -0.255  0.47  -0.76   0.511       38  1.1</span></span>
+<span><span class="co">#&gt; Corr[3,1]  -0.3286  -0.334  0.23  -0.60  -0.073       39  1.1</span></span>
+<span><span class="co">#&gt; Corr[3,2]  -0.3482  -0.429  0.38  -0.81   0.181       46  1.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ess_bulk is the bulk effective sample size; rhat is the potential</span></span>
 <span><span class="co">#&gt; scale reduction factor on split chains (Rhat = 1 at convergence).</span></span>
@@ -366,13 +368,13 @@ The full analysis can now proceed using the methods presented in
 </h3>
 <p>Let’s visualize the chains and densities of the posterior. Observe
 which parameters have better mixing than others.</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">samples</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"c"</span>, <span class="st">"A"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="vg04-integrated-workflow_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"T"</span>, <span class="st">"Corr"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="vg04-integrated-workflow_files/figure-html/unnamed-chunk-13-2.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">samples</span>, select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"phi"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="vg04-integrated-workflow_files/figure-html/unnamed-chunk-13-3.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 </div>
@@ -381,7 +383,7 @@ which parameters have better mixing than others.</p>
 </h3>
 <p>Let’s visualize the spatial pattern of the latent factors mean
 prediction.</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pred_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_colour_distiller</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"RdYlBu"</span><span class="op">)</span></span></code></pre></div>
