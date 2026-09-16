@@ -167,14 +167,17 @@ fit2 <- spifa(items ~ wealth, data = ipixuna, nfactors = 2, niter = 1000, burnin
 fit2
 ```
 
-Use `dic()` and create a data.frame:
+Computing `dic()` for each model:
 
 ```{r}
-dplyr::bind_rows(
-  "M1: 3 factors" = dic(fit1, burnin = 100, thin = 2),
-  "M2: 2 factors" = dic(fit2, burnin = 100, thin = 2),
-  .id = "model")
+# M1: 3 factors
+dic(fit1, burnin = 100, thin = 2)
+```
+
+```{r}
+# M2: 2 factors
+dic(fit2, burnin = 100, thin = 2)
 ```
 
 Assuming both models have converged, the 3-factor model has the lower DIC, favouring the
-discrimination structure used above over an arbitrary 2-factor alternative.
+discrimination structure used above over an 2-factor alternative.
