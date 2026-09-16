@@ -18,10 +18,7 @@ Invisibly returns \code{x}.
 \description{
 Prints a fitted \code{spifa} object (the output of \code{\link{spifa}}):
 model type, formula, data dimensions, MCMC settings, and a posterior
-summary table (via \code{\link{summary.spifa}}) -- following the
-convention of \pkg{rstan}/\pkg{rstanarm}/\pkg{brms}/\pkg{R2jags}, which
-all show actual parameter estimates by default rather than just fit
-metadata.
+summary table (via \code{\link{summary.spifa}}).
 }
 \examples{
 data(ipixuna)

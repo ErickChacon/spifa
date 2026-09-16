@@ -18,9 +18,7 @@
 \value{
 A one-row \code{\link[tibble]{tibble}} with columns
 \code{mean_deviance} (posterior mean of the deviance), \code{p_eff}
-(effective number of parameters), and \code{dic} -- naming follows
-\pkg{INLA}'s \code{$dic} output (\code{mean.deviance}/\code{p.eff}/
-\code{dic}).
+(effective number of parameters), and \code{dic}.
 }
 \description{
 Computes the Deviance Information Criterion (DIC) for a fitted
