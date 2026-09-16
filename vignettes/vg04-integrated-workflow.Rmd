@@ -1,0 +1,211 @@
+---
+title: "Integrated workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Integrated workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+knitr::opts_chunk$set(fig.width = 7, fig.height = 4)
+knitr::opts_chunk$set(comment = "#>")
+options(width = 100)
+
+can_run <- requireNamespace("mirt", quietly = TRUE) &&
+  requireNamespace("gstat", quietly = TRUE)
+knitr::opts_chunk$set(eval = can_run)
+```
+
+```{r, eval = !can_run, echo = FALSE, results = "asis"}
+cat("This vignette needs the mirt and gstat packages, which are not installed.")
+```
+
+`vignette("spifa")` fits the full spatial model directly, using a discrimination
+restriction and a spatial range prior already decided. In practice both could be
+informed by previous knowledge or a preliminary analysis on the data itself.
+This vignette walks through that preliminary analysis, then fits the full model:
+
+1) Perform non-spatial exploratory item factor analysis to suggest a discrimination
+   structure using the **mirt** package.
+2) Analyse the empirical variogram of that fit's factor scores to suggest a spatial range
+   using the **gstat** package.
+3) Fit the full spatial model with `spifa()`, using the restriction and range prior from
+   the previous two steps.
+
+```{r}
+library(mirt)
+library(gstat)
+library(sf)
+library(spifa)
+library(ggplot2)
+
+data(ipixuna)
+nitems <- ncol(ipixuna$items)
+nfactors <- 3
+```
+
+## Step 1: Discrimination structure with `mirt`
+
+`mirt()` requires named item columns; `ipixuna$items` doesn't have any, so we name
+them here:
+
+```{r}
+items <- ipixuna$items
+colnames(items) <- paste0("item", seq_len(nitems))
+head(items)
+```
+
+We fit an exploratory (unrestricted) 2PL item factor model and rotate it (varimax)
+towards a simple structure:
+
+```{r}
+set.seed(11)
+efa <- mirt(items, model = nfactors, itemtype = "2PL", verbose = FALSE)
+loadings <- summary(efa, rotate = "varimax", verbose = FALSE)$rotF
+loadings
+```
+
+Thresholding small loadings to zero turns this into a `0`/`1` restriction:
+
+```{r}
+A <- (abs(loadings) > 0.24) * 1
+A
+```
+
+This is only one approach, different rotations could be applied depending on the
+questionnaire and the latent construct under analysis. In this example, we will use `A` to
+constrain discrimination parameters to zero.
+
+## Step 2: Spatial range with `gstat`
+
+The second thing `vignette("spifa")` takes as given is `priors$range`, the prior for each
+Gaussian process's spatial range. `mirt`'s factor scores give a first estimate of each
+household's latent abilities, which we can examine spatially with an empirical variogram.
+
+### Estimate the latent factors
+
+First, we obtain the estimated latent factors using `fscores` from **mirt**:
+
+```{r}
+fscore <- fscores(efa, rotate = "varimax")
+colnames(fscore) <- paste0("F", seq_len(nfactors))
+head(fscore)
+```
+
+Then, we need to geo-reference these factor scores in order to perform spatial analysis.
+`gstat` uses the default coordinates units to compute distances between locations, so we
+will also transform the coordinates system to a planar one where distances can be computed
+in meters:
+
+```{r}
+fscore_sf <- st_sf(
+  id = ipixuna$id, wealth = ipixuna$wealth, as.data.frame(fscore),
+  geometry = st_transform(st_geometry(ipixuna), 32719)
+)
+fscore_sf
+```
+
+### Evaluate predictors effects
+
+We can evaluate the effect of wealth on this estimated latent factors:
+
+```{r}
+fscore_sf |>
+  tidyr::pivot_longer(F1:F3) |>
+  ggplot(aes(wealth, value)) +
+    geom_point() +
+    geom_smooth(method = 'lm', formula = y ~ x) +
+    facet_wrap(~ name)
+```
+
+There seems to be an effect in F1 and F3, so we will analyse the residual spatial
+structure after taking into account `wealth` effect:
+
+### Evaluate the spatial structure
+
+From `gstat`, we can use `variogram()` to obtain the empirical variogram, `vgm()` to define
+a theoretical variogram and  `fit.variogram()` to fit the theoretical model to the
+empirical variogram.
+
+```{r}
+vg1 <- variogram(F1 ~ wealth, fscore_sf, width = 20, cutoff = 1000)
+vg1_fit <- fit.variogram(vg1, model = vgm(psill = 0.6, "Exp", range = 100, nugget = 0.1))
+vg1_fit
+plot(vg1, vg1_fit, pch = 19, main = "F1")
+```
+
+For F1, we can see that there is some evidence of spatial correlation at small scale.
+
+```{r}
+vg2 <- variogram(F2 ~ wealth, fscore_sf, width = 50, cutoff = 1000)
+vg2_fit <- fit.variogram(vg2, model = vgm(psill = 0.6, "Exp", range = 100, nugget = 0.1))
+vg2_fit
+plot(vg2, vg2_fit, pch = 19, main = "F2")
+```
+
+For F2, there is a much clearer spatial structure with a range parameter around `170`.
+
+```{r}
+vg3 <- variogram(F3 ~ wealth, fscore_sf, width = 50, cutoff = 800)
+vg3_fit <- fit.variogram(vg3, model = vgm(psill = 0.6, "Exp", range = 100, nugget = 0.1))
+vg3_fit
+plot(vg3, vg3_fit, pch = 19, main = "F3")
+```
+
+For F3 also the range parameter seems to be small.
+
+In general, there is some evidence of spatial correlation in the latent factors, and
+specifically in F2 the spatial structure is strong with a range parameter around 170. This
+gives a good understanding of plausible values for the range parameters of our `spifa`
+model. However, remember that the `spifa` and `mirt` models are not exactly the same, so
+these values should be taken only as a reference to decide on our `constraints` and
+`priors`.
+
+## Step 3: Spatial modelling with `spifa`
+
+With `A` from Step 1 and a range prior from Step 2 in hand, `spifa()` can fit the full
+spatial model, one independent Gaussian process per factor by default. For the range
+prior, F2's estimate is the one clear signal -- with only 100 households, F1 and F3's
+much smaller ranges are more likely noise than genuine short-range structure -- so we
+use a common reference value of 150 (close to F2's ~170) for all three factors:
+
+```{r}
+set.seed(1)
+samples <- spifa(
+  items ~ wealth, data = ipixuna, nfactors = nfactors,
+  burnin = 1000, niter = 4000,
+  constraints = list(discrimination = A, loading = diag(nfactors)),
+  priors = list(range = list(initial = 150, mean = 150, sd = 0.4)))
+samples
+```
+
+Note this uses `spifa()`'s own default (non-informed) initial values for everything
+except the spatial range -- the same starting point a real user, without further
+domain knowledge, would use. The full analysis can now proceed using the methods
+presented in `vignette("spifa")` and the package's other vignettes.
+
+### Visualize
+
+Let's visualize the chains and densities of the posterior. Observe which parameters have
+better mixing than others.
+
+```{r, fig.height = 6}
+plot(samples, c("c", "A"))
+plot(samples, select = c("B", "T", "Corr"))
+plot(samples, select = c("phi"))
+```
+
+### Predict
+
+Let's visualize the spatial pattern of the latent factors mean prediction.
+
+```{r}
+pred_samples <- predict(samples)
+plot_predict(pred_samples) +
+  scale_colour_distiller(palette = "RdYlBu")
+```
+
+You can continue your analysis using the other methods and functions shown in the
+package's vignettes.
