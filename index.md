@@ -1,5 +1,9 @@
 # spifa: Bayesian Spatial Item Factor Analysis
 
+![Predictive mean maps of three latent factors over the Ipixuna study
+area, produced with predict() and
+plot_predict()](reference/figures/readme-map.png)
+
 ## Introduction
 
 **spifa** fits spatial item factor analysis (IFA) models for binary
@@ -33,9 +37,8 @@ remotes::install_github("ErickChacon/spifa")
 
 A minimal *spatial* item factor analysis fit on the bundled `ipixuna`
 dataset (a simulated `sf` object with `items` responses for
-geo-referenced households). We define the factor loadings structure
-(discrimination) and fit the model with the default spatial structure
-for each factor:
+geo-referenced households). We define the discrimination structure and
+fit the model with the default spatial structure for each factor:
 
 ``` r
 
@@ -60,7 +63,7 @@ plot(samples, select = "c", burnin = 500)
 ```
 
 ![Trace and density plots of the easiness (c) posterior samples from the
-basic usage example](reference/figures/README-example.png)
+basic usage example](reference/figures/readme-example.png)
 
 See
 [`vignette("spifa")`](https://ErickChacon.github.io/spifa/articles/spifa.md)
