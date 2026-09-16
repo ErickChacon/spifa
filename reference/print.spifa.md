@@ -4,9 +4,7 @@ Prints a fitted `spifa` object (the output of
 [`spifa`](https://ErickChacon.github.io/spifa/reference/spifa.md)):
 model type, formula, data dimensions, MCMC settings, and a posterior
 summary table (via
-[`summary.spifa`](https://ErickChacon.github.io/spifa/reference/summary.spifa.md))
-– following the convention of rstan/rstanarm/brms/R2jags, which all show
-actual parameter estimates by default rather than just fit metadata.
+[`summary.spifa`](https://ErickChacon.github.io/spifa/reference/summary.spifa.md)).
 
 ## Usage
 

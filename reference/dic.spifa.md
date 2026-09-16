@@ -34,8 +34,7 @@ dic(x, burnin = 0, thin = 1, ...)
 
 A one-row [`tibble`](https://tibble.tidyverse.org/reference/tibble.html)
 with columns `mean_deviance` (posterior mean of the deviance), `p_eff`
-(effective number of parameters), and `dic` – naming follows INLA's
-`$dic` output (`mean.deviance`/`p.eff`/ `dic`).
+(effective number of parameters), and `dic`.
 
 ## Author
 

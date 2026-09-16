@@ -88,9 +88,9 @@ If the fitted model has no spatial or predictor structure (`eifa` or
 `cifa`), or if `newdata` is not supplied for a model that has one, there
 is nothing to predict beyond the latent abilities' own posterior samples
 already available from the fit, so those are returned directly (subject
-to `burnin`/`thin`) instead of calling the `C++` sampler. Otherwise,
-prediction for the new locations and/or predictor values is delegated to
-the `C++` sampler.
+to `burnin`/`thin`) – this case is fast, since no new sampling is
+needed. Otherwise, new draws are sampled for the new locations and/or
+predictor values, which takes longer.
 
 If the fitted model has predictors (`cifa_pred`/`spifa_pred`), `newdata`
 must include those predictor columns, the same as

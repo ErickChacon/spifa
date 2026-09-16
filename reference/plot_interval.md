@@ -44,9 +44,8 @@ plot_interval(
 - horizontal:
 
   Logical; if `FALSE` (default), parameters run along the x-axis and
-  values run along the y-axis, matching the `ci_intervals()` convention
-  used in the SPIFA paper's own figures; if `TRUE`, the axes are swapped
-  (a forest-plot layout).
+  values run along the y-axis; if `TRUE`, the axes are swapped (a
+  forest-plot layout).
 
 - burnin:
 

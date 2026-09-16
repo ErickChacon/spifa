@@ -129,9 +129,9 @@ again.</p>
 <code>cifa</code>), or if <code>newdata</code> is not supplied for a model that has
 one, there is nothing to predict beyond the latent abilities' own
 posterior samples already available from the fit, so those are returned
-directly (subject to <code>burnin</code>/<code>thin</code>) instead of calling the
-<code>C++</code> sampler. Otherwise, prediction for the new locations and/or
-predictor values is delegated to the <code>C++</code> sampler.</p>
+directly (subject to <code>burnin</code>/<code>thin</code>) – this case is fast,
+since no new sampling is needed. Otherwise, new draws are sampled for
+the new locations and/or predictor values, which takes longer.</p>
 <p>If the fitted model has predictors (<code>cifa_pred</code>/<code>spifa_pred</code>),
 <code>newdata</code> must include those predictor columns, the same as
 <code><a href="https://rdrr.io/r/stats/predict.lm.html" class="external-link">predict.lm</a></code> and similar methods require – this is

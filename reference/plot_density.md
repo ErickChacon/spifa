@@ -9,10 +9,6 @@ locations at a glance) or faceted (`facet = TRUE`; one panel per
 parameter). Shows the density shape only – for credible intervals and
 point estimates, see
 [`plot_interval`](https://ErickChacon.github.io/spifa/reference/plot_interval.md).
-The density itself is computed directly by
-[`geom_density`](https://ggplot2.tidyverse.org/reference/geom_density.html)/[`geom_density_ridges`](https://wilkelab.org/ggridges/reference/geom_density_ridges.html)
-from the raw draws, reshaped via
-[`as_draws_df`](https://mc-stan.org/posterior/reference/draws_df.html).
 
 ## Usage
 

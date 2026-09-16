@@ -5,8 +5,7 @@ Draws MCMC traceplots (iteration vs. value) directly from a fitted
 default; one panel per parameter, with its own free y-scale, so a
 slow-mixing or small-variance parameter isn't visually flattened by
 others sharing the same axis) or overlaid (`facet = FALSE`; all series
-on a single panel, for a quick glance at overall convergence). Reshapes
-draws directly, so it works on `x` with no intermediate conversion.
+on a single panel, for a quick glance at overall convergence).
 
 ## Usage
 
