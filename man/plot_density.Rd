@@ -61,9 +61,7 @@ default; stacked, slightly-overlapping ridgeline plot via
 default for comparing many parameters' shapes and locations at a glance) or
 faceted (\code{facet = TRUE}; one panel per parameter). Shows the
 density shape only -- for credible intervals and point estimates, see
-\code{\link{plot_interval}}. The density itself is computed directly by
-\code{\link[ggplot2]{geom_density}}/\code{\link[ggridges]{geom_density_ridges}}
-from the raw draws, reshaped via \code{\link[posterior]{as_draws_df}}.
+\code{\link{plot_interval}}.
 }
 \examples{
 \donttest{

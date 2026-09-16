@@ -52,8 +52,6 @@ theme_spifa <- function (legend = "none") {
 #' slow-mixing or small-variance parameter isn't visually flattened by
 #' others sharing the same axis) or overlaid (\code{facet = FALSE}; all
 #' series on a single panel, for a quick glance at overall convergence).
-#' Reshapes draws directly, so it works on \code{x} with no intermediate
-#' conversion.
 #'
 #' @param x A fitted \code{spifa} model.
 #' @param select Parameters to plot, passed to the \code{variable} argument
@@ -154,9 +152,7 @@ plot_trace <- function (x, select, facet = TRUE,
 #' default for comparing many parameters' shapes and locations at a glance) or
 #' faceted (\code{facet = TRUE}; one panel per parameter). Shows the
 #' density shape only -- for credible intervals and point estimates, see
-#' \code{\link{plot_interval}}. The density itself is computed directly by
-#' \code{\link[ggplot2]{geom_density}}/\code{\link[ggridges]{geom_density_ridges}}
-#' from the raw draws, reshaped via \code{\link[posterior]{as_draws_df}}.
+#' \code{\link{plot_interval}}.
 #'
 #' @param x A fitted \code{spifa} model.
 #' @param select Parameters to plot, as in \code{\link{plot_trace}}.
@@ -255,9 +251,8 @@ plot_density <- function (x, select, facet = FALSE,
 #' @param x A fitted \code{spifa} model.
 #' @param select Parameters to plot, as in \code{\link{plot_trace}}.
 #' @param horizontal Logical; if \code{FALSE} (default), parameters run
-#' along the x-axis and values run along the y-axis, matching the
-#' \code{ci_intervals()} convention used in the SPIFA paper's own figures;
-#' if \code{TRUE}, the axes are swapped (a forest-plot layout).
+#' along the x-axis and values run along the y-axis; if \code{TRUE}, the
+#' axes are swapped (a forest-plot layout).
 #' @param burnin Number of initial iterations to discard.
 #' @param thin Thinning interval applied after \code{burnin}.
 #' @param nshow As in \code{\link{plot_trace}} (a random subsample when

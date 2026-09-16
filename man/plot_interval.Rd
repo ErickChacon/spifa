@@ -25,9 +25,8 @@ plot_interval(
 \item{select}{Parameters to plot, as in \code{\link{plot_trace}}.}
 
 \item{horizontal}{Logical; if \code{FALSE} (default), parameters run
-along the x-axis and values run along the y-axis, matching the
-\code{ci_intervals()} convention used in the SPIFA paper's own figures;
-if \code{TRUE}, the axes are swapped (a forest-plot layout).}
+along the x-axis and values run along the y-axis; if \code{TRUE}, the
+axes are swapped (a forest-plot layout).}
 
 \item{burnin}{Number of initial iterations to discard.}
 

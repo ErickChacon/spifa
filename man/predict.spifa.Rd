@@ -67,9 +67,9 @@ If the fitted model has no spatial or predictor structure (\code{eifa} or
 \code{cifa}), or if \code{newdata} is not supplied for a model that has
 one, there is nothing to predict beyond the latent abilities' own
 posterior samples already available from the fit, so those are returned
-directly (subject to \code{burnin}/\code{thin}) instead of calling the
-\code{C++} sampler. Otherwise, prediction for the new locations and/or
-predictor values is delegated to the \code{C++} sampler.
+directly (subject to \code{burnin}/\code{thin}) -- this case is fast,
+since no new sampling is needed. Otherwise, new draws are sampled for
+the new locations and/or predictor values, which takes longer.
 
 If the fitted model has predictors (\code{cifa_pred}/\code{spifa_pred}),
 \code{newdata} must include those predictor columns, the same as

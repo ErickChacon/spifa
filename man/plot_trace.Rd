@@ -57,8 +57,6 @@ the default; one panel per parameter, with its own free y-scale, so a
 slow-mixing or small-variance parameter isn't visually flattened by
 others sharing the same axis) or overlaid (\code{facet = FALSE}; all
 series on a single panel, for a quick glance at overall convergence).
-Reshapes draws directly, so it works on \code{x} with no intermediate
-conversion.
 }
 \examples{
 \donttest{
