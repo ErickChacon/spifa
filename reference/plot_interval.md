@@ -87,8 +87,8 @@ plot_interval(
 
   Optional reference values to overlay (e.g. the true values in a
   simulation study), as a fourth marker alongside the interval and point
-  estimate. Only valid when `select` is a single block name (e.g.
-  `"A"`): an unnamed vector or matrix matching that block's own shape
+  estimate. Only valid when `select` is a single group name (e.g.
+  `"A"`): an unnamed vector or matrix matching that group's own shape
   (e.g. `parameters$discrimination`, an `nitems x nfactors` matrix).
   Structurally-restricted parameters (dropped internally before
   plotting) are silently ignored if present in `reference`.

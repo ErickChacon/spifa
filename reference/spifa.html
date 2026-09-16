@@ -195,7 +195,7 @@ predictors or a Gaussian process, it is recomended to be lower than 1.</p></dd>
 
 <dt id="arg-priors">priors<a class="anchor" aria-label="anchor" href="#arg-priors"></a></dt>
 <dd><p>Named list of initial values and prior hyperparameters, one
-element per parameter block: `easiness`, `discrimination`, `effect`
+element per parameter group: `easiness`, `discrimination`, `effect`
 (predictor effect on the latent factors), `corr` (correlation of the
 latent factors' residual term, paired with `constraints$sd`),
 `loading` (multivariate Gaussian process loading matrix, paired with
@@ -277,7 +277,7 @@ descriptive names; the fitted model's sampled output (as seen via
 instead uses short internal names matching the underlying model
 notation. The two are deliberately different vocabularies (what you
 configure vs. what the sampler produced) – this table maps between
-them:</p><table class="table table"><tr><td><code>priors</code>/<code>constraints</code> name</td><td>output block name</td><td>meaning</td></tr><tr><td><code>easiness</code></td><td><code>c</code></td><td>item easiness (intercept)</td></tr><tr><td><code>discrimination</code></td><td><code>A</code></td><td>item-factor discrimination (loading) matrix</td></tr><tr><td><code>effect</code></td><td><code>B</code></td><td>predictor effect on the latent factors</td></tr><tr><td><code>corr</code></td><td><code>Corr</code>, <code>Chol</code></td><td>residual correlation matrix, and its Cholesky factor</td></tr><tr><td><code>sd</code></td><td><em>(fixed, not sampled)</em></td><td>residual standard deviation</td></tr><tr><td><code>loading</code></td><td><code>T</code></td><td>multivariate Gaussian process loading matrix</td></tr><tr><td><code>range</code></td><td><code>phi</code></td><td>multivariate Gaussian process spatial range</td></tr><tr><td><em>(not user-set)</em></td><td><code>Theta</code></td><td>latent abilities</td></tr><tr><td><em>(not user-set)</em></td><td><code>Z</code></td><td>augmented latent response</td></tr></table></div>
+them:</p><table class="table table"><tr><td><code>priors</code>/<code>constraints</code> name</td><td>output group name</td><td>meaning</td></tr><tr><td><code>easiness</code></td><td><code>c</code></td><td>item easiness (intercept)</td></tr><tr><td><code>discrimination</code></td><td><code>A</code></td><td>item-factor discrimination (loading) matrix</td></tr><tr><td><code>effect</code></td><td><code>B</code></td><td>predictor effect on the latent factors</td></tr><tr><td><code>corr</code></td><td><code>Corr</code>, <code>Chol</code></td><td>residual correlation matrix, and its Cholesky factor</td></tr><tr><td><code>sd</code></td><td><em>(fixed, not sampled)</em></td><td>residual standard deviation</td></tr><tr><td><code>loading</code></td><td><code>T</code></td><td>multivariate Gaussian process loading matrix</td></tr><tr><td><code>range</code></td><td><code>phi</code></td><td>multivariate Gaussian process spatial range</td></tr><tr><td><em>(not user-set)</em></td><td><code>Theta</code></td><td>latent abilities</td></tr><tr><td><em>(not user-set)</em></td><td><code>Z</code></td><td>augmented latent response</td></tr></table></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Chacon-Montalvan, E. A., Parry, L., Giorgi, E., Torres, P., Orellana,

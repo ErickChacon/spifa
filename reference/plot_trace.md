@@ -34,8 +34,8 @@ plot_trace(
 
   Parameters to plot, passed to the `variable` argument of
   [`subset_draws`](https://mc-stan.org/posterior/reference/subset_draws.html):
-  either a block name (e.g. `"A"`, matching every parameter in that
-  block) or one or more full indexed names (e.g. `"c[1]"`,
+  either a group name (e.g. `"A"`, matching every parameter in that
+  group) or one or more full indexed names (e.g. `"c[1]"`,
   `paste0("A[", 1:10, ",1]")`).
 
 - facet:

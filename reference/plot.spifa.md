@@ -9,7 +9,7 @@ on the right, one row per parameter and matched row for row, via
 [`wrap_plots`](https://patchwork.data-imaginist.com/reference/wrap_plots.html)
 – convergence and posterior shape at a glance, right after fitting.
 Defaults to the easiness (`c`) and discrimination (`A`) parameters. For
-a credible-interval view, or for any other parameter block, call
+a credible-interval view, or for any other parameter group, call
 [`plot_trace`](https://ErickChacon.github.io/spifa/reference/plot_trace.md)/[`plot_density`](https://ErickChacon.github.io/spifa/reference/plot_density.md)/
 [`plot_interval`](https://ErickChacon.github.io/spifa/reference/plot_interval.md)
 directly instead.

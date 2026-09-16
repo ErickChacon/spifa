@@ -37,8 +37,8 @@ summary(object, burnin = 0, thin = 1, select = NULL, ...)
 
 - select:
 
-  Character vector of parameter blocks to summarise (defaults to all of
-  them). An error if any requested block does not exist in the fitted
+  Character vector of parameter groups to summarise (defaults to all of
+  them). An error if any requested group does not exist in the fitted
   model (e.g. `"T"` for a model with no spatial process).
 
 - ...:

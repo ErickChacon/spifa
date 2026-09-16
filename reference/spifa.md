@@ -140,7 +140,7 @@ spifa(
 - priors:
 
   Named list of initial values and prior hyperparameters, one element
-  per parameter block: \`easiness\`, \`discrimination\`, \`effect\`
+  per parameter group: \`easiness\`, \`discrimination\`, \`effect\`
   (predictor effect on the latent factors), \`corr\` (correlation of the
   latent factors' residual term, paired with \`constraints\$sd\`),
   \`loading\` (multivariate Gaussian process loading matrix, paired with
@@ -239,7 +239,7 @@ them:
 
 |  |  |  |
 |----|----|----|
-| `priors`/`constraints` name | output block name | meaning |
+| `priors`/`constraints` name | output group name | meaning |
 | `easiness` | `c` | item easiness (intercept) |
 | `discrimination` | `A` | item-factor discrimination (loading) matrix |
 | `effect` | `B` | predictor effect on the latent factors |
