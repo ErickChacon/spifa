@@ -51,8 +51,8 @@ estimate instead of their natural order. Defaults to \code{FALSE}.}
 
 \item{reference}{Optional reference values to overlay (e.g. the true
 values in a simulation study), as a fourth marker alongside the interval
-and point estimate. Only valid when \code{select} is a single block name
-(e.g. \code{"A"}): an unnamed vector or matrix matching that block's own
+and point estimate. Only valid when \code{select} is a single group name
+(e.g. \code{"A"}): an unnamed vector or matrix matching that group's own
 shape (e.g. \code{parameters$discrimination}, an \code{nitems x nfactors}
 matrix). Structurally-restricted parameters (dropped internally before
 plotting) are silently ignored if present in \code{reference}.}

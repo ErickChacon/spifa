@@ -27,8 +27,6 @@ test_that("plot.spifa() shows the same parameters, row for row, in both panels",
   expect_length(trace_pars, 10)
 
   # select = "A" matches more than nshow -- both panels must still agree
-  # (plot_trace()/plot_density() each apply their own independent random
-  # subsample when called separately with the same select)
   gg_a <- plot(samples, select = "A", nshow = 6)
   trace_pars_a <- levels(droplevels(gg_a$patches$plots[[1]]$data$parameter))
   density_pars_a <- levels(droplevels(gg_a$data$parameter))

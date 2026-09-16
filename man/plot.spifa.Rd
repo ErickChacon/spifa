@@ -31,7 +31,7 @@ matched row for row, via \code{\link[patchwork]{wrap_plots}} --
 convergence and posterior shape at a glance, right after fitting.
 Defaults to the easiness (\code{c}) and discrimination (\code{A})
 parameters. For a credible-interval view, or for any other parameter
-block, call \code{\link{plot_trace}}/\code{\link{plot_density}}/
+group, call \code{\link{plot_trace}}/\code{\link{plot_density}}/
 \code{\link{plot_interval}} directly instead.
 }
 \examples{

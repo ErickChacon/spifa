@@ -20,8 +20,8 @@ plot_trace(
 \item{x}{A fitted \code{spifa} model.}
 
 \item{select}{Parameters to plot, passed to the \code{variable} argument
-of \code{\link[posterior]{subset_draws}}: either a block name (e.g.
-\code{"A"}, matching every parameter in that block) or one or more full
+of \code{\link[posterior]{subset_draws}}: either a group name (e.g.
+\code{"A"}, matching every parameter in that group) or one or more full
 indexed names (e.g. \code{"c[1]"}, \code{paste0("A[", 1:10, ",1]")}).}
 
 \item{facet}{Logical; if \code{TRUE} (default), draw one panel per

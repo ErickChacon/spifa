@@ -81,8 +81,8 @@ print_summary <- function (x, params, label) {
 #' \code{\link{spifa}}.
 #' @param burnin Number of initial iterations to discard.
 #' @param thin Thinning interval applied after discarding burn-in.
-#' @param select Character vector of parameter blocks to summarise (defaults
-#' to all of them). An error if any requested block does not exist in the
+#' @param select Character vector of parameter groups to summarise (defaults
+#' to all of them). An error if any requested group does not exist in the
 #' fitted model (e.g. \code{"T"} for a model with no spatial process).
 #' @param ... Further arguments passed to methods (currently unused).
 #'

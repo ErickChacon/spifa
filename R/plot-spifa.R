@@ -31,6 +31,7 @@ draws_long <- function (x) {
     dplyr::select(iteration, parameter, value)
 }
 
+# custom spifa theme
 theme_spifa <- function (legend = "none") {
   theme_minimal() +
     theme(panel.border = element_blank(),
@@ -56,8 +57,8 @@ theme_spifa <- function (legend = "none") {
 #'
 #' @param x A fitted \code{spifa} model.
 #' @param select Parameters to plot, passed to the \code{variable} argument
-#' of \code{\link[posterior]{subset_draws}}: either a block name (e.g.
-#' \code{"A"}, matching every parameter in that block) or one or more full
+#' of \code{\link[posterior]{subset_draws}}: either a group name (e.g.
+#' \code{"A"}, matching every parameter in that group) or one or more full
 #' indexed names (e.g. \code{"c[1]"}, \code{paste0("A[", 1:10, ",1]")}).
 #' @param facet Logical; if \code{TRUE} (default), draw one panel per
 #' parameter; if \code{FALSE}, overlay every series on a single panel. See
@@ -272,8 +273,8 @@ plot_density <- function (x, select, facet = FALSE,
 #' estimate instead of their natural order. Defaults to \code{FALSE}.
 #' @param reference Optional reference values to overlay (e.g. the true
 #' values in a simulation study), as a fourth marker alongside the interval
-#' and point estimate. Only valid when \code{select} is a single block name
-#' (e.g. \code{"A"}): an unnamed vector or matrix matching that block's own
+#' and point estimate. Only valid when \code{select} is a single group name
+#' (e.g. \code{"A"}): an unnamed vector or matrix matching that group's own
 #' shape (e.g. \code{parameters$discrimination}, an \code{nitems x nfactors}
 #' matrix). Structurally-restricted parameters (dropped internally before
 #' plotting) are silently ignored if present in \code{reference}.
@@ -325,9 +326,9 @@ plot_interval <- function (x, select, horizontal = FALSE,
   # add reference data frame
   if (!is.null(reference)) {
     if (length(select) != 1 || grepl("[", select, fixed = TRUE)) {
-      stop("`reference` is only supported when `select` is a single block ",
+      stop("`reference` is only supported when `select` is a single group ",
            "name (e.g. \"A\"), matched against an unnamed vector or matrix ",
-           "of the same shape as that block.")
+           "of the same shape as that group.")
     } else if (is.matrix(reference)) {
       idx <- expand.grid(row = seq_len(nrow(reference)), col = seq_len(ncol(reference)))
       ref_names <- paste0(select, "[", idx$row, ",", idx$col, "]")
@@ -401,7 +402,7 @@ plot_interval <- function (x, select, horizontal = FALSE,
 #' convergence and posterior shape at a glance, right after fitting.
 #' Defaults to the easiness (\code{c}) and discrimination (\code{A})
 #' parameters. For a credible-interval view, or for any other parameter
-#' block, call \code{\link{plot_trace}}/\code{\link{plot_density}}/
+#' group, call \code{\link{plot_trace}}/\code{\link{plot_density}}/
 #' \code{\link{plot_interval}} directly instead.
 #'
 #' @param x A fitted \code{spifa} object, as returned by \code{\link{spifa}}.

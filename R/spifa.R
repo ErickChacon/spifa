@@ -62,7 +62,7 @@
 #' configure vs. what the sampler produced) -- this table maps between
 #' them:
 #' \tabular{lll}{
-#' \code{priors}/\code{constraints} name \tab output block name \tab meaning \cr
+#' \code{priors}/\code{constraints} name \tab output group name \tab meaning \cr
 #' \code{easiness} \tab \code{c} \tab item easiness (intercept) \cr
 #' \code{discrimination} \tab \code{A} \tab item-factor discrimination (loading) matrix \cr
 #' \code{effect} \tab \code{B} \tab predictor effect on the latent factors \cr
@@ -148,7 +148,7 @@
 #' predictors or a Gaussian process, it is recomended to be lower than 1.
 #'
 #' @param priors Named list of initial values and prior hyperparameters, one
-#' element per parameter block: `easiness`, `discrimination`, `effect`
+#' element per parameter group: `easiness`, `discrimination`, `effect`
 #' (predictor effect on the latent factors), `corr` (correlation of the
 #' latent factors' residual term, paired with `constraints$sd`),
 #' `loading` (multivariate Gaussian process loading matrix, paired with

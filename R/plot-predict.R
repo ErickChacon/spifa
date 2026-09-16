@@ -1,18 +1,3 @@
-# clean map look for plot_predict(): no axis titles, a light dashed
-# reference grid drawn on top of the fill, small legend, no strip background
-theme_map <- function (base_size = 9, legend = "bottom") {
-  theme_bw(base_size = base_size) +
-    theme(axis.title = element_blank(),
-          panel.grid = element_line(linetype = 2, colour = "grey80", linewidth = 0.25),
-          panel.background = element_blank(),
-          panel.ontop = TRUE,
-          legend.position = legend,
-          legend.title = element_blank(),
-          legend.key.height = unit(0.4, "cm"),
-          strip.background = element_blank(),
-          strip.text = element_text(size = rel(1)))
-}
-
 #' @title Map Posterior Predictions from a Fitted spifa Model
 #'
 #' @description
@@ -136,3 +121,18 @@ plot_predict <- function (pred, grid = NULL, select = NULL, stat = mean,
     facet_wrap(~ factor, scales = facet_scales, ncol = ncol, labeller = label_parsed) +
     theme_map()
 }
+
+# custom map theme
+theme_map <- function (base_size = 9, legend = "bottom") {
+  theme_bw(base_size = base_size) +
+    theme(axis.title = element_blank(),
+          panel.grid = element_line(linetype = 2, colour = "grey80", linewidth = 0.25),
+          panel.background = element_blank(),
+          panel.ontop = TRUE,
+          legend.position = legend,
+          legend.title = element_blank(),
+          legend.key.height = unit(0.4, "cm"),
+          strip.background = element_blank(),
+          strip.text = element_text(size = rel(1)))
+}
+
