@@ -10,11 +10,13 @@ fit_spatial_samples <- function () {
   A[c(4, 8), 1] <- 0
   A[c(2, 4, 5, 6, 7, 8, 10), 2] <- 0
   A[c(5, 6), 3] <- 0
-  spifa(items ~ 1, data = ipixuna, nfactors = nfactors, niter = 5,
-    constraints = list(discrimination = A))
+  spifa(
+    items ~ 1, data = ipixuna, nfactors = nfactors, niter = 5,
+    constraints = list(discrimination = A)
+  )
 }
 
-test_that("plot_predict() defaults to stat = mean and uses attr(pred, \"newdata\") when grid isn't supplied", {
+test_that("plot_predict(): defaults to mean, uses newdata attribute when grid missing", {
   samples <- fit_spatial_samples()
   pred <- predict(samples)
 
@@ -30,7 +32,7 @@ test_that("plot_predict() defaults to stat = mean and uses attr(pred, \"newdata\
   expect_equal(plot_predict(pred, select = 1)$data$value, expected)
 })
 
-test_that("plot_predict() draws points for point newdata, polygons for polygon newdata", {
+test_that("plot_predict(): draws points for points, polygons for polygon newdata", {
   samples <- fit_spatial_samples()
   data(ipixuna, package = "spifa")
 
@@ -46,7 +48,7 @@ test_that("plot_predict() draws points for point newdata, polygons for polygon n
   expect_true("fill" %in% names(gg_grid$layers[[1]]$mapping))
 })
 
-test_that("plot_predict() stat accepts any function of the draws, e.g. sd or an exceedance probability", {
+test_that("plot_predict(): stat accepts any function of the draws", {
   samples <- fit_spatial_samples()
   data(ipixuna, package = "spifa")
   grid <- sf::st_sf(geometry = sf::st_make_grid(ipixuna, n = c(3, 2)))
@@ -67,13 +69,13 @@ test_that("plot_predict() stat accepts any function of the draws, e.g. sd or an 
   expect_equal(gg_exc$data$value, expected_exc)
 })
 
-test_that("plot_predict() rejects a non-function stat", {
+test_that("plot_predict(): rejects a non-function stat", {
   samples <- fit_spatial_samples()
   pred <- predict(samples)
   expect_error(plot_predict(pred, stat = "mean"), "must be a function")
 })
 
-test_that("plot_predict() select restricts which factors are plotted", {
+test_that("plot_predict(): select restricts which factors are plotted", {
   samples <- fit_spatial_samples()
   data(ipixuna, package = "spifa")
   grid <- sf::st_sf(geometry = sf::st_make_grid(ipixuna, n = c(3, 2)))
@@ -84,7 +86,7 @@ test_that("plot_predict() select restricts which factors are plotted", {
   expect_equal(nrow(gg$data), nrow(grid) * 2)
 })
 
-test_that("plot_predict() errors without grid or a newdata attribute", {
+test_that("plot_predict(): errors without grid or a newdata attribute", {
   samples <- fit_spatial_samples()
   pred <- predict(samples)
   attr(pred, "newdata") <- NULL
@@ -93,7 +95,7 @@ test_that("plot_predict() errors without grid or a newdata attribute", {
   expect_error(plot_predict(pred, grid = 1:3), "sf/sfc")
 })
 
-test_that("plot_predict() boundary is drawn as an extra layer without affecting the data", {
+test_that("plot_predict(): boundary is an extra layer, doesn't affect the data", {
   samples <- fit_spatial_samples()
   data(ipixuna, package = "spifa")
   grid <- sf::st_sf(geometry = sf::st_make_grid(ipixuna, n = c(3, 2)))
