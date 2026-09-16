@@ -118,10 +118,10 @@ As mentioned before, an identifiable spifa model requires restricting
 the discrimination parameters, along with adequate initial values and
 priors for the spatial parameters (mainly the range). In practice, these
 are best obtained from a preliminary analysis, as shown in
-`vignette("vg04-mirt-variogram-workflow")`. Here, we instead assume the
-discrimination structure and some initial knowledge of the spatial
-parameters are already available, and focus on defining, fitting, and
-diagnosing the model.
+[`vignette("vg04-integrated-workflow")`](https://ErickChacon.github.io/spifa/articles/vg04-integrated-workflow.md).
+Here, we instead assume the discrimination structure and some initial
+knowledge of the spatial parameters are already available, and focus on
+defining, fitting, and diagnosing the model.
 
 First, we obtain the number of items (10) and define the number of
 factors (3) we will use:
