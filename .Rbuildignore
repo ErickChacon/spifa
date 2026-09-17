@@ -1,5 +1,6 @@
 ^\.travis\.yml$
 ^\.lintr$
+^README\.html$
 ^arxiv$
 ^plan\.md$
 ^cran-comments\.md$

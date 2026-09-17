@@ -301,8 +301,14 @@ and (ii) new locations through the `predict()` function.
 By default `predict()` will simply return the samples of the latent factors at observed
 locations as a `posterior::draws_array()` object:
 
-```{r}
-pred_samples <- predict(samples)
+```{r, eval = FALSE}
+pred_samples <- predict(samples, burnin = 1000, thin = 5)
+posterior::as_draws_df(pred_samples)
+```
+
+```{r, echo = FALSE}
+pred_samples <- readRDS(system.file("vigdata", "spifa-pred-observed.rds", package = "spifa"))
+attr(pred_samples, "newdata") <- st_geometry(ipixuna)
 posterior::as_draws_df(pred_samples)
 ```
 

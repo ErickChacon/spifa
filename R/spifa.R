@@ -130,9 +130,9 @@
 #' does not touch \code{formula}'s right-hand side at all.
 #' @param constraints Named list of constraints associated to the factor model. Accepted
 #' names are `discrimination`, `loading`, and `sd`. The restrictions on the
-#' discrimination paramater should be placed in the element `discrimination` with same
+#' discrimination parameter should be placed in the element `discrimination` with same
 #' dimensions as the discrimination matrix (nitems x nfactors). A value of 0 indicates that
-#' the link betwen the item and the factor is disabled and 1 indicates that it remains
+#' the link between the item and the factor is disabled and 1 indicates that it remains
 #' active and the coefficient associated will be estimated. If left unspecified
 #' (`NULL`), a lower-triangular restriction is applied by default (the item on row `i`
 #' can only load on factors `1:i`) -- this is a standard identifiability trick for
@@ -145,7 +145,7 @@
 #' in the element `sd`, which should be a vector (length nfactors) providing the fixed
 #' values for that standard deviation (paired with `priors$corr`, together they
 #' parameterize the residual covariance). If the model includes
-#' predictors or a Gaussian process, it is recomended to be lower than 1.
+#' predictors or a Gaussian process, it is recommended to be lower than 1.
 #'
 #' @param priors Named list of initial values and prior hyperparameters, one
 #' element per parameter group: `easiness`, `discrimination`, `effect`
