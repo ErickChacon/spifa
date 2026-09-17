@@ -9,7 +9,7 @@ Authors@R: c(
     person("Emanuele", "Giorgi", role = "ctb"),
     person("Benjamin M.", "Taylor", role = "ctb"))
 Description: Fits spatial item factor analysis models for binary responses,
-    following Chacon-Montalvan et al. (2025) <doi:10.1214/25-AOAS2072>,
+    following Chacón-Montalván, E. A. et al. (2025) <doi:10.1214/25-AOAS2072>,
     using full Bayesian inference via adaptive Metropolis-Hastings within
     Gibbs sampling and auxiliary variables with a probit link function. The
     latent factors are modelled as the sum of a predictor effect, a

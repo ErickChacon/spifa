@@ -21,9 +21,17 @@ Useful links:
 
 }
 \author{
-Erick A. Chacon-Montalvan \email{e.chaconmontalvan@lancaster.ac.uk}
+\strong{Maintainer}: Erick A. Chacón-Montalván \email{erick.chaconmontalvan@wur.nl} (\href{https://orcid.org/0000-0001-8068-1034}{ORCID})
 
-Emanuele Giorgi, \email{e.giorgi@lancaster.ac.uk}
+Authors:
+\itemize{
+  \item Erick A. Chacón-Montalván \email{erick.chaconmontalvan@wur.nl} (\href{https://orcid.org/0000-0001-8068-1034}{ORCID})
+}
 
-Benjamin M. Taylor, \email{b.taylor1@lancaster.ac.uk}
+Other contributors:
+\itemize{
+  \item Emanuele Giorgi [contributor]
+  \item Benjamin M. Taylor [contributor]
+}
+
 }

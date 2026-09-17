@@ -10,10 +10,6 @@
 #' Gaussian process to capture spatial dependence. See \code{\link{spifa}}
 #' for the main model-fitting function.
 #'
-#' @author Erick A. Chacon-Montalvan \email{e.chaconmontalvan@lancaster.ac.uk}
-#' @author Emanuele Giorgi, \email{e.giorgi@lancaster.ac.uk}
-#' @author Benjamin M. Taylor, \email{b.taylor1@lancaster.ac.uk}
-#'
 #' @importFrom stats delete.response dist model.frame model.matrix
 #' @importFrom stats model.response quantile rnorm setNames terms update
 #' @importFrom grDevices rgb
@@ -33,7 +29,7 @@
 #' Ten binary items, a household-level `wealth` covariate, and spatial
 #' coordinates are simulated for each household so that they reproduce the
 #' spatial multidimensional item response structure described in the SPIFA
-#' paper (Chacon-Montalvan, Giorgi and Taylor). The data is provided as an
+#' paper (Chacón-Montalván, E. A., Giorgi, E. and Taylor, B.). The data is provided as an
 #' `sf` object, already in the format [spifa()] requires.
 #'
 #' @format An `sf` tibble with one row per household (100 rows) and columns:

@@ -34,7 +34,7 @@ Simulated household survey data for the rural area of Ipixuna
 Ten binary items, a household-level `wealth` covariate, and spatial
 coordinates are simulated for each household so that they reproduce the
 spatial multidimensional item response structure described in the SPIFA
-paper (Chacon-Montalvan, Giorgi and Taylor). The data is provided as an
+paper (Chacón-Montalván, E. A., Giorgi, E. and Taylor, B.). The data is provided as an
 `sf` object, already in the format [spifa()] requires.
 }
 \examples{
