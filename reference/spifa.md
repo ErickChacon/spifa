@@ -252,7 +252,7 @@ them:
 
 ## References
 
-Chacon-Montalvan, E. A., Parry, L., Giorgi, E., Torres, P., Orellana, J.
+Chacón-Montalván, E. A., Parry, L., Giorgi, E., Torres, P., Orellana, J.
 D. Y., Moraga, P., and Taylor, B. M. (2025). Mapping food insecurity in
 the Brazilian Amazon using a spatial item factor analysis model. The
 Annals of Applied Statistics, 19(4), 3438-3463.

@@ -19,8 +19,16 @@ Useful links:
 
 ## Author
 
-Erick A. Chacon-Montalvan <e.chaconmontalvan@lancaster.ac.uk>
+**Maintainer**: Erick A. Chacón-Montalván <erick.chaconmontalvan@wur.nl>
+([ORCID](https://orcid.org/0000-0001-8068-1034))
 
-Emanuele Giorgi, <e.giorgi@lancaster.ac.uk>
+Authors:
 
-Benjamin M. Taylor, <b.taylor1@lancaster.ac.uk>
+- Erick A. Chacón-Montalván <erick.chaconmontalvan@wur.nl>
+  ([ORCID](https://orcid.org/0000-0001-8068-1034))
+
+Other contributors:
+
+- Emanuele Giorgi \[contributor\]
+
+- Benjamin M. Taylor \[contributor\]
