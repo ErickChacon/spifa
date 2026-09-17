@@ -243,7 +243,7 @@ void Ifa::update_cov_params(
     const double R_prior_eta,
     const double C, const double alpha, const double target, int index)
 {
-  double accept;
+  double accept = arma::datum::nan;
 
   if (model_type == "cifa" || model_type == "cifa_pred") {
     // Define current Sigma_proposal and propose new covariance matrix
