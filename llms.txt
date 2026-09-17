@@ -12,7 +12,7 @@ within Gibbs sampling), via auxiliary variables with a probit link
 function. The latent factors are modelled as the sum of a predictor
 effect, a multivariate Gaussian process capturing spatial dependence,
 and a multivariate non-spatial term, so spatially referenced constructs
-(e.g. food insecurity or a socio-economic index measured at survey
+(e.g. food insecurity or a socioeconomic index measured at survey
 locations) can be mapped and predicted at new locations. Standard
 exploratory and confirmatory IFA are supported as particular cases,
 simply by dropping the spatial structure.
