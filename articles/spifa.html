@@ -505,21 +505,21 @@ factors at (i) the observed locations and (ii) new locations through the
 the latent factors at observed locations as a
 <code><a href="https://mc-stan.org/posterior/reference/draws_array.html" class="external-link">posterior::draws_array()</a></code> object:</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pred_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">pred_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">samples</span>, burnin <span class="op">=</span> <span class="fl">1000</span>, thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">as_draws_df</a></span><span class="op">(</span><span class="va">pred_samples</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; # A draws_df: 4000 iterations, 1 chains, and 300 variables</span></span>
+<pre><code><span><span class="co">#&gt; # A draws_df: 600 iterations, 1 chains, and 300 variables</span></span>
 <span><span class="co">#&gt;    Theta[1,1] Theta[2,1] Theta[3,1] Theta[4,1] Theta[5,1] Theta[6,1] Theta[7,1] Theta[8,1]</span></span>
-<span><span class="co">#&gt; 1       0.377     -0.270      -0.88      -0.71       0.93      -1.05      -0.60      0.708</span></span>
-<span><span class="co">#&gt; 2       1.383     -0.855      -0.28      -1.28       1.17      -0.66      -1.05     -0.101</span></span>
-<span><span class="co">#&gt; 3       0.657     -0.046      -0.83      -1.19       0.95      -0.98      -1.43     -0.662</span></span>
-<span><span class="co">#&gt; 4       0.680     -0.132      -1.03      -1.06       0.18      -1.20      -0.25      0.075</span></span>
-<span><span class="co">#&gt; 5       0.235     -0.536      -1.24      -1.30      -0.08      -0.77      -0.69     -0.274</span></span>
-<span><span class="co">#&gt; 6       0.871     -0.050      -0.86      -1.39       0.43      -0.80      -0.56     -0.388</span></span>
-<span><span class="co">#&gt; 7       0.344     -0.058      -0.63      -1.38      -0.22      -1.18      -0.49     -0.725</span></span>
-<span><span class="co">#&gt; 8       0.561     -0.574      -0.47      -0.50       1.14      -1.54      -0.16     -0.593</span></span>
-<span><span class="co">#&gt; 9      -0.065     -0.339      -0.48      -0.57       0.54      -1.27      -0.59     -0.704</span></span>
-<span><span class="co">#&gt; 10      0.918      0.066      -0.43      -0.82       0.25      -0.57      -0.16      0.252</span></span>
-<span><span class="co">#&gt; # ... with 3990 more draws, and 292 more variables</span></span>
+<span><span class="co">#&gt; 1       1.625     -0.255     -0.850      -0.54       0.56      -1.05      -0.45      0.078</span></span>
+<span><span class="co">#&gt; 2       0.294     -0.169     -1.231      -0.72       1.62      -0.85      -0.75     -0.196</span></span>
+<span><span class="co">#&gt; 3       0.729     -0.267      0.221      -2.14       0.49      -1.18      -0.64     -0.274</span></span>
+<span><span class="co">#&gt; 4       1.023     -0.027     -0.716      -0.43       1.94      -1.66      -0.81      0.054</span></span>
+<span><span class="co">#&gt; 5       1.281      0.034     -0.373      -1.80       1.62      -1.60      -0.51     -0.606</span></span>
+<span><span class="co">#&gt; 6       2.018     -0.140      0.510      -1.82       0.73      -0.23      -0.29      0.635</span></span>
+<span><span class="co">#&gt; 7       2.003      0.022      0.507      -1.24       0.10      -1.18      -0.11      0.348</span></span>
+<span><span class="co">#&gt; 8       1.201     -0.581     -1.158      -0.75       1.08      -0.73      -0.50     -0.297</span></span>
+<span><span class="co">#&gt; 9       1.609     -0.553     -0.509      -1.88       1.07      -0.52      -0.88     -0.408</span></span>
+<span><span class="co">#&gt; 10     -0.049     -0.185      0.033      -1.16       0.74      -0.53      -0.24     -0.482</span></span>
+<span><span class="co">#&gt; # ... with 590 more draws, and 292 more variables</span></span>
 <span><span class="co">#&gt; # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span></span></code></pre>
 <p>We can visualize a summary (<code>mean</code> by default) of these
 predictive samples using <code><a href="../reference/plot_predict.html">plot_predict()</a></code> and integrate it
@@ -527,7 +527,7 @@ with <code>ggplot2</code> functionality:</p>
 <div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_colour_distiller</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"RdBu"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-21-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
 <h3 id="new-locations">New locations<a class="anchor" aria-label="anchor" href="#new-locations"></a>
@@ -576,21 +576,21 @@ predictive <code>mean</code> by default.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span>, boundary <span class="op">=</span> <span class="va">bnd</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_fill_distiller</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"RdBu"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Predictive mean"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-26-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 <p>Other summaries can be mapped by simply providing a function in the
 <code>stat</code> argument:</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span>, boundary <span class="op">=</span> <span class="va">bnd</span>, stat <span class="op">=</span> <span class="va">sd</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"magma"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Predictive standard deviation"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-27-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-28-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 <p>Custom functions can easily be provided, for example, we can plot the
 probability of exceeding the value of 1 to identify hotspots:</p>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_predict.html">plot_predict</a></span><span class="op">(</span><span class="va">pred_samples</span>, boundary <span class="op">=</span> <span class="va">bnd</span>, stat <span class="op">=</span> <span class="kw">function</span> <span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">v</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Exceedance probability: "</span>, <span class="fu">P</span><span class="op">(</span><span class="va">theta</span><span class="op">[</span><span class="va">j</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spifa_files/figure-html/unnamed-chunk-29-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
+<p><img src="spifa_files/figure-html/unnamed-chunk-30-1.png" class="r-plt" alt="" width="100%" style="display: block; margin: auto;"></p>
 </div>
 </div>
 <div class="section level2 unnumbered">

@@ -488,23 +488,23 @@ object:
 
 ``` r
 
-pred_samples <- predict(samples)
+pred_samples <- predict(samples, burnin = 1000, thin = 5)
 posterior::as_draws_df(pred_samples)
 ```
 
-    #> # A draws_df: 4000 iterations, 1 chains, and 300 variables
+    #> # A draws_df: 600 iterations, 1 chains, and 300 variables
     #>    Theta[1,1] Theta[2,1] Theta[3,1] Theta[4,1] Theta[5,1] Theta[6,1] Theta[7,1] Theta[8,1]
-    #> 1       0.377     -0.270      -0.88      -0.71       0.93      -1.05      -0.60      0.708
-    #> 2       1.383     -0.855      -0.28      -1.28       1.17      -0.66      -1.05     -0.101
-    #> 3       0.657     -0.046      -0.83      -1.19       0.95      -0.98      -1.43     -0.662
-    #> 4       0.680     -0.132      -1.03      -1.06       0.18      -1.20      -0.25      0.075
-    #> 5       0.235     -0.536      -1.24      -1.30      -0.08      -0.77      -0.69     -0.274
-    #> 6       0.871     -0.050      -0.86      -1.39       0.43      -0.80      -0.56     -0.388
-    #> 7       0.344     -0.058      -0.63      -1.38      -0.22      -1.18      -0.49     -0.725
-    #> 8       0.561     -0.574      -0.47      -0.50       1.14      -1.54      -0.16     -0.593
-    #> 9      -0.065     -0.339      -0.48      -0.57       0.54      -1.27      -0.59     -0.704
-    #> 10      0.918      0.066      -0.43      -0.82       0.25      -0.57      -0.16      0.252
-    #> # ... with 3990 more draws, and 292 more variables
+    #> 1       1.625     -0.255     -0.850      -0.54       0.56      -1.05      -0.45      0.078
+    #> 2       0.294     -0.169     -1.231      -0.72       1.62      -0.85      -0.75     -0.196
+    #> 3       0.729     -0.267      0.221      -2.14       0.49      -1.18      -0.64     -0.274
+    #> 4       1.023     -0.027     -0.716      -0.43       1.94      -1.66      -0.81      0.054
+    #> 5       1.281      0.034     -0.373      -1.80       1.62      -1.60      -0.51     -0.606
+    #> 6       2.018     -0.140      0.510      -1.82       0.73      -0.23      -0.29      0.635
+    #> 7       2.003      0.022      0.507      -1.24       0.10      -1.18      -0.11      0.348
+    #> 8       1.201     -0.581     -1.158      -0.75       1.08      -0.73      -0.50     -0.297
+    #> 9       1.609     -0.553     -0.509      -1.88       1.07      -0.52      -0.88     -0.408
+    #> 10     -0.049     -0.185      0.033      -1.16       0.74      -0.53      -0.24     -0.482
+    #> # ... with 590 more draws, and 292 more variables
     #> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
 
 We can visualize a summary (`mean` by default) of these predictive
@@ -518,7 +518,7 @@ plot_predict(pred_samples) +
   scale_colour_distiller(palette = "RdBu")
 ```
 
-![](spifa_files/figure-html/unnamed-chunk-20-1.png)
+![](spifa_files/figure-html/unnamed-chunk-21-1.png)
 
 ### New locations
 
@@ -579,7 +579,7 @@ plot_predict(pred_samples, boundary = bnd) +
   labs(title = "Predictive mean")
 ```
 
-![](spifa_files/figure-html/unnamed-chunk-25-1.png)
+![](spifa_files/figure-html/unnamed-chunk-26-1.png)
 
 Other summaries can be mapped by simply providing a function in the
 `stat` argument:
@@ -591,7 +591,7 @@ plot_predict(pred_samples, boundary = bnd, stat = sd) +
   labs(title = "Predictive standard deviation")
 ```
 
-![](spifa_files/figure-html/unnamed-chunk-27-1.png)
+![](spifa_files/figure-html/unnamed-chunk-28-1.png)
 
 Custom functions can easily be provided, for example, we can plot the
 probability of exceeding the value of 1 to identify hotspots:
@@ -603,7 +603,7 @@ plot_predict(pred_samples, boundary = bnd, stat = function (v) mean(v > 1)) +
   labs(title = expression(paste("Exceedance probability: ", P(theta[j] > 1))))
 ```
 
-![](spifa_files/figure-html/unnamed-chunk-29-1.png)
+![](spifa_files/figure-html/unnamed-chunk-30-1.png)
 
 ## References
 
