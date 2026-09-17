@@ -8,17 +8,16 @@ Authors@R: c(
         role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8068-1034")),
     person("Emanuele", "Giorgi", role = "ctb"),
     person("Benjamin M.", "Taylor", role = "ctb"))
-Description: Fits spatial item factor analysis models for binary responses,
-    following Chacón-Montalván, E. A. et al. (2025) <doi:10.1214/25-AOAS2072>,
-    using full Bayesian inference via adaptive Metropolis-Hastings within
-    Gibbs sampling and auxiliary variables with a probit link function. The
-    latent factors are modelled as the sum of a predictor effect, a
-    multivariate Gaussian process capturing spatial dependence, and a
-    multivariate non-spatial term, allowing users to fit and predict
-    spatially-referenced constructs such as food insecurity or
-    socio-economic indices. Standard exploratory and confirmatory item
-    factor analysis are supported as particular cases, simply by dropping
-    the spatial structure.
+Description: Fits spatial item factor analysis models for binary responses, following
+    Chacón-Montalván, E. A., Parry, L., Giorgi, E., Torres, P., Orellana, J. D. Y.,
+    Moraga, P., and Taylor, B. M. (2025) <doi:10.1214/25-AOAS2072>, using full Bayesian
+    inference via adaptive Metropolis-Hastings within Gibbs sampling and auxiliary
+    variables with a probit link function. The latent factors are modelled as the sum of a
+    predictor effect, a multivariate Gaussian process capturing spatial dependence, and a
+    multivariate non-spatial term, allowing users to fit and predict spatially-referenced
+    constructs such as food insecurity or socioeconomic indices. Standard exploratory and
+    confirmatory item factor analysis are supported as particular cases, simply by
+    dropping the spatial structure.
 License: GPL-3
 URL: https://github.com/ErickChacon/spifa, https://ErickChacon.github.io/spifa/
 Depends: R (>= 4.1.0)
