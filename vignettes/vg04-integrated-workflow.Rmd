@@ -11,7 +11,7 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center", out.width = "100%")
 knitr::opts_chunk$set(fig.width = 7, fig.height = 4)
 knitr::opts_chunk$set(comment = "#>")
-options(width = 100)
+old_options <- options(width = 100)
 
 can_run <- requireNamespace("mirt", quietly = TRUE) &&
   requireNamespace("gstat", quietly = TRUE)
@@ -210,3 +210,7 @@ plot_predict(pred_samples) +
 
 You can continue your analysis using the other methods and functions shown in the
 package's vignettes.
+
+```{r, include = FALSE}
+options(old_options)
+```

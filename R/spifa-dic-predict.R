@@ -8,6 +8,9 @@
 #' @param x A fitted model object.
 #' @param ... Further arguments passed to methods.
 #'
+#' @return The DIC for \code{x}; see the specific method (e.g.
+#' \code{\link{dic.spifa}}) for its exact return value.
+#'
 #' @export
 dic <- function (x, ...) {
   UseMethod("dic", x)

@@ -10,7 +10,7 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center", out.width = "100%")
 knitr::opts_chunk$set(comment = "#>")
-options(width = 100)
+old_options <- options(width = 100)
 ```
 
 `spifa()` expects data in a specific shape: one row per respondent, and the binary item
@@ -122,4 +122,8 @@ fit_na
 
 As you can see in `Dimensions`, the 5 respondents with a missing `wealth` value are
 dropped -- 15 respondents remain, unlike the item-response case above.
+
+```{r, include = FALSE}
+options(old_options)
+```
 

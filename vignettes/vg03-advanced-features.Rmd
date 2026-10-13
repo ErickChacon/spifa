@@ -10,7 +10,7 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center", out.width = "100%")
 knitr::opts_chunk$set(comment = "#>")
-options(width = 100)
+old_options <- options(width = 100)
 ```
 
 This vignette goes deeper into two things `vignette("spifa")` and
@@ -179,3 +179,7 @@ dic(fit2, burnin = 100, thin = 2)
 
 Assuming both models have converged, the 3-factor model has the lower DIC, favouring the
 discrimination structure used above over an 2-factor alternative.
+
+```{r, include = FALSE}
+options(old_options)
+```

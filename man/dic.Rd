@@ -11,6 +11,10 @@ dic(x, ...)
 
 \item{...}{Further arguments passed to methods.}
 }
+\value{
+The DIC for \code{x}; see the specific method (e.g.
+\code{\link{dic.spifa}}) for its exact return value.
+}
 \description{
 Generic function for the Deviance Information Criterion (DIC), a
 Bayesian measure of model fit that penalises complexity. See

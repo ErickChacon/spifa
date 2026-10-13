@@ -10,7 +10,7 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center", out.width = "100%")
 knitr::opts_chunk$set(comment = "#>")
-options(width = 100)
+old_options <- options(width = 100)
 ```
 
 `spifa()` can fit five model types that are determined automatically from `formula` and
@@ -133,3 +133,7 @@ samples
 ```
 
 Notice that the predictor effects `B` is now included in the samples.
+
+```{r, include = FALSE}
+options(old_options)
+```
