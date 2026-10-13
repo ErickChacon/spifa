@@ -20,3 +20,9 @@ dic(x, ...)
 - ...:
 
   Further arguments passed to methods.
+
+## Value
+
+The DIC for `x`; see the specific method (e.g.
+[`dic.spifa`](https://ErickChacon.github.io/spifa/reference/dic.spifa.md))
+for its exact return value.
