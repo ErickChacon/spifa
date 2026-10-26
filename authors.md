@@ -12,7 +12,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/ErickChacon/spifa/blob/master/inst/CITATION)
+[`inst/CITATION`](https://github.com/ErickChacon/spifa/blob/v0.1.0/inst/CITATION)
 
 Chacón-Montalván, E. A., Parry, L., Giorgi, E., Torres, P., Orellana, J.
 D. Y., Moraga, P., and Taylor, B. M. (2025). Mapping food insecurity in
