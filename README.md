@@ -1,6 +1,7 @@
 # spifa: Bayesian Spatial Item Factor Analysis
 
 <!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/spifa)](https://CRAN.R-project.org/package=spifa)
 [![R-CMD-check](https://github.com/ErickChacon/spifa/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ErickChacon/spifa/actions/workflows/R-CMD-check.yaml)
 [![pkgdown](https://github.com/ErickChacon/spifa/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/ErickChacon/spifa/actions/workflows/pkgdown.yaml)
 <!-- badges: end -->
